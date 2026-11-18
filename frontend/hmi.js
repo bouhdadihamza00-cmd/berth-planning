@@ -41,45 +41,10 @@ export function prepareScreen(page) {
         items.forEach((item) => list.append(item));
       }
     }
-    if (content?.dataset.section === "integrations") {
-      const stack = content.querySelector(".config-card-stack");
-      if (stack) addCardTabs(stack, "Integration section");
-    }
   }
   if (page === "overview") addOverviewTabs(workspace);
 }
 
-function addCardTabs(stack, label) {
-  const cards = [...stack.children];
-  const tabs = document.createElement("div");
-  tabs.className = "hmi-panel-tabs";
-  tabs.setAttribute("aria-label", label);
-  const key = "cards:" + window.P.S.configTab;
-  let selected = pageState.get(key) || 0;
-  const buttons = cards.map((card, i) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent =
-      card.querySelector("h2")?.textContent || "Section " + (i + 1);
-    button.onclick = () => {
-      selected = i;
-      pageState.set(key, i);
-      update();
-      window.dispatchEvent(new Event("resize"));
-    };
-    tabs.append(button);
-    return button;
-  });
-  function update() {
-    cards.forEach((c, i) => (c.hidden = i !== selected));
-    buttons.forEach((b, i) => {
-      b.classList.toggle("active", i === selected);
-      b.setAttribute("aria-pressed", String(i === selected));
-    });
-  }
-  stack.prepend(tabs);
-  update();
-}
 function addOverviewTabs(workspace) {
   const tabs = document.createElement("div");
   tabs.className = "hmi-panel-tabs hmi-overview-tabs";

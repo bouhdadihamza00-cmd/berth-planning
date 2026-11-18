@@ -9,7 +9,7 @@ import {
   bindRuleWorkbench,
 } from "./rule-workbench.js?v=9";
 import { renderDocuments, bindDocuments } from "./documents.js?v=13";
-import { renderConnectors, bindConnectors } from "./connectors.js?v=6";
+import { renderConnectors, bindConnectors } from "./connectors.js?v=7";
 import { renderPreferences, bindPreferences } from "./preferences.js?v=7";
 import { renderCatalog, bindCatalog } from "./cargo.js?v=11";
 import {
@@ -64,16 +64,14 @@ const sections = [
   [
     "integrations",
     "plug-zap",
-    "External Integration",
-    [
-      ["integrations", "All integrations"],
-      ["integrations-ais", "AIS vessel tracking"],
-    ],
+    "External integrations",
+    [["integrations", "External integrations"]],
   ],
 ];
 export function renderConfig() {
   const { S, pageHeading, btn, icon, can, empty } = P();
   if (!can("config.view") && can("planning.view")) S.configTab = "imports";
+  if (S.configTab === "integrations-ais") S.configTab = "integrations";
   if (S.configTab === "audit") S.configTab = "general";
   if (S.configTab === "workflows") {
     S.configTab = "rules";
@@ -140,14 +138,12 @@ function configContent() {
     return `<section class="card">${cardHead("People & permissions", "users")}<div class="form-body"><div id="users-list">${empty("Loading port members…", "", "users")}</div><div class="form-actions">${can("users.edit") ? btn("Create user", "user-plus", "new-user", "primary") : ""}</div></div></section>`;
   if (S.configTab === "rules" || S.configTab === "workflows")
     return renderRuleWorkbench();
-  if (S.configTab === "integrations") return renderConnectors();
-  if (S.configTab === "integrations-ais")
-    return `<div class="config-card-stack"><section class="card">${cardHead("AIS vessel tracking", "radio", "Server-side connection")}<form class="form-body" id="integration-form"><div class="notice ${S.data.ais.mode === "live" ? "success" : "warning"}">${icon("radio")}${esc(S.data.ais.message)}</div><div class="form-grid">${select(
-      "AIS provider",
+  if (S.configTab === "integrations") return renderConnectors(`<section class="card"><div class="integration-section-heading"><h3 id="ais-settings-title">${icon("radio")}AIS vessel tracking</h3><span class="status blue" id="ais-connection-badge">${esc(P().aisStateLabel())}</span></div><form class="form-body" id="integration-form" aria-labelledby="ais-settings-title"><div id="ais-connection-message" role="status" class="notice ${S.data.ais.mode === "live" ? "success" : "warning"}">${icon("radio")}${esc(S.data.ais.message)}</div><div class="form-grid">${select(
+      "Vessel data source",
       "provider",
       [["marinetraffic-client", "MarineTraffic · global vessel data"]],
       "marinetraffic-client",
-    )}${field("Port tracking radius, km", "radius_km", p.integration.radius_km || 25, "number", 'min="1" max="5000" required')}${field("Position freshness, minutes", "freshness_minutes", p.integration.freshness_minutes || 30, "number", 'min="1" max="1440" required')}<div class="field full"><label class="check-row"><input type="checkbox" name="enabled" ${p.integration.enabled ? "checked" : ""}>Enable AIS vessel tracking for this port</label></div><div class="field full"><label>Connection status</label><p>${esc(P().aisStateLabel())}${S.data.ais.connected ? " · Connection active" : ""} · ${S.data.ais.positions.length} positions${S.data.ais.last_message_at ? " · Last report " + esc(P().date(S.data.ais.last_message_at)) : ""}</p></div></div><div class="form-actions"><button type="button" class="btn" id="test-integration">${icon("refresh-cw")}Check saved connection</button><button type="submit" class="btn primary" ${!can("config.edit") ? "disabled" : ""}>${icon("save")}Save connector</button></div></form></section></div>`;
+    )}${field("Port tracking radius, km", "radius_km", p.integration.radius_km || 25, "number", 'min="1" max="5000" required')}${field("Position freshness, minutes", "freshness_minutes", p.integration.freshness_minutes || 30, "number", 'min="1" max="1440" required')}<div class="field full"><label class="check-row"><input type="checkbox" name="enabled" ${p.integration.enabled ? "checked" : ""}>Enable AIS vessel tracking for this port</label></div><div class="field full"><label>Connection status</label><p id="ais-connection-detail">${esc(P().aisStateLabel())}${S.data.ais.connected ? " · Connection active" : ""} · ${S.data.ais.positions.length} positions${S.data.ais.last_message_at ? " · Last report " + esc(P().date(S.data.ais.last_message_at)) : ""}</p></div></div><div class="form-actions"><button type="button" class="btn" id="test-integration">${icon("refresh-cw")}Check saved connection</button><button type="submit" class="btn primary" ${!can("config.edit") ? "disabled" : ""}>${icon("save")}Save tracking settings</button></div></form></section>`);
   if (S.configTab === "general") return renderPreferences();
   return empty("Select a configuration section");
 }
@@ -161,6 +157,7 @@ async function savePort(changes) {
 export function bindConfig() {
   const {
     S,
+    can,
     $,
     $$,
     api,
@@ -294,19 +291,30 @@ export function bindConfig() {
   if (S.configTab === "general") bindPreferences();
   if (S.configTab === "integrations") {
     bindConnectors();
-    return;
-  }
-  if (S.configTab === "integrations-ais") {
-    handleForm("#integration-form", async (d) =>
-      savePort({
-        integration: {
-          ...d,
-          enabled: d.enabled === "on",
-          freshness_minutes: Number(d.freshness_minutes),
-          radius_km: Number(d.radius_km),
-        },
-      }),
-    );
+
+    const integrationPort = S.portId;
+    const integrationForm = $("#integration-form");
+    if (!can("config.edit")) integrationForm.querySelectorAll("input,select").forEach(input => input.disabled = true);
+    const updateConnection = () => {
+      $("#ais-connection-badge").textContent = P().aisStateLabel();
+      const message = $("#ais-connection-message");
+      message.textContent = S.data.ais.message || "No connection report available.";
+      message.className = "notice " + (S.data.ais.mode === "live" ? "success" : "warning");
+      $("#ais-connection-detail").textContent = `${P().aisStateLabel()} · ${S.data.ais.positions.length} positions${S.data.ais.last_message_at ? " · Last report " + P().date(S.data.ais.last_message_at) : ""}`;
+    };
+    const reloadConnection = async () => {
+      const snapshot = await api("/ports/" + encodeURIComponent(integrationPort) + "/snapshot");
+      if (S.portId !== integrationPort || !integrationForm.isConnected) return;
+      S.data = snapshot;
+      updateConnection();
+    };
+    handleForm("#integration-form", async (d) => {
+      await api(path(""), "PUT", { ...S.data.port, integration: {
+        ...d, enabled: d.enabled === "on", freshness_minutes: Number(d.freshness_minutes), radius_km: Number(d.radius_km),
+      }});
+      await reloadConnection();
+      toast("Vessel tracking settings saved.");
+    });
     $("#test-integration").onclick = async (e) => {
       e.currentTarget.disabled = true;
       try {
@@ -314,7 +322,7 @@ export function bindConfig() {
         toast(
           result.mode === "live" ? "AIS positions received." : result.message,
         );
-        await refresh();
+        await reloadConnection();
       } catch (e) {
         toast(e.message, true);
       } finally {

@@ -27,3 +27,24 @@ test('port configuration exposes directory then inventory without redundant tabs
     assert.match(inventory, /config-nav[\s\S]*class="active" data-config-tab="ports"/);
   } finally { delete globalThis.window; }
 });
+
+test('integration settings share one page and legacy AIS navigation resolves to it', () => {
+  const port = { id: 'port-1', name: 'Test port', integration: { enabled: false, radius_km: 25, freshness_minutes: 30 } };
+  globalThis.window = { P: {
+    S: { configTab: 'integrations-ais', portId: port.id, data: { port, ais: { mode: 'offline', message: 'Offline', positions: [] } } },
+    can: () => true, esc: String, icon: () => '', cardHead: () => '', btn: () => '', pageHeading: () => '', empty: () => '',
+    field: (label, name) => `<label>${label}<input name="${name}"></label>`,
+    select: (label, name) => `<label>${label}<select name="${name}"></select></label>`, aisStateLabel: () => 'Offline',
+  } };
+  try {
+    const html = renderConfig();
+    assert.equal(window.P.S.configTab, 'integrations');
+    assert.match(html, /id="integration-form" aria-labelledby="ais-settings-title"/);
+    assert.match(html, /id="connector-list"/);
+    assert.match(html, /id="connector-editor-slot" hidden/);
+    assert.match(html, /id="new-data-connector"/);
+    assert.doesNotMatch(html, /config-section-tabs|connector-back|edit-ais-connector/);
+    window.P.can = () => false;
+    assert.doesNotMatch(renderConfig(), /id="new-data-connector"/);
+  } finally { delete globalThis.window; }
+});

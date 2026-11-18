@@ -16,7 +16,7 @@ import {
   prepareScreen,
   activateScreen,
   activateModalLists,
-} from "./hmi.js?v=10";
+} from "./hmi.js?v=11";
 import {
   renderPlanning,
   fitTimeline,
@@ -32,7 +32,7 @@ import {
   delayForm,
   alertModal,
 } from "./workflows.js?v=28";
-import { renderConfig, bindConfig } from "./configuration.js?v=37";
+import { renderConfig, bindConfig } from "./configuration.js?v=38";
 const S = {
   user: null,
   ports: [],

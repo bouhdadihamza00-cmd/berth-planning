@@ -113,3 +113,34 @@ html[data-theme="dark"] .workflow-template-head h3 { color: #d5e6ef; }
 .hmi-main .config-content[data-section="products"] .catalogue-card th:last-child { background: #f1f7fb; z-index: 2; }
 .catalog-row-actions { width: max-content; }
 html[data-theme="dark"] .hmi-main .config-content[data-section="products"] .catalogue-card :is(th,td):last-child { background: #193c51; }
+
+/* All integration settings share one scroll surface, with independent save actions. */
+.hmi-main .config-content[data-section="integrations"] { overflow: auto; }
+.integrations-page { display: flex; flex-direction: column; gap: 24px; padding-bottom: 16px; min-width: 0; }
+.integrations-page > .card { flex: none; overflow: visible; }
+.integrations-intro h2 { margin: 0 0 8px; font-size: calc(24px * var(--ui-font-scale,1)); color: var(--ink); }
+.integrations-intro p { margin: 0; color: var(--muted); line-height: 1.5; }
+.integration-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+.integration-section-heading h3 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: calc(16px * var(--ui-font-scale,1)); color: var(--ink); }
+.integration-section-heading h3 svg { width: 20px; height: 20px; flex: none; }
+.integration-section-heading p { margin: 8px 0 0; color: var(--muted); line-height: 1.5; }
+.hmi-main .integrations-page .form-body { overflow: visible; padding: 20px; }
+.integrations-page .form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
+.integrations-page .form-actions { flex-wrap: wrap; gap: 10px; }
+.integrations-page .notice { overflow-wrap: anywhere; line-height: 1.5; }
+.integration-row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.integration-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 28px 16px; line-height: 1.5; text-align: center; }
+.integration-empty span { color: var(--muted); }
+#connector-editor-slot:not([hidden]) { border-top: 1px solid var(--line); }
+.connector-mapping-help { margin-block: 12px; color: var(--muted); line-height: 1.5; }
+.connector-mapping-help summary { cursor: pointer; width: fit-content; }
+.integrations-page .connector-tags { max-height: none; }
+.integrations-page .connector-tags input { min-width: 120px; }
+@media(max-width: 700px) {
+  .integrations-page .form-grid { grid-template-columns: minmax(0,1fr); }
+  .integration-section-heading, .hmi-main .integrations-page .form-body { padding: 16px; }
+  .integrations-page .form-actions .btn { flex: 1 1 auto; white-space: normal; }
+  .integrations-page table { min-width: 560px; }
+  .integrations-page :is(input,select,.btn) { min-height: 48px; }
+  .integrations-page :is(input,select) { font-size: max(16px,1em); }
+}
