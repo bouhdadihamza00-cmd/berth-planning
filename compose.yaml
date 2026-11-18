@@ -1,0 +1,33 @@
+services:
+  portside:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - portside-data:/app/data
+    environment:
+      COPERNICUS_SESSION_FILE: /app/data/copernicus-session.json
+      WEATHER_USER_AGENT: ${WEATHER_USER_AGENT:-Portside-BerthPlanning/1.0 local-development}
+      PORTOPS_DB: /app/data/portops.db
+      PORTOPS_AI_PROVIDER: ${PORTOPS_AI_PROVIDER:-disabled}
+      PORTOPS_AI_MODEL: ${PORTOPS_AI_MODEL:-openrouter/free}
+      PORTOPS_AI_BASE_URL: ${PORTOPS_AI_BASE_URL:-https://openrouter.ai/api/v1}
+      PORTOPS_AI_PROTOCOL: ${PORTOPS_AI_PROTOCOL:-openai}
+      PORTOPS_AI_API_KEY: ${PORTOPS_AI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      PORTOPS_AI_CREDENTIALS_FILE: /app/data/free-ai-providers.json
+      PORTOPS_AI_MAX_OUTPUT_TOKENS: ${PORTOPS_AI_MAX_OUTPUT_TOKENS:-2048}
+      PORTOPS_AI_MAX_INPUT_CHARS: ${PORTOPS_AI_MAX_INPUT_CHARS:-48000}
+      PORTOPS_AI_TIMEOUT_SECONDS: ${PORTOPS_AI_TIMEOUT_SECONDS:-120}
+      MARINETRAFFIC_CLIENT_COOKIES_FILE: ${MARINETRAFFIC_CLIENT_COOKIES_FILE:-/app/data/marinetraffic-client-cookies.json}
+      MARINETRAFFIC_CLIENT_ZOOM: ${MARINETRAFFIC_CLIENT_ZOOM:-12}
+      MARINETRAFFIC_CLIENT_SPEED_UNIT: ${MARINETRAFFIC_CLIENT_SPEED_UNIT:-tenths_knots}
+      MARINETRAFFIC_CLIENT_ELAPSED_UNIT: ${MARINETRAFFIC_CLIENT_ELAPSED_UNIT:-minutes}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+volumes:
+  portside-data:

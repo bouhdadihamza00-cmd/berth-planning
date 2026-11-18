@@ -1,0 +1,145 @@
+/* Overview-only refinements; operational screens retain their existing layouts. */
+.hmi-main[data-page="overview"] {
+  --dashboard-ink: #16364b;
+  --dashboard-muted: #637b8b;
+  --dashboard-line: #dce6ed;
+  background: #f2f6f9;
+  padding: 14px 16px 16px;
+  gap: 12px;
+}
+.hmi-main[data-page="overview"] .page-heading { min-height: 42px; align-items: center; }
+.hmi-main[data-page="overview"] h1 { font-size: calc(24px * var(--ui-font-scale, 1)); letter-spacing: -.65px; font-weight: 650; }
+.hmi-main[data-page="overview"] .page-heading p { font-size: calc(11px * var(--ui-font-scale, 1)); color: var(--dashboard-muted); margin-top: 4px; }
+.hmi-main[data-page="overview"] .page-heading .btn { background: white; border-color: var(--dashboard-line); border-radius: 6px; padding: 7px 11px; }
+.hmi-main[data-page="overview"] .hmi-workspace { gap: 12px; }
+.hmi-main[data-page="overview"] .card {
+  border: 1px solid var(--dashboard-line);
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 2px 5px #17384c04;
+}
+.hmi-main[data-page="overview"] .card-head {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 12px;
+  background: #fff;
+  border-bottom: 1px solid #e8eef3;
+}
+.hmi-main[data-page="overview"] .card-title { gap: 7px; }
+.hmi-main[data-page="overview"] .card-title h2 { font-size: calc(12px * var(--ui-font-scale, 1)); font-weight: 650; color: var(--dashboard-ink); }
+.hmi-main[data-page="overview"] .card-title > svg { width: 17px; height: 17px; color: #397d9d; }
+.hmi-main[data-page="overview"] .card-meta { font-size: calc(9px * var(--ui-font-scale, 1)); color: var(--dashboard-muted); }
+.hmi-main[data-page="overview"] .card-link { font-size: calc(10px * var(--ui-font-scale, 1)); color: #287292; font-weight: 550; }
+.hmi-main[data-page="overview"] .count-pill { background: #eef3f6; color: #5a7384; border: 0; }
+.hmi-main[data-page="overview"] .metrics { gap: 8px; background: none; border: 0; }
+.hmi-main[data-page="overview"] .metric {
+  padding: 11px 12px 9px;
+  border: 1px solid var(--dashboard-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--dashboard-ink);
+  box-shadow: none;
+  transition: border-color 120ms, background 120ms;
+}
+.hmi-main[data-page="overview"] .metric:hover { border-color: #94b6c8; background: #fbfdff; }
+.hmi-main[data-page="overview"] .metric:focus-visible { outline: 2px solid #167aa1; outline-offset: 2px; }
+.hmi-main[data-page="overview"] .metric-top { height: 21px; align-items: flex-start; }
+.hmi-main[data-page="overview"] .metric-label { font-size: calc(10px * var(--ui-font-scale, 1)); line-height: calc(13px * var(--ui-font-scale, 1)); color: #456173; font-weight: 550; }
+.hmi-main[data-page="overview"] .metric-icon { color: #6d96ad; }
+.hmi-main[data-page="overview"] .metric-icon svg { width: 18px; height: 18px; }
+.hmi-main[data-page="overview"] .metric-value { font-size: calc(30px * var(--ui-font-scale, 1)); line-height: calc(33px * var(--ui-font-scale, 1)); letter-spacing: -.8px; font-weight: 650; }
+.hmi-main[data-page="overview"] .metric-unit { margin-left: 3px; font-size: calc(13px * var(--ui-font-scale, 1)); font-weight: 450; letter-spacing: 0; }
+.hmi-main[data-page="overview"] .metric-foot { font-size: calc(9px * var(--ui-font-scale, 1)); line-height: calc(12px * var(--ui-font-scale, 1)); margin-top: 3px; color: var(--dashboard-muted); }
+.hmi-main[data-page="overview"] .metric:first-child { background: #123e58; border-color: #123e58; color: #fff; }
+.hmi-main[data-page="overview"] .metric:first-child .metric-label { color: #e4eff5; }
+.hmi-main[data-page="overview"] .metric:first-child .metric-foot { color: #b6d0df; }
+.hmi-main[data-page="overview"] .metric:first-child .metric-icon { color: #ffbc5e; }
+.hmi-main[data-page="overview"] .mini-meter { height: 3px; background: #e6eef3; margin-top: 3px; }
+.hmi-main[data-page="overview"] .mini-meter span { background: #338bab; }
+.hmi-main[data-page="overview"] .dashboard-middle,
+.hmi-main[data-page="overview"] .dashboard-bottom,
+.hmi-main[data-page="overview"] .right-stack { gap: 12px; }
+.hmi-main[data-page="overview"] .right-stack .list-filter-toolbar {
+  background: #f8fafc;
+  border-bottom: 1px solid #edf1f5;
+  padding: 5px 8px;
+  gap: 5px;
+}
+.hmi-main[data-page="overview"] .right-stack .list-filter-toolbar :is(input,select,.btn) {
+  background: #fff;
+  border: 1px solid #d9e4eb;
+  border-radius: 4px;
+  color: #496576;
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  height: 25px;
+}
+.hmi-main[data-page="overview"] .right-stack th { background: #f8fafc; color: #657d8d; font-size: calc(9px * var(--ui-font-scale, 1)); font-weight: 550; padding: 6px 9px; border-bottom-color: #e7eef3; }
+.hmi-main[data-page="overview"] .right-stack td { font-size: calc(10px * var(--ui-font-scale, 1)); padding: 7px 9px; border-bottom: 1px solid #eef2f5; }
+.hmi-main[data-page="overview"] .right-stack tr:nth-child(even) { background: #fbfcfd; }
+.hmi-main[data-page="overview"] .right-stack tbody tr:hover { background: #f0f7fb; }
+.hmi-main[data-page="overview"] .right-stack .vessel-name { font-size: calc(11px * var(--ui-font-scale, 1)); color: #21465c; }
+.hmi-main[data-page="overview"] .right-stack .vessel-sub { color: #748896; font-size: calc(9px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="overview"] .table-progress .progress-track { height: 4px; background: #e8eff4; }
+.hmi-main[data-page="overview"] .map-control { border-color: #d1dce3; border-radius: 5px; background: #fffffff2; color: #244c63; box-shadow: 0 1px 3px #08243612; }
+.hmi-main[data-page="overview"] .map-search input { border-color: #d1dce3; border-radius: 5px; background: #fffffff2; }
+.hmi-main[data-page="overview"] .map-legend { background: #0c3249e8; border-color: #ffffff33; border-radius: 6px; box-shadow: 0 2px 8px #08243620; }
+.hmi-main[data-page="overview"] .map-legend h4 { font-size: calc(9px * var(--ui-font-scale, 1)); letter-spacing: .5px; }
+.hmi-main[data-page="overview"] .map-footer { background: #fafcfd; color: #6b8190; border-top: 1px solid #e7eef3; }
+.hmi-main[data-page="overview"] .throughput-products { gap: 6px; }
+.hmi-main[data-page="overview"] .throughput-products .throughput-product { border-color: #e3ebf0; border-radius: 5px; padding: 6px 8px; }
+.hmi-main[data-page="overview"] .throughput-products .product-label { font-size: calc(10px * var(--ui-font-scale, 1)); line-height: calc(12px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="overview"] .throughput-products .product-value { font-size: calc(24px * var(--ui-font-scale, 1)); line-height: calc(26px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="overview"] .throughput-product-meta { color: #6e8492; }
+.hmi-main[data-page="overview"] .delay-donut { width: 92px; flex-basis: 92px; }
+.hmi-main[data-page="overview"] .delay-chart-row { font-size: calc(10px * var(--ui-font-scale, 1)); line-height: calc(14px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="overview"] .delay-chart-legend { gap: 5px; }
+.hmi-main[data-page="overview"] .alerts-card .alert-item { padding: 5px 0; border-bottom-color: #e8eef3; }
+.hmi-main[data-page="overview"] .alerts-card .alert-copy h4 { font-size: calc(11px * var(--ui-font-scale, 1)); line-height: calc(13px * var(--ui-font-scale, 1)); color: #25485d; }
+.hmi-main[data-page="overview"] .alerts-card .alert-copy p { color: #657d8d; line-height: calc(12px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="overview"] .alert-severity { border-radius: 4px; font-size: calc(9px * var(--ui-font-scale, 1)) !important; }
+@media (min-width: 1000px) {
+  .hmi-main[data-page="overview"] .hmi-workspace { grid-template-rows: 102px minmax(340px,1fr) 164px; }
+  .hmi-main[data-page="overview"] :is(.dashboard-middle,.dashboard-bottom) {
+    grid-template-columns: minmax(0,.925fr) minmax(0,.925fr) minmax(0,1fr);
+  }
+  .hmi-main[data-page="overview"] .dashboard-middle > .map-card { grid-column: 1 / 3; }
+  .hmi-main[data-page="overview"] .dashboard-middle > .right-stack { grid-column: 3; }
+}
+@media (max-width: 1200px) and (min-width: 1000px) {
+  .hmi-main[data-page="overview"] .metric { padding: 9px 8px; }
+  .hmi-main[data-page="overview"] .metric-icon { display: none; }
+  .hmi-main[data-page="overview"] .metric-label { font-size: calc(9px * var(--ui-font-scale, 1)); }
+  .hmi-main[data-page="overview"] .metric-value { font-size: calc(26px * var(--ui-font-scale, 1)); }
+}
+@media (max-width: 999px) {
+  .hmi-main[data-page="overview"] { padding: 10px 10px 16px; }
+  .hmi-main[data-page="overview"] .metrics { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .hmi-main[data-page="overview"] .metric { padding: 8px; }
+  .hmi-main[data-page="overview"] .metric-value { font-size: calc(25px * var(--ui-font-scale, 1)); line-height: calc(28px * var(--ui-font-scale, 1)); }
+}
+html[data-theme="dark"] .hmi-main[data-page="overview"] { --dashboard-ink: #dfebf2; --dashboard-muted: #9db3c2; --dashboard-line: #304e61; background: #102b3e; }
+html[data-theme="dark"] .hmi-main[data-page="overview"] :is(.card,.metric,.card-head) { background: #16364b; }
+html[data-theme="dark"] .hmi-main[data-page="overview"] .metric-label { color: #bfd2df; }
+html[data-theme="dark"] .hmi-main[data-page="overview"] .metric:first-child { background: #22516d; }
+html[data-theme="dark"] .hmi-main[data-page="overview"] :is(.right-stack th,.right-stack .list-filter-toolbar,.map-footer) { background: #153247; color: #b4c9d7; }
+html[data-theme="dark"] .hmi-main[data-page="overview"] .right-stack tr:nth-child(even) { background: #17394f; }
+html[data-theme="dark"] .hmi-main[data-page="overview"] .right-stack tbody tr:hover { background: #20475e; }
+html[data-theme="dark"] .hmi-main[data-page="overview"] .alerts-card .alert-copy h4 { color: #d7e7ef; }
+html[data-theme="dark"] .hmi-main[data-page="overview"] .alerts-card .alert-copy p { color: #a2bac9; }
+@media (min-width: 1000px) {
+  .hmi-main[data-page="overview"] .products.throughput-products { grid-template-columns: repeat(auto-fit,minmax(80px,1fr)); }
+}
+@media (min-width: 1000px) and (max-width: 1450px) {
+  .hmi-main[data-page="overview"] .throughput-products .product-label { font-size: calc(9px * var(--ui-font-scale, 1)); line-height: calc(11px * var(--ui-font-scale, 1)); }
+  .hmi-main[data-page="overview"] .throughput-products .throughput-product { padding: 5px 6px; }
+}
+@media (max-width: 999px) {
+  .hmi-main[data-page="overview"] .hmi-workspace { grid-template-rows: 156px 30px minmax(0,1fr); }
+  .hmi-main[data-page="overview"] .metric { padding: 6px 7px; }
+  .hmi-main[data-page="overview"] .metric-top { height: auto; min-height: 30px; }
+  .hmi-main[data-page="overview"] .metric-label { font-size: calc(9px * var(--ui-font-scale, 1)); line-height: calc(10px * var(--ui-font-scale, 1)); }
+  .hmi-main[data-page="overview"] .metric-value { font-size: calc(23px * var(--ui-font-scale, 1)); line-height: calc(25px * var(--ui-font-scale, 1)); }
+}
+html[data-theme="dark"] .hmi-main[data-page="overview"] .right-stack .list-filter-toolbar :is(input,select,.btn) { background: #153247; color: #c4d7e2; border-color: #365468; }
+html[data-theme="dark"] .hmi-main[data-page="overview"] .metric:hover { background: #20465d; }
+html[data-theme="dark"] .hmi-main[data-page="overview"] .page-heading .btn { background: #16364b; color: #c4d7e2; }

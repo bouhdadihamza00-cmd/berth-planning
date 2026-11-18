@@ -1,0 +1,8 @@
+.git
+.taskplane
+.venv*
+node_modules
+data
+.env
+.test-output
+__pycache__

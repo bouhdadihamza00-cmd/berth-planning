@@ -1,0 +1,685 @@
+/* Operator night palette. Keep state colors separate from neutral surfaces.
+   Loaded after the daytime theme; every rule is scoped to the selected theme. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --night-canvas: #101820;
+  --night-panel: #18232d;
+  --night-raised: #202e3a;
+  --night-input: #111b25;
+  --night-hover: #273a4b;
+  --night-selected: #203f54;
+  --ink: #e6edf3;
+  --muted: #a6b6c6;
+  --line: #354654;
+  --panel: var(--night-panel);
+  --panel-heading: #1d2b37;
+  --panel-row: #1b2833;
+  --panel-border: var(--line);
+  --teal: #78c4f5;
+  --deep: #d4e9f8;
+  --green: #7cdda7;
+  --blue: #77d5ee;
+  --amber: #f4ca78;
+  --red: #ff9298;
+}
+html[data-theme="dark"]
+  :is(#app, main.hmi-main, .hmi-workspace, .config-content, .boot) {
+  background: var(--night-canvas);
+  color: var(--ink);
+}
+html[data-theme="dark"] :is(.app-sidebar, .topbar) {
+  background: #132331;
+  border-color: var(--line);
+  color: var(--ink);
+}
+html[data-theme="dark"]
+  .app-sidebar
+  :is(.brand-name, .nav-item, .sidebar-port-name),
+html[data-theme="dark"]
+  .topbar
+  :is(.clock, .user-name, .port-switch, .user-button) {
+  color: var(--ink);
+}
+html[data-theme="dark"]
+  :is(
+    .nav-caption,
+    .eyebrow,
+    .brand-tag,
+    .sidebar-port-meta,
+    .sidebar-foot,
+    .user-dept
+  ) {
+  color: var(--muted);
+}
+html[data-theme="dark"] .app-sidebar .nav-item:hover {
+  background: var(--night-hover);
+}
+html[data-theme="dark"] .app-sidebar .nav-item.active,
+html[data-theme="dark"] .app-sidebar .nav-item.active:hover {
+  background: #f2a33a;
+  color: #151c23;
+  box-shadow: inset 3px 0 #ffcd89;
+}
+html[data-theme="dark"] .hmi-main :is(.card, .metric, .summary-card),
+html[data-theme="dark"]
+  :is(
+    .modal,
+    .approval-card,
+    .report-card,
+    .list-card,
+    .detail-section,
+    .cargo-fields,
+    .permission-grid,
+    .rule-defaults,
+    .scenario-result
+  ) {
+  background: var(--night-panel);
+  color: var(--ink);
+  border-color: var(--line);
+  box-shadow: none;
+}
+html[data-theme="dark"] .hmi-main :is(.card-head, th),
+html[data-theme="dark"] :is(.modal-head, .form-actions, .detail-banner) {
+  background: var(--panel-heading);
+  color: var(--ink);
+  border-color: var(--line);
+}
+html[data-theme="dark"] .hmi-main .toolbar,
+html[data-theme="dark"] .config-nav {
+  background: var(--night-panel) !important;
+  border-color: var(--line);
+}
+html[data-theme="dark"] .hmi-main .hmi-form-flow {
+  background: transparent;
+}
+html[data-theme="dark"]
+  :is(
+    .config-nav button,
+    .hmi-panel-tabs button,
+    .section-tabs button,
+    .segmented button
+  ) {
+  color: var(--muted);
+  background: transparent;
+  border-color: var(--line);
+}
+html[data-theme="dark"]
+  :is(
+    .config-nav button:hover,
+    .hmi-panel-tabs button:hover,
+    .section-tabs button:hover,
+    .segmented button:hover
+  ) {
+  background: var(--night-hover);
+  color: var(--ink);
+}
+html[data-theme="dark"]
+  :is(
+    .config-nav button.active,
+    .hmi-panel-tabs button.active,
+    .section-tabs button.active,
+    .segmented button.active,
+    .geo-editor-tools .btn.active
+  ) {
+  background: var(--night-selected);
+  color: #c1e7ff;
+  border-color: #5a9bc5;
+  box-shadow: inset 0 -2px #78c4f5;
+}
+html[data-theme="dark"] .config-nav button.active {
+  box-shadow: inset 3px 0 #78c4f5;
+}
+html[data-theme="dark"] :is(.hmi-panel-tabs, .segmented, .section-tabs) {
+  background: var(--night-input);
+  border-color: var(--line);
+}
+html[data-theme="dark"] .section-tabs button.active:after {
+  background: #78c4f5;
+}
+html[data-theme="dark"]
+  :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    .field label,
+    .rule-slider,
+    .check-row,
+    .vessel-cell,
+    .berth-code,
+    .detail-grid dd,
+    .detail-section-title
+  ) {
+  color: var(--ink);
+}
+html[data-theme="dark"]
+  .hmi-main
+  :is(
+    .card-title h2,
+    .metric-value,
+    .summary-card b,
+    .product-value,
+    .delay-total strong,
+    .alert-copy h4
+  ) {
+  color: var(--ink);
+}
+html[data-theme="dark"]
+  :is(
+    .subtle,
+    .config-description,
+    .field small,
+    .list-copy p,
+    .list-card p,
+    .approval-card p,
+    .report-card p,
+    .history-row p,
+    .history-row time,
+    .detail-grid dt,
+    .detail-banner p,
+    .modal-subtitle,
+    .empty p,
+    .available-text,
+    .catalog-source,
+    .report-footer,
+    .rule-explanation,
+    .source-result-count
+  ) {
+  color: var(--muted);
+}
+html[data-theme="dark"]
+  .hmi-main
+  :is(
+    .page-heading p,
+    .page-footer,
+    .card-meta,
+    .metric-label,
+    .metric-foot,
+    .summary-card span,
+    .product-label small,
+    .product-value small,
+    .product-change,
+    .delay-total,
+    .delay-line small,
+    .alert-copy p,
+    .map-footer
+  ) {
+  color: var(--muted);
+}
+html[data-theme="dark"] :is(.demo-pill, .nav-count, .badge-count) {
+  background: #243d50;
+  border-color: #4b6477;
+  color: #c4dcec;
+}
+html[data-theme="dark"] :is(input, select, textarea),
+html[data-theme="dark"] .field :is(input, select, textarea),
+html[data-theme="dark"] .toolbar :is(input, select),
+html[data-theme="dark"] .report-controls :is(input, select),
+html[data-theme="dark"] .map-search input {
+  background-color: var(--night-input);
+  color: var(--ink);
+  border-color: #536b7e;
+  accent-color: #78c4f5;
+}
+html[data-theme="dark"] :is(input::placeholder, textarea::placeholder) {
+  color: #9cafbf;
+  opacity: 1;
+}
+html[data-theme="dark"] :is(input, select, textarea):focus {
+  border-color: #78c4f5;
+  box-shadow: 0 0 0 1px #78c4f5;
+}
+html[data-theme="dark"] :focus-visible {
+  outline-color: #9ed7ff;
+}
+html[data-theme="dark"] .btn {
+  background: #243847;
+  border-color: #536c80;
+  color: var(--ink);
+}
+html[data-theme="dark"] .btn:hover {
+  background: #304d62;
+  border-color: #78c4f5;
+  color: #fff;
+}
+html[data-theme="dark"] .btn.primary {
+  background: #f2a33a;
+  border-color: #f2a33a;
+  color: #151c23;
+}
+html[data-theme="dark"] .btn.primary:hover {
+  background: #ffbc60;
+  border-color: #ffbc60;
+  color: #151c23;
+}
+html[data-theme="dark"] .btn.danger {
+  background: #39252c;
+  border-color: #9b5964;
+  color: #ffb3b8;
+}
+html[data-theme="dark"] .btn.ghost {
+  background: transparent;
+  color: #a3d7fa;
+}
+html[data-theme="dark"] :is(.icon-btn, .hmi-main .map-control) {
+  background: var(--night-raised);
+  color: #c7dfef;
+  border-color: #536b7e;
+}
+html[data-theme="dark"] :is(.icon-btn, .hmi-main .map-control):hover {
+  background: var(--night-hover);
+  color: #fff;
+}
+html[data-theme="dark"] .search-box {
+  background: var(--night-input);
+  border-color: #536b7e;
+  color: var(--muted);
+}
+html[data-theme="dark"] .search-box input {
+  background: transparent;
+}
+html[data-theme="dark"]
+  :is(.table-scroll, .source-table, .metrics, .planning-summary) {
+  background: var(--night-panel);
+  border-color: var(--line);
+}
+html[data-theme="dark"] .hmi-main td,
+html[data-theme="dark"] .modal td {
+  background: transparent;
+  color: var(--ink);
+  border-color: #2d3d4b;
+}
+html[data-theme="dark"] :is(tbody tr, .source-table tr) {
+  background: var(--night-panel);
+}
+html[data-theme="dark"] tbody tr:nth-child(even) {
+  background: var(--panel-row);
+}
+html[data-theme="dark"] .hmi-main tbody tr.clickable:hover,
+html[data-theme="dark"] .modal tbody tr.clickable:hover {
+  background: var(--night-hover);
+}
+html[data-theme="dark"] .hmi-main th,
+html[data-theme="dark"] .modal th {
+  color: #bacddd;
+  background: var(--panel-heading);
+  border-color: var(--line);
+}
+html[data-theme="dark"] :is(.table-progress > span) {
+  color: #c4d7e5 !important;
+}
+html[data-theme="dark"]
+  :is(.progress-track, .full-progress, .mini-meter, .schedule-progress-track) {
+  background: #354957;
+}
+html[data-theme="dark"]
+  :is(
+    .full-progress span,
+    .mini-meter span,
+    .table-progress .progress-track span
+  ) {
+  background: #6ac5ed;
+}
+html[data-theme="dark"] .hmi-main .metric:hover {
+  background: var(--night-raised);
+  border-color: #78c4f5;
+  box-shadow: inset 0 0 0 1px #78c4f5;
+}
+html[data-theme="dark"] .hmi-main .metric:first-child,
+html[data-theme="dark"] .hmi-main .metric:first-child:hover {
+  background: #203f54;
+  border-color: #527b97;
+}
+html[data-theme="dark"]
+  .hmi-main
+  :is(.metric-icon, .summary-icon, .product-symbol),
+html[data-theme="dark"] .hmi-main .metric:nth-child(n) .metric-icon,
+html[data-theme="dark"] .hmi-main .product:nth-child(n) .product-symbol {
+  color: #78c4f5;
+  background: transparent;
+}
+html[data-theme="dark"] .hmi-main .metric-foot.positive,
+html[data-theme="dark"] .status.green {
+  color: var(--green);
+}
+html[data-theme="dark"] .hmi-main .metric-foot.warning,
+html[data-theme="dark"] .status.amber {
+  color: var(--amber);
+}
+html[data-theme="dark"] .hmi-main .metric-foot.danger,
+html[data-theme="dark"] .status.red {
+  color: var(--red);
+}
+html[data-theme="dark"] .status.blue {
+  color: var(--blue);
+}
+html[data-theme="dark"] .status:not(.green):not(.blue):not(.amber):not(.red) {
+  color: var(--muted);
+}
+html[data-theme="dark"] .notice {
+  background: #203747;
+  border-color: #46657b;
+  color: #c8e0f1;
+}
+html[data-theme="dark"] :is(.notice.warning, .alert-severity, .basemap-status) {
+  background: #382e1e;
+  color: #f4ce88;
+  border-color: #806b42;
+}
+html[data-theme="dark"] :is(.notice.error, .alert-severity.high) {
+  background: #3b252b;
+  color: #ffb1b7;
+  border-color: #8c5361;
+}
+html[data-theme="dark"] .notice.success {
+  background: #1e352b;
+  color: #9de4b8;
+  border-color: #48735b;
+}
+html[data-theme="dark"] .hmi-main .alert-symbol {
+  color: var(--amber);
+}
+html[data-theme="dark"] .hmi-main .alert-symbol.red {
+  color: var(--red);
+}
+html[data-theme="dark"]
+  :is(.rule-slider output, .report-icon, .empty-icon, .detail-icon) {
+  color: #9bd6fc;
+  background: transparent;
+}
+html[data-theme="dark"]
+  :is(
+    .product,
+    .delay-total,
+    .alert-item,
+    .history-row,
+    .list-card,
+    .approval-actions,
+    .detail-grid,
+    .report-summary
+  ) {
+  border-color: var(--line);
+}
+html[data-theme="dark"] :is(.approval-diff, .detail-banner, .rule-explanation) {
+  background: var(--night-raised);
+  color: var(--muted);
+  border-color: var(--line);
+}
+html[data-theme="dark"]
+  :is(.approval-diff b, .approval-diff strong, .detail-banner h2) {
+  color: var(--ink);
+}
+html[data-theme="dark"] .delay-bar {
+  background: #78c4f5;
+}
+html[data-theme="dark"] .modal-backdrop {
+  background: #050b13b8;
+}
+html[data-theme="dark"] .toast {
+  background: #213c32;
+  color: #b3edca;
+  border: 1px solid #577f6b;
+}
+html[data-theme="dark"] .toast.error {
+  background: #3b252b;
+  color: #ffb1b7;
+  border-color: #8c5361;
+}
+/* Gantt: quiet lanes, readable cards, colored state edges and badges. */
+html[data-theme="dark"] :is(.gantt-wrap, .gantt) {
+  background: var(--night-canvas);
+}
+html[data-theme="dark"]
+  :is(
+    .gantt-label,
+    .gantt-label.head,
+    .gantt-time-head,
+    .gantt-day,
+    .gantt-hours
+  ) {
+  background: var(--panel-heading);
+  color: #c3d4e2;
+  border-color: var(--line);
+}
+html[data-theme="dark"] .hmi-main .gantt-label strong {
+  color: var(--ink);
+}
+html[data-theme="dark"] .hmi-main .gantt-label small {
+  color: var(--muted);
+}
+html[data-theme="dark"] .gantt-label .port-symbol {
+  color: #9bbdd4;
+}
+html[data-theme="dark"] .gantt-row {
+  background-color: #141f29;
+  background-image: none;
+  border-color: #30414f;
+}
+html[data-theme="dark"] .gantt-gridline {
+  background: #2b3b49;
+}
+html[data-theme="dark"] .hmi-main .gantt-block {
+  --state: #7cdda7;
+  background: #20342f;
+  color: var(--ink);
+  border-color: #4a6c5b;
+  border-left-color: var(--state);
+  box-shadow: none;
+}
+html[data-theme="dark"] .hmi-main .gantt-block.blue {
+  --state: #77d5ee;
+  background: #1d3340;
+  border-color: #466c81;
+  border-left-color: var(--state);
+}
+html[data-theme="dark"] .hmi-main .gantt-block.amber {
+  --state: #f4ca78;
+  background: #332f24;
+  border-color: #766643;
+  border-left-color: var(--state);
+}
+html[data-theme="dark"] .hmi-main .gantt-block.red {
+  --state: #ff9298;
+  background: #352830;
+  border-color: #815461;
+  border-left-color: var(--state);
+}
+html[data-theme="dark"] .hmi-main .gantt-block.neutral {
+  --state: #a6b6c6;
+  background: #253440;
+  border-color: #536a7c;
+  border-left-color: var(--state);
+}
+html[data-theme="dark"] .hmi-main .gantt-block.draft {
+  --state: #93caff;
+  background: #1c3449;
+  border-color: #78bdf0;
+  border-left-color: var(--state);
+}
+html[data-theme="dark"] .hmi-main .gantt-block:hover {
+  box-shadow: inset 0 0 0 1px #bdddf4;
+  border-top-color: #bdddf4;
+  border-right-color: #bdddf4;
+  border-bottom-color: #bdddf4;
+}
+html[data-theme="dark"] .hmi-main .schedule-heading strong {
+  color: #f1f6fa;
+}
+html[data-theme="dark"]
+  :is(
+    .schedule-cargo,
+    .schedule-timing,
+    .schedule-duration,
+    .schedule-direction
+  ) {
+  color: #c0d1df;
+}
+html[data-theme="dark"]
+  :is(.schedule-cargo svg, .schedule-timing svg, .schedule-arrow) {
+  color: #a3c6df;
+}
+html[data-theme="dark"] .schedule-state {
+  color: #a4edc1;
+  background: #193c2c;
+  border-color: #4b7b60;
+}
+html[data-theme="dark"] .blue .schedule-state {
+  color: #a0e3f7;
+  background: #163c4b;
+  border-color: #43768a;
+}
+html[data-theme="dark"] .amber .schedule-state {
+  color: #ffe0a0;
+  background: #40331a;
+  border-color: #877044;
+}
+html[data-theme="dark"] .red .schedule-state {
+  color: #ffb6bd;
+  background: #482a34;
+  border-color: #95586b;
+}
+html[data-theme="dark"] .neutral .schedule-state {
+  color: #d2deea;
+  background: #2a3c4c;
+  border-color: #5a7185;
+}
+html[data-theme="dark"] .draft .schedule-state {
+  color: #b8dfff;
+  background: #1e4059;
+  border-color: #527ea0;
+}
+html[data-theme="dark"] .schedule-quantity {
+  border-color: #536575;
+}
+html[data-theme="dark"] .hmi-main .resize-handle {
+  color: #c8e0f1;
+  background: #273f51;
+  border-color: #6b8ba3;
+}
+html[data-theme="dark"] :is(.gantt-footer, .map-footer) {
+  background: var(--panel-heading);
+  color: var(--muted);
+  border-color: var(--line);
+}
+html[data-theme="dark"] .now-line {
+  border-color: #ff9298;
+}
+/* Map imagery stays natural; only interface chrome is themed. */
+html[data-theme="dark"]
+  :is(
+    .layer-menu,
+    .map-search-results,
+    .leaflet-popup-content-wrapper,
+    .leaflet-popup-tip
+  ) {
+  background: var(--night-panel);
+  color: var(--ink);
+  border-color: #536b7e;
+}
+html[data-theme="dark"]
+  :is(.layer-menu label, .map-search-results button, .leaflet-popup-content) {
+  color: var(--ink);
+}
+html[data-theme="dark"] .map-search-results button:hover {
+  background: var(--night-hover);
+}
+html[data-theme="dark"] .leaflet-bar a {
+  background: var(--night-panel);
+  color: var(--ink);
+  border-color: #536b7e;
+}
+html[data-theme="dark"] .leaflet-bar a:hover {
+  background: var(--night-hover);
+}
+html[data-theme="dark"] .leaflet-control-attribution {
+  background: #142431ed;
+  color: #bfced9;
+}
+html[data-theme="dark"] .leaflet-control-attribution a {
+  color: #acdafa;
+}
+html[data-theme="dark"]
+  :is(
+    .hmi-scroll-region,
+    .table-scroll,
+    .source-table,
+    .report-controls,
+    .gantt-wrap,
+    .modal-body,
+    .hmi-form-flow,
+    .rules-workbench
+  ) {
+  scrollbar-color: #617d92 #17242f;
+}
+html[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: #17242f;
+}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #617d92;
+  border-color: #17242f;
+}
+html[data-theme="dark"][data-contrast="high"] {
+  --line: #8ca6b9;
+  --panel-border: #8ca6b9;
+  --muted: #d0dfeb;
+}
+/* Detail readings are deliberately brighter than secondary labels. */
+html[data-theme="dark"]
+  .hmi-main
+  :is(.product-label, .delay-line, .throughput-total, .berths-card td),
+html[data-theme="dark"] .schedule-progress b {
+  color: var(--ink);
+}
+html[data-theme="dark"] .hmi-main :is(td small, td time),
+html[data-theme="dark"] .hmi-main td [style*="color:"] {
+  color: var(--muted) !important;
+}
+html[data-theme="dark"] .hmi-main .card-link {
+  color: #a3d7fa;
+}
+html[data-theme="dark"] .count-pill {
+  background: #2b4052;
+  color: #d6e5f0;
+}
+html[data-theme="dark"] #gantt-visible-range {
+  color: var(--muted);
+}
+html[data-theme="dark"]
+  .hmi-main[data-page="planning"]
+  .toolbar
+  > span[style*="color:"] {
+  color: #c7b7e6 !important;
+}
+html[data-theme="dark"] .catalog-source {
+  background: var(--panel-heading);
+  border-color: var(--line);
+}
+html[data-theme="dark"] .cargo-reference {
+  color: #a3d7fa !important;
+}
+html[data-theme="dark"] .timing-help {
+  color: var(--muted) !important;
+}
+html[data-theme="dark"] .hmi-main td[style*="color:"] {
+  color: var(--muted) !important;
+}
+html[data-theme="dark"]
+  .hmi-main
+  .metric[data-metric="7"]
+  .metric-value[style*="color:"] {
+  color: var(--red) !important;
+}
+html[data-theme="dark"] .port-map-empty-state {
+  background: #18232df5;
+  color: var(--ink);
+  border-color: #536b7e;
+}
+html[data-theme="dark"] .port-map-empty-state p {
+  color: var(--muted);
+}
+html[data-theme="dark"] .ais-empty-icon {
+  color: var(--amber);
+}
+html[data-theme="dark"] .permission-grid label {
+  color: var(--ink);
+}

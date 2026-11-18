@@ -1,0 +1,693 @@
+/* Color system: navy structure, blue controls; green loading, cyan unloading,
+   amber waiting, red delayed, slate idle, violet proposed schedules. */
+:root {
+  --ink: #10253e;
+  --muted: #64748b;
+  --teal: #2563eb;
+  --deep: #102c50;
+  --line: #d9e2ec;
+  --bg: #eef3f8;
+  --green: #16a34a;
+  --red: #dc2626;
+  --amber: #d97706;
+  --blue: #0284c7;
+}
+body {
+  background: var(--bg);
+}
+.topbar {
+  background: #102c50;
+  color: #f8fafc;
+}
+.topbar .brand,
+.topbar .user-name,
+.topbar .clock strong,
+.topbar .port-switch select {
+  color: #fff;
+}
+.topbar .brand-tag,
+.topbar .eyebrow,
+.topbar .user-dept,
+.topbar .clock {
+  color: #b9cce4;
+}
+.topbar .brand-icon {
+  background: #1d4ed8;
+}
+.topbar .port-symbol {
+  background: #1d3c64;
+  color: #93c5fd;
+}
+.topbar .divider,
+.topbar .port-switch {
+  border-color: #38516e;
+}
+.topbar > .divider {
+  background: #38516e;
+}
+.topbar .icon-btn {
+  color: #dbeafe;
+}
+.topbar select option {
+  background: white;
+  color: #10253e;
+}
+.topbar .avatar {
+  background: #1d4ed8;
+  color: white;
+}
+.topbar .user-button > svg {
+  color: #bfdbfe;
+}
+.nav-item.active {
+  color: #1d4ed8;
+}
+.nav-item.active:after {
+  background: #2563eb;
+}
+.hmi-main .card {
+  border-color: #d8e2ed;
+  box-shadow: 0 1px 3px #10253e05;
+}
+.hmi-main .card-head {
+  background: #f8fafd;
+  border-bottom-color: #dce5ef;
+}
+.hmi-main .card-title > svg {
+  color: #2563eb;
+  width: 21px;
+  height: 21px;
+  stroke-width: 1.8;
+}
+.hmi-main .metric {
+  position: relative;
+  padding: 9px 12px;
+}
+.hmi-main .metric-top {
+  display: block;
+  margin: 0;
+  height: 21px;
+}
+.hmi-main .metric-label {
+  display: block;
+  line-height: calc(11px * var(--ui-font-scale, 1));
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  max-width: calc(100% - 30px);
+  color: #475569;
+  font-weight: 600;
+}
+.hmi-main .metric-icon {
+  display: grid;
+  place-items: center;
+  position: absolute;
+  right: 9px;
+  top: 9px;
+  width: 31px;
+  height: 31px;
+  border-radius: 7px;
+  background: #eff6ff;
+  color: #2563eb;
+}
+.hmi-main .metric-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.8;
+}
+.hmi-main .metric-value {
+  font-size: calc(26px * var(--ui-font-scale, 1));
+  line-height: 1.05;
+}
+.hmi-main .metric-foot {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: calc(8px * var(--ui-font-scale, 1));
+}
+.hmi-main .metric-foot.positive {
+  color: #15803d;
+}
+.hmi-main .metric-foot.warning {
+  color: #b45309;
+}
+.hmi-main .metric-foot.danger {
+  color: #b91c1c;
+}
+.hmi-main .metric:nth-child(7) .metric-icon {
+  color: #d97706;
+  background: #fff7ed;
+}
+.hmi-main .metric:nth-child(8) .metric-icon {
+  color: #dc2626;
+  background: #fef2f2;
+}
+.hmi-main .metric:nth-child(3) .metric-icon,
+.hmi-main .metric:nth-child(6) .metric-icon {
+  color: #16a34a;
+  background: #f0fdf4;
+}
+.status.green {
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+}
+.status.blue {
+  color: #075985;
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+}
+.status.amber {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+}
+.status.red {
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+}
+.status:not(.green):not(.blue):not(.amber):not(.red) {
+  background: #eaf0f7;
+  color: #475569;
+  border: 1px solid #d8e2ed;
+}
+.mini-meter span,
+.full-progress span {
+  background: #2563eb;
+}
+.table-progress .progress-track span {
+  background: #2563eb;
+}
+.hmi-main .donut {
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+}
+.hmi-main .donut:before {
+  z-index: 0;
+  background: #fff;
+}
+.hmi-main .donut-center {
+  z-index: 1;
+  width: 68%;
+  height: 68%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  text-align: center;
+}
+.hmi-main .donut-center strong {
+  display: block;
+  font-size: calc(23px * var(--ui-font-scale, 1));
+  line-height: 1;
+  letter-spacing: -0.7px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.hmi-main .donut-center strong small {
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  margin-left: 1px;
+}
+.hmi-main .donut-center span {
+  font-size: calc(8px * var(--ui-font-scale, 1));
+  line-height: 1.2;
+  margin: 0;
+  color: #64748b;
+  white-space: nowrap;
+}
+.cause-row .legend-color {
+  width: 8px !important;
+  height: 8px !important;
+}
+.cause-row > span {
+  color: #475569;
+}
+.vessel-silhouette {
+  color: var(--vessel-color);
+  transform-origin: 50% 50%;
+  filter: drop-shadow(0 0 4px var(--vessel-color));
+}
+.vessel-silhouette svg {
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.25;
+  filter: none !important;
+}
+.vessel-silhouette .vessel-hull {
+  fill: #10253ef2;
+  stroke-width: 2;
+}
+.vessel-silhouette .vessel-halo {
+  fill: currentColor;
+  stroke-width: 5;
+  opacity: 0.16;
+}
+.vessel-silhouette rect {
+  fill: currentColor;
+  fill-opacity: 0.27;
+  stroke-opacity: 0.9;
+}
+.ship-label {
+  border-color: #4c709c !important;
+  background: #0f2744f2 !important;
+}
+.ship-label small {
+  color: #c8daf1 !important;
+}
+.map-legend {
+  background: #10253ef0 !important;
+  border-color: #496580 !important;
+}
+.hmi-main .gantt-block {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #14532d;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  cursor: grab;
+}
+.hmi-main .gantt-block.blue {
+  background: #e0f2fe;
+  border-color: #0284c7;
+  color: #075985;
+}
+.hmi-main .gantt-block.red {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+.hmi-main .gantt-block.amber {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+.hmi-main .gantt-block.neutral {
+  background: #edf2f7;
+  border-color: #94a3b8;
+  color: #334155;
+}
+.hmi-main .gantt-block.draft {
+  background: #ede9fe;
+  border-color: #7c3aed;
+  color: #5b21b6;
+}
+.hmi-main .resize-handle {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  width: 10px;
+  opacity: 1;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  background: #ffffffb8;
+  color: inherit;
+  display: grid;
+  place-items: center;
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  line-height: 1;
+  cursor: ew-resize;
+  touch-action: none;
+  z-index: 4;
+}
+.hmi-main .resize-start {
+  left: 2px;
+  right: auto;
+}
+.hmi-main .resize-end {
+  right: 2px;
+  left: auto;
+}
+.hmi-main .resize-handle:hover {
+  background: white;
+  box-shadow: 0 0 0 2px #2563eb30;
+}
+.gantt-wrap {
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-x pan-y;
+}
+.gantt-wrap::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+.gantt-wrap::-webkit-scrollbar-track,
+.gantt-wrap::-webkit-scrollbar-corner {
+  background: #e8edf3;
+}
+.gantt-wrap::-webkit-scrollbar-thumb {
+  background: #8294aa;
+  border: 3px solid #e8edf3;
+  border-radius: 8px;
+}
+.gantt-wrap::-webkit-scrollbar-thumb:hover {
+  background: #526b87;
+}
+.gantt-wrap::-webkit-scrollbar-thumb:active {
+  background: #254e79;
+}
+.gantt-wrap:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
+.gantt-row,
+.gantt-time-head {
+  cursor: grab;
+}
+.gantt-wrap.panning,
+.gantt-wrap.panning * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+.cargo-fields {
+  padding: 13px;
+  border: 1px solid #d6e3f4;
+  border-radius: 7px;
+  background: #f8fbff;
+}
+.cargo-reference,
+.timing-help {
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  line-height: 1.5;
+  color: #64748b;
+  margin: 0;
+}
+.cargo-reference {
+  color: #1d4ed8;
+}
+.catalog-source {
+  flex: none;
+  padding: 9px 12px;
+  border-top: 1px solid #d9e2ec;
+  font-size: calc(9px * var(--ui-font-scale, 1));
+  color: #64748b;
+  background: #f8fafd;
+}
+.permission-grid {
+  gap: 0;
+  background: #f8fafd;
+  border: 1px solid #e2e8f0;
+  padding: 6px;
+}
+.permission-grid label {
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  line-height: 1.4;
+  font-weight: 500;
+  color: #334155;
+  border-bottom: 1px solid #e2e8f0;
+}
+.field input[type="checkbox"],
+.permission-grid input[type="checkbox"] {
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px;
+  flex: 0 0 15px;
+  margin: 0;
+  accent-color: #2563eb;
+}
+.check-row {
+  align-items: flex-start;
+  line-height: 1.5;
+}
+.rules-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 12px;
+  gap: 10px;
+}
+.rule-defaults {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+  gap: 15px;
+  align-items: end;
+  flex: none;
+  background: #f8fafd;
+  padding: 12px;
+  border: 1px solid #dbe5f0;
+  border-radius: 6px;
+}
+.rule-defaults h3 {
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  margin-bottom: 5px;
+}
+.rule-defaults p {
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  line-height: 1.5;
+  color: #64748b;
+}
+.rule-explanation {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  line-height: 1.6;
+  color: #475569;
+  flex: none;
+}
+.rule-explanation svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: #2563eb;
+}
+.rules-form .table-scroll {
+  flex: 1;
+}
+.rules-form td input,
+.rules-form td select {
+  width: 100%;
+  max-width: 150px;
+  min-width: 50px;
+  padding: 7px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: white;
+  font-size: calc(11px * var(--ui-font-scale, 1));
+}
+.rules-form .form-actions {
+  margin: 0;
+}
+.rules-form .form-actions .subtle {
+  margin-right: auto;
+  font-size: calc(9px * var(--ui-font-scale, 1));
+}
+.geo-editor-tools {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.geo-editor-tools .btn.active {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+.geo-editor-tools #geo-editor-status {
+  font-size: calc(9px * var(--ui-font-scale, 1));
+  color: #526981;
+  flex: 1;
+  min-width: 160px;
+  padding: 3px 4px;
+  line-height: 1.4;
+}
+.leaflet-draw-tooltip {
+  display: none !important;
+}
+.hmi-main .hmi-map-footer {
+  flex-wrap: wrap;
+}
+.hmi-main .hmi-map-footer > .form-grid {
+  min-width: 180px;
+}
+.hmi-main .hmi-map-footer .form-actions {
+  flex-wrap: wrap;
+}
+.hmi-main .config-nav button {
+  font-size: calc(10px * var(--ui-font-scale, 1));
+}
+.leaflet-marker-draggable {
+  cursor: move !important;
+}
+@media (min-height: 950px) {
+  .hmi-main .metric {
+    padding: 12px 15px;
+  }
+  .hmi-main .metric-top {
+    height: 26px;
+  }
+  .hmi-main .metric-label {
+    font-size: calc(12px * var(--ui-font-scale, 1));
+    line-height: calc(14px * var(--ui-font-scale, 1));
+    max-width: calc(100% - 36px);
+  }
+  .hmi-main .metric-value {
+    font-size: calc(32px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .metric-icon {
+    width: 36px;
+    height: 36px;
+    top: 12px;
+    right: 12px;
+  }
+  .hmi-main .metric-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+  .hmi-main .metric-foot {
+    font-size: calc(9px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .donut-center strong {
+    font-size: calc(28px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .donut-center span {
+    font-size: calc(9px * var(--ui-font-scale, 1));
+  }
+}
+@media (max-width: 1200px) {
+  .rule-defaults {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .rule-defaults > div:first-child {
+    grid-column: 1/-1;
+  }
+  .hmi-main .hmi-map-footer > .form-grid {
+    display: none;
+  }
+  .geo-editor-tools #geo-editor-status {
+    flex-basis: 100%;
+  }
+  .hmi-main .metric-label {
+    font-size: calc(9px * var(--ui-font-scale, 1));
+  }
+}
+@media (max-width: 900px) {
+  .permission-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .hmi-main .metric-top {
+    height: 16px;
+  }
+  .hmi-main .metric-label {
+    font-size: calc(7px * var(--ui-font-scale, 1));
+    line-height: calc(8px * var(--ui-font-scale, 1));
+    max-width: calc(100% - 18px);
+  }
+  .hmi-main .metric-icon {
+    height: 21px;
+    width: 21px;
+    top: 5px;
+    right: 4px;
+  }
+  .hmi-main .metric-icon svg {
+    width: 17px;
+    height: 17px;
+  }
+  .hmi-main .metric-value {
+    font-size: calc(20px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .metric {
+    padding: 5px 7px;
+  }
+  .hmi-main .metric-foot {
+    font-size: calc(6px * var(--ui-font-scale, 1));
+    margin-top: 1px;
+  }
+  .rule-defaults {
+    padding: 8px;
+    gap: 8px;
+  }
+  .rules-form {
+    padding: 8px;
+  }
+  .rule-explanation {
+    font-size: calc(9px * var(--ui-font-scale, 1));
+  }
+  .geo-editor-tools .btn {
+    font-size: calc(8px * var(--ui-font-scale, 1)) !important;
+    padding: 5px !important;
+  }
+}
+@media (max-width: 600px) {
+  .rules-form .table-scroll {
+    min-height: 80px;
+  }
+  .rule-defaults {
+    grid-template-columns: 1fr 1fr;
+  }
+  .rule-defaults .field:last-child {
+    grid-column: 1/-1;
+  }
+  .rules-form .table-scroll table {
+    table-layout: fixed;
+  }
+  .rules-form th,
+  .rules-form td {
+    font-size: calc(8px * var(--ui-font-scale, 1)) !important;
+    padding: 5px !important;
+  }
+  .rules-form td input,
+  .rules-form td select {
+    min-width: 0;
+    font-size: calc(9px * var(--ui-font-scale, 1));
+    padding: 4px;
+  }
+  .permission-grid {
+    grid-template-columns: 1fr;
+  }
+  .hmi-main .hmi-map-footer .form-actions {
+    justify-content: flex-start;
+  }
+  .cargo-fields {
+    padding: 9px;
+  }
+}
+
+.hmi-main .donut {
+  container-type: inline-size;
+}
+.hmi-main .donut-center strong {
+  font-size: clamp(17px, 23cqw, 28px);
+}
+.hmi-main .donut-center span {
+  font-size: clamp(7px, 8cqw, 9px);
+}
+
+.rules-form table {
+  table-layout: fixed;
+}
+.rules-form td,
+.rules-form th {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rules-form th {
+  white-space: normal;
+}
+.rules-form td:last-child button {
+  white-space: normal;
+}
+.hmi-main .config-content[data-section="products"] table {
+  table-layout: fixed;
+}
+.hmi-main .config-content[data-section="products"] td,
+.hmi-main .config-content[data-section="products"] th {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hmi-main .config-content[data-section="products"] th:first-child {
+  width: 100px;
+}
+.hmi-main .config-content[data-section="products"] th:nth-child(2) {
+  width: 70px;
+}
+.hmi-main .config-content[data-section="products"] th:last-child {
+  width: 65px;
+}

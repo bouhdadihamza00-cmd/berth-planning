@@ -1,0 +1,1456 @@
+/* Fixed-screen HMI shell: panels consume the available area; records use pages. */
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+[hidden] {
+  display: none !important;
+}
+#app:has(.hmi-main) {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+#app > header {
+  position: relative;
+  top: auto;
+}
+.topbar {
+  height: 52px;
+  padding: 0 16px;
+  gap: 18px;
+}
+.brand {
+  min-width: 178px;
+}
+.brand-name {
+  font-size: calc(23px * var(--ui-font-scale, 1));
+}
+.brand-icon {
+  height: 32px;
+  width: 33px;
+  border-radius: 6px;
+}
+.brand-tag {
+  font-size: calc(8px * var(--ui-font-scale, 1));
+}
+.port-switch {
+  padding-left: 16px;
+}
+.nav-bar {
+  height: 37px;
+  padding: 0 16px;
+  gap: 25px;
+}
+.nav-item {
+  height: 37px;
+  font-size: calc(11px * var(--ui-font-scale, 1));
+}
+.clock {
+  line-height: 1.4;
+}
+.avatar {
+  height: 29px;
+  width: 29px;
+}
+.hmi-main {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 10px 14px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hmi-main .page-heading {
+  flex: none;
+  min-height: 40px;
+  margin: 0;
+}
+.hmi-main h1 {
+  font-size: calc(23px * var(--ui-font-scale, 1));
+}
+.hmi-main .page-heading p {
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  margin-top: 3px;
+}
+.hmi-main .page-footer {
+  flex: none;
+  margin: 0;
+  height: 17px;
+  padding: 0;
+  font-size: calc(8px * var(--ui-font-scale, 1));
+}
+.hmi-workspace {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+.hmi-main .card {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 7px;
+}
+.hmi-main .card-head {
+  height: 35px;
+  min-height: 35px;
+  padding: 0 11px;
+  flex: none;
+}
+.hmi-main .card-title h2 {
+  font-size: calc(11px * var(--ui-font-scale, 1));
+}
+.hmi-main .card-head svg {
+  height: 14px;
+  width: 14px;
+}
+.hmi-main .card-meta {
+  font-size: calc(9px * var(--ui-font-scale, 1));
+}
+.hmi-main .table-scroll {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  overflow: hidden;
+}
+.hmi-main th {
+  padding: 7px 10px;
+  font-size: calc(9px * var(--ui-font-scale, 1));
+}
+.hmi-main td {
+  padding: 7px 10px;
+  font-size: calc(10px * var(--ui-font-scale, 1));
+}
+.hmi-main .status {
+  padding: 4px 6px;
+  font-size: calc(9px * var(--ui-font-scale, 1));
+}
+.hmi-main .toolbar {
+  flex: none;
+  padding: 7px 10px;
+  gap: 7px;
+}
+.hmi-main .toolbar input,
+.hmi-main .toolbar select {
+  padding: 6px 8px;
+  font-size: calc(10px * var(--ui-font-scale, 1));
+}
+.hmi-main .btn {
+  padding: 7px 10px;
+  font-size: calc(10px * var(--ui-font-scale, 1));
+}
+.hmi-main .btn.small {
+  padding: 5px 8px;
+  font-size: calc(9px * var(--ui-font-scale, 1));
+}
+.hmi-main .icon-btn {
+  width: 28px;
+  height: 28px;
+}
+.hmi-main .notice {
+  flex: none;
+  padding: 7px 10px;
+  margin: 0;
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  line-height: 1.5;
+}
+.hmi-main .section-tabs {
+  flex: none;
+  height: 34px;
+  margin: 0;
+  gap: 23px;
+}
+.hmi-main .section-tabs button {
+  padding: 8px 2px;
+  font-size: calc(11px * var(--ui-font-scale, 1));
+}
+.hmi-paged {
+  overflow: hidden !important;
+  min-height: 0;
+}
+.hmi-pager {
+  flex: none;
+  height: 24px;
+  min-height: 24px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding: 0 8px;
+  background: #fafcfd;
+  color: #6a818e;
+  font-size: calc(9px * var(--ui-font-scale, 1));
+}
+.hmi-pager button {
+  height: 21px;
+  width: 25px;
+  border: 1px solid #dbe5e8;
+  border-radius: 3px;
+  background: white;
+  font-size: calc(17px * var(--ui-font-scale, 1));
+  line-height: 1;
+}
+.hmi-pager button:hover {
+  background: #e9f3f3;
+}
+.hmi-pager[data-single="true"] button {
+  visibility: hidden;
+}
+.hmi-panel-tabs {
+  flex: none;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 4px;
+  background: #edf2f4;
+  border-radius: 5px;
+  min-height: 30px;
+}
+.hmi-panel-tabs button {
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  padding: 5px 11px;
+  border-radius: 3px;
+  color: #718895;
+}
+.hmi-panel-tabs button.active {
+  background: #fff;
+  color: var(--teal);
+  box-shadow: 0 1px 3px #173b4510;
+}
+.hmi-overview-tabs {
+  display: none;
+}
+/* Overview: one process display with a flexible geographic center. */
+.hmi-main[data-page="overview"] .hmi-workspace {
+  display: grid;
+  grid-template-rows: 88px minmax(0, 1fr) 169px;
+  gap: 9px;
+}
+.hmi-main .metrics {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  margin: 0;
+  gap: 8px;
+}
+.hmi-main .metric {
+  min-height: 0;
+  padding: 9px 11px;
+  border-radius: 6px;
+}
+.hmi-main .metric-top {
+  margin-bottom: 3px;
+}
+.hmi-main .metric-label {
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  white-space: normal;
+}
+.hmi-main .metric-value {
+  font-size: calc(26px * var(--ui-font-scale, 1));
+  line-height: 1.2;
+}
+.hmi-main .metric-unit {
+  font-size: calc(14px * var(--ui-font-scale, 1));
+}
+.hmi-main .metric-foot {
+  font-size: calc(8px * var(--ui-font-scale, 1));
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+.hmi-main .metric-foot svg {
+  width: 9px;
+  height: 9px;
+}
+.hmi-main .mini-meter {
+  height: 3px;
+  margin-top: 4px;
+}
+.hmi-main .metric-icon {
+  display: flex;
+}
+.hmi-main .metric-icon svg {
+  width: 14px;
+  height: 14px;
+}
+.hmi-main .dashboard-middle {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  margin: 0;
+  gap: 9px;
+  min-height: 0;
+}
+.hmi-main .port-map-wrap {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+.hmi-main .map-footer {
+  height: 23px;
+  min-height: 23px;
+  flex: none;
+  font-size: calc(8px * var(--ui-font-scale, 1));
+  padding: 0 10px;
+}
+.hmi-main .right-stack {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  height: auto;
+  min-height: 0;
+  gap: 9px;
+}
+.hmi-main .operations-card,
+.hmi-main .berths-card {
+  flex: initial;
+}
+.hmi-main .operations-card .vessel-cell small {
+  display: inline;
+  margin-left: 5px !important;
+  font-size: calc(8px * var(--ui-font-scale, 1));
+}
+.hmi-main .mini-ship {
+  width: 17px;
+  height: 17px;
+  margin-right: 4px;
+}
+.hmi-main .berths-card td {
+  padding: 4px 9px;
+  line-height: calc(13px * var(--ui-font-scale, 1));
+}
+.hmi-main .berths-card .status {
+  font-size: calc(8px * var(--ui-font-scale, 1));
+  padding: 3px 5px;
+}
+.hmi-main .map-legend {
+  bottom: 11px;
+  padding: 9px 10px;
+  font-size: calc(8px * var(--ui-font-scale, 1));
+  width: 126px;
+}
+.hmi-main .map-legend .legend-row {
+  margin-top: 5px;
+}
+.hmi-main .map-caption {
+  font-size: calc(7px * var(--ui-font-scale, 1));
+  right: 10px;
+  bottom: 20px;
+}
+.hmi-main .map-right-controls {
+  gap: 4px;
+}
+.hmi-main .map-right-controls .map-control {
+  width: 26px;
+  height: 26px;
+}
+.hmi-main .dashboard-bottom {
+  grid-template-columns: 1.15fr 1fr 1.2fr;
+  gap: 9px;
+  min-height: 0;
+}
+.hmi-main .products {
+  flex: 1;
+  align-items: center;
+  padding: 8px 5px;
+}
+.hmi-main .product-symbol {
+  width: 25px;
+  height: 25px;
+  margin-bottom: 5px;
+}
+.hmi-main .product-symbol svg {
+  width: 16px;
+  height: 16px;
+}
+.hmi-main .product-label {
+  font-size: calc(9px * var(--ui-font-scale, 1));
+  line-height: 1.3;
+  min-height: 24px;
+}
+.hmi-main .product-label small {
+  font-size: calc(8px * var(--ui-font-scale, 1));
+}
+.hmi-main .product-value {
+  font-size: calc(22px * var(--ui-font-scale, 1));
+  line-height: 1.2;
+  margin-top: 4px;
+}
+.hmi-main .product-change {
+  font-size: calc(7px * var(--ui-font-scale, 1));
+  margin-top: 4px;
+}
+.hmi-main .delay-body {
+  flex: 1;
+  min-height: 0;
+  padding: 8px 12px;
+  gap: 15px;
+}
+.hmi-main .donut {
+  height: 100px;
+  width: 100px;
+}
+.hmi-main .donut:before {
+  inset: 15px;
+}
+.hmi-main .donut-center strong {
+  font-size: calc(22px * var(--ui-font-scale, 1));
+}
+.hmi-main .cause-row {
+  font-size: calc(9px * var(--ui-font-scale, 1));
+  margin: 9px 0;
+}
+.hmi-main .alerts-list {
+  flex: 1;
+  min-height: 0;
+  display: block;
+  padding: 0 10px;
+}
+.hmi-main .alert-item {
+  padding: 7px 0;
+  gap: 8px;
+}
+.hmi-main .alert-symbol {
+  width: 22px;
+  height: 23px;
+}
+.hmi-main .alert-copy h4 {
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  margin-bottom: 3px;
+}
+.hmi-main .alert-copy p {
+  font-size: calc(8px * var(--ui-font-scale, 1));
+  max-width: none;
+}
+.hmi-main .alert-severity {
+  font-size: calc(8px * var(--ui-font-scale, 1));
+}
+.hmi-main .throughput-total {
+  font-size: calc(10px * var(--ui-font-scale, 1));
+}
+/* Planning fills both axes. Time and berth navigation use explicit controls. */
+.hmi-main .planning-summary {
+  flex: none;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 0;
+}
+.hmi-main .summary-card {
+  padding: 7px 12px;
+  gap: 9px;
+}
+.hmi-main .summary-card b {
+  font-size: calc(16px * var(--ui-font-scale, 1));
+}
+.hmi-main .summary-card span {
+  font-size: calc(9px * var(--ui-font-scale, 1));
+  margin-top: 1px;
+}
+.hmi-main .summary-icon {
+  width: 27px;
+  height: 27px;
+}
+.hmi-main[data-page="planning"] .hmi-workspace > section.card {
+  flex: 1;
+}
+.hmi-main .gantt-wrap {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow: scroll;
+}
+.hmi-main .gantt {
+  min-width: 0;
+}
+.hmi-main .gantt-label {
+  padding: 8px 10px;
+  gap: 7px;
+}
+.hmi-main .gantt-label small {
+  font-size: calc(8px * var(--ui-font-scale, 1));
+  margin-top: 2px;
+}
+.hmi-main .gantt-label strong {
+  font-size: calc(10px * var(--ui-font-scale, 1));
+}
+.hmi-main .gantt-label.head {
+  padding: 8px 10px;
+}
+.hmi-main .gantt-day {
+  height: 25px;
+}
+.hmi-main .gantt-hours {
+  height: 23px;
+}
+.hmi-main .gantt-hours span {
+  top: 6px;
+}
+.hmi-main .gantt-row {
+  height: var(--hmi-row-height, 66px);
+}
+.hmi-main .gantt-block {
+  top: 7px;
+  height: calc(var(--hmi-row-height, 66px) - 14px);
+  padding: 7px 8px;
+  min-width: 0;
+}
+.hmi-main .gantt-block strong {
+  margin-bottom: 4px;
+  font-size: calc(10px * var(--ui-font-scale, 1));
+}
+.hmi-main .gantt-block small {
+  font-size: calc(8px * var(--ui-font-scale, 1));
+}
+.hmi-main .gantt-footer {
+  flex: none;
+  padding: 7px 10px;
+  font-size: calc(8px * var(--ui-font-scale, 1));
+  gap: 8px;
+  flex-direction: row;
+}
+.hmi-main .gantt-legend {
+  gap: 10px;
+  font-size: calc(8px * var(--ui-font-scale, 1));
+}
+.hmi-main #scenario-inline:empty {
+  display: none;
+}
+/* Workflow tables and reports retain a fixed workspace and paginate records. */
+.hmi-main[data-page="center"] .hmi-workspace > .card:not(.report-filters) {
+  flex: 1;
+}
+.hmi-main[data-page="center"]
+  .hmi-workspace
+  > .card:not(.intelligence-workbench)
+  > div:not(.card-head):not(.toolbar):not(.hmi-pager):not(.table-scroll) {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.hmi-main .list-card {
+  padding: 10px 13px;
+}
+.hmi-main .list-card h3 {
+  font-size: calc(11px * var(--ui-font-scale, 1));
+}
+.hmi-main .list-card p {
+  font-size: calc(10px * var(--ui-font-scale, 1));
+}
+.hmi-main .approval-grid,
+.hmi-main .report-grid {
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  align-content: start;
+}
+.hmi-main .approval-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.hmi-main .report-filters {
+  flex: none;
+  margin: 0;
+}
+.hmi-main .report-card {
+  padding: 12px;
+}
+.hmi-main .report-card > .report-icon {
+  width: 27px;
+  height: 27px;
+  margin-bottom: 8px;
+}
+.hmi-main .report-card h3 {
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  margin-bottom: 5px;
+}
+.hmi-main .report-card p {
+  font-size: calc(9px * var(--ui-font-scale, 1));
+  line-height: 1.5;
+  min-height: 27px;
+}
+.hmi-main .report-card .exports {
+  margin-top: 9px;
+  padding-top: 9px;
+}
+.hmi-main .approval-card {
+  padding: 14px;
+}
+.hmi-main .approval-card p {
+  margin-bottom: 10px;
+}
+.hmi-main .approval-diff {
+  padding: 9px;
+}
+.hmi-main .approval-card .notice {
+  max-height: 54px;
+  overflow: hidden;
+}
+.hmi-main .approval-actions {
+  margin-top: 9px;
+  gap: 5px;
+}
+/* Configuration is a fixed workbench with reachable actions and section pages. */
+.hmi-main .config-layout {
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: 196px minmax(0, 1fr);
+  gap: 10px;
+}
+.hmi-main .config-nav {
+  align-self: stretch;
+  padding: 6px;
+  overflow: hidden;
+}
+.hmi-main .config-nav button {
+  flex: 1;
+  min-height: 0;
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  padding: 6px 9px;
+  margin: 0;
+}
+.hmi-main .config-nav .nav-caption {
+  padding: 7px 9px;
+  font-size: calc(8px * var(--ui-font-scale, 1));
+}
+.hmi-main .config-content {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.hmi-main .config-content > .card,
+.hmi-main .config-card-stack {
+  flex: 1;
+  min-height: 0;
+}
+.hmi-main .config-card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.hmi-main .config-card-stack > .card {
+  flex: 1;
+  min-height: 0;
+}
+.hmi-main .config-content[data-section="assets"] .config-card-stack {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr);
+}
+.hmi-main .form-body {
+  flex: 1;
+  min-height: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.hmi-main .form-grid {
+  gap: 11px 15px;
+  flex: none;
+}
+.hmi-main .field {
+  gap: 5px;
+}
+.hmi-main .field input,
+.hmi-main .field select,
+.hmi-main .field textarea {
+  padding: 8px 10px;
+  font-size: calc(11px * var(--ui-font-scale, 1));
+}
+.hmi-main .field textarea {
+  min-height: 75px;
+}
+.hmi-main .form-actions {
+  flex: none;
+  margin-top: 8px;
+  padding-top: 9px;
+  gap: 7px;
+}
+.hmi-main .config-description {
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+.hmi-main .hmi-form-flow {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.hmi-main .hmi-form-flow > .notice {
+  margin-bottom: 10px;
+}
+.hmi-main .config-map {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+.hmi-main .hmi-map-footer {
+  flex: none;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+}
+.hmi-main .hmi-map-footer > .form-grid {
+  flex: 1;
+  gap: 18px;
+}
+.hmi-main .hmi-map-footer .field {
+  gap: 2px;
+}
+.hmi-main .hmi-map-footer .form-actions {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.hmi-main .hmi-rule-list {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.hmi-main .hmi-rule-list .list-card {
+  padding: 8px 0 !important;
+}
+.hmi-main #rules-form > .detail-section-title {
+  margin: 12px 0 5px;
+  flex: none;
+}
+.hmi-main #rules-form > .config-description {
+  margin: 7px 0 0 !important;
+}
+.hmi-main #users-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.hmi-main #audit-list {
+  flex: 1;
+  min-height: 0;
+}
+.hmi-main .history-row {
+  padding: 11px 14px;
+}
+.hmi-main #audit-list details[open] {
+  max-height: 130px;
+  overflow: auto;
+}
+@media (min-height: 950px) {
+  .hmi-main[data-page="overview"] .hmi-workspace {
+    grid-template-rows: 108px minmax(0, 1fr) 205px;
+  }
+  .hmi-main .metric-value {
+    font-size: calc(32px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .metric {
+    padding: 13px 15px;
+  }
+  .hmi-main .metric-foot {
+    font-size: calc(9px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .donut {
+    width: 130px;
+    height: 130px;
+  }
+  .hmi-main .donut:before {
+    inset: 19px;
+  }
+  .hmi-main .products {
+    padding: 15px 8px;
+  }
+  .hmi-main .product-value {
+    font-size: calc(26px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .product-label {
+    font-size: calc(11px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .alert-item {
+    padding: 12px 0;
+  }
+  .hmi-main .alert-copy p {
+    font-size: calc(10px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .alert-copy h4 {
+    font-size: calc(12px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .card-head {
+    height: 40px;
+    min-height: 40px;
+  }
+  .hmi-main .card-title h2 {
+    font-size: calc(13px * var(--ui-font-scale, 1));
+  }
+  .hmi-main td {
+    padding: 10px;
+    font-size: calc(11px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .berths-card td {
+    padding: 7px 10px;
+  }
+  .hmi-main .metric-label {
+    font-size: calc(12px * var(--ui-font-scale, 1));
+  }
+}
+@media (max-width: 1150px) {
+  .clock {
+    display: none;
+  }
+  .topbar {
+    gap: 12px;
+  }
+  .brand {
+    min-width: 155px;
+  }
+  .hmi-main .dashboard-middle {
+    grid-template-columns: 1.2fr 1fr;
+  }
+  .hmi-main .metric-label {
+    font-size: calc(9px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .metric-icon {
+    display: none;
+  }
+  .hmi-main .metric-foot {
+    font-size: calc(7px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .dashboard-bottom {
+    grid-template-columns: 1fr 1fr 1.2fr;
+  }
+  .hmi-main .cause-row {
+    font-size: calc(8px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .cause-row small {
+    display: none;
+  }
+  .hmi-main .donut {
+    width: 82px;
+    height: 82px;
+  }
+  .hmi-main .donut-center strong {
+    font-size: calc(19px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .donut-center span {
+    font-size: calc(7px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .cause-list {
+    min-width: 90px;
+  }
+  .hmi-main .alert-copy p {
+    font-size: calc(8px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .config-layout {
+    grid-template-columns: 166px minmax(0, 1fr);
+  }
+  .hmi-main .config-nav button {
+    font-size: calc(9px * var(--ui-font-scale, 1));
+    gap: 7px;
+  }
+  .hmi-main .config-content[data-section="assets"] .config-card-stack {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+  .hmi-main .config-content[data-section="assets"] td {
+    padding: 5px 9px;
+  }
+  .hmi-main .card-meta {
+    display: none;
+  }
+  .hmi-main .toolbar .search-box input {
+    min-width: 145px;
+    width: 145px;
+  }
+  .hmi-main .toolbar {
+    gap: 5px;
+  }
+  .hmi-main #plan-date {
+    width: 116px;
+  }
+  .hmi-main .approval-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 900px) {
+  .brand {
+    min-width: 0;
+  }
+  .port-switch {
+    min-width: 0;
+    flex: 1;
+  }
+  .top-spacer {
+    display: none;
+  }
+  .topbar > .divider,
+  .user-meta,
+  .clock {
+    display: none;
+  }
+  .hmi-main[data-page="overview"] .hmi-workspace {
+    grid-template-rows: 112px 30px minmax(0, 1fr);
+  }
+  .hmi-main .metrics {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+  }
+  .hmi-main .metric {
+    padding: 5px 8px;
+  }
+  .hmi-main .metric-top {
+    margin: 0;
+  }
+  .hmi-main .metric-value {
+    font-size: calc(21px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .metric-foot {
+    margin-top: 1px;
+  }
+  .hmi-main .metric-label {
+    font-size: calc(8px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .mini-meter {
+    display: none;
+  }
+  .hmi-overview-tabs {
+    display: flex;
+  }
+  .hmi-main .dashboard-middle,
+  .hmi-main .dashboard-bottom {
+    grid-column: 1;
+    grid-row: 3;
+    display: grid;
+    grid-template-columns: 1fr;
+    margin: 0;
+  }
+  .hmi-workspace[data-panel="map"] .dashboard-middle > .right-stack,
+  .hmi-workspace[data-panel="map"] .dashboard-bottom {
+    display: none;
+  }
+  .hmi-workspace[data-panel="operations"] .map-card,
+  .hmi-workspace[data-panel="operations"] .dashboard-bottom {
+    display: none;
+  }
+  .hmi-workspace[data-panel="analysis"] .dashboard-middle,
+  .hmi-workspace[data-panel="alerts"] .dashboard-middle {
+    display: none;
+  }
+  .hmi-workspace[data-panel="analysis"] .dashboard-bottom {
+    grid-template-columns: 1fr 1fr;
+  }
+  .hmi-workspace[data-panel="analysis"] .alerts-card {
+    display: none;
+  }
+  .hmi-workspace[data-panel="alerts"]
+    .dashboard-bottom
+    > .card:not(.alerts-card) {
+    display: none;
+  }
+  .hmi-workspace[data-panel="operations"] .right-stack {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+  }
+  .hmi-main .config-layout {
+    grid-template-columns: 155px minmax(0, 1fr);
+  }
+  .hmi-main .report-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hmi-main .planning-summary {
+    display: none;
+  }
+  .hmi-main .toolbar {
+    flex-wrap: wrap;
+  }
+  .hmi-main .toolbar .search-box {
+    width: auto;
+  }
+  .hmi-main .gantt-legend {
+    gap: 6px;
+  }
+  .hmi-main .gantt-footer > span {
+    display: none;
+  }
+  .hmi-main .config-content[data-section="geography"] .toolbar > span,
+  .hmi-main .config-content[data-section="geography"] .toolbar > small {
+    display: none;
+  }
+  .hmi-main .hmi-map-footer > .form-grid {
+    display: none;
+  }
+  .hmi-main .hmi-map-footer {
+    justify-content: flex-end;
+  }
+  .hmi-main .nav-right {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  .topbar {
+    height: 45px;
+    padding: 0 10px;
+  }
+  .brand-name {
+    font-size: calc(19px * var(--ui-font-scale, 1));
+  }
+  .brand-icon {
+    width: 27px;
+    height: 28px;
+  }
+  .brand-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+  .port-switch {
+    padding-left: 8px;
+  }
+  .port-switch select {
+    font-size: calc(9px * var(--ui-font-scale, 1));
+    max-width: 170px;
+  }
+  .user-button {
+    display: flex;
+  }
+  .user-button > svg {
+    display: none;
+  }
+  .user-button .avatar {
+    height: 25px;
+    width: 25px;
+    font-size: calc(9px * var(--ui-font-scale, 1));
+  }
+  .nav-bar {
+    height: 34px;
+    padding: 0 7px;
+    gap: 4px;
+  }
+  .nav-item {
+    height: 34px;
+    font-size: calc(9px * var(--ui-font-scale, 1));
+    gap: 4px;
+  }
+  .hmi-main {
+    padding: 7px 8px 3px;
+    gap: 6px;
+  }
+  .hmi-main h1 {
+    font-size: calc(19px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .page-heading {
+    min-height: 34px;
+    align-items: center;
+  }
+  .hmi-main .page-heading p {
+    display: none;
+  }
+  .hmi-main .heading-actions .btn {
+    padding: 6px;
+    font-size: calc(9px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .page-footer {
+    height: 14px;
+    font-size: calc(7px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .demo-pill {
+    font-size: calc(7px * var(--ui-font-scale, 1));
+    padding: 3px 5px;
+  }
+  .hmi-main .hmi-panel-tabs button {
+    font-size: calc(9px * var(--ui-font-scale, 1));
+    padding: 5px 7px;
+  }
+  .hmi-main .config-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .hmi-main .config-nav {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    flex: none;
+    padding: 3px;
+    height: auto;
+    max-height: 132px;
+    gap: 1px;
+  }
+  .hmi-main .config-nav button {
+    font-size: calc(8px * var(--ui-font-scale, 1));
+    padding: 4px 5px;
+    min-height: 22px;
+  }
+  .hmi-main .config-nav button svg {
+    display: none;
+  }
+  .hmi-main .config-nav .nav-caption {
+    display: none;
+  }
+  .hmi-main .config-content {
+    flex: 1;
+    min-height: 0;
+  }
+  .hmi-main .form-body {
+    padding: 9px;
+  }
+  .hmi-main .form-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+  }
+  .hmi-main .field.full {
+    grid-column: 1/-1;
+  }
+  .hmi-main .field label {
+    font-size: calc(9px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .field input,
+  .hmi-main .field select,
+  .hmi-main .field textarea {
+    font-size: calc(10px * var(--ui-font-scale, 1));
+    padding: 6px;
+    min-height: 0;
+  }
+  .hmi-main .field small {
+    font-size: calc(8px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .config-content[data-section="geography"] .toolbar {
+    padding: 5px;
+  }
+  .hmi-main .hmi-map-footer {
+    padding: 6px;
+  }
+  .hmi-main .hmi-map-footer .btn {
+    font-size: calc(8px * var(--ui-font-scale, 1));
+    padding: 5px;
+  }
+  .hmi-main .config-map {
+    min-height: 0;
+  }
+  .hmi-main .report-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .hmi-main .report-card {
+    padding: 9px;
+  }
+  .hmi-main .report-card p {
+    font-size: calc(8px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .report-card .exports {
+    gap: 3px;
+  }
+  .hmi-main .report-card .exports .btn {
+    font-size: calc(8px * var(--ui-font-scale, 1));
+    padding: 5px;
+  }
+  .hmi-main .approval-grid {
+    grid-template-columns: 1fr;
+  }
+  .hmi-main .section-tabs {
+    gap: 12px;
+    overflow: hidden;
+  }
+  .hmi-main .section-tabs button {
+    font-size: calc(10px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .hmi-workspace > .notice {
+    font-size: calc(8px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .report-filters .toolbar {
+    gap: 4px;
+  }
+  .hmi-main .report-filters input {
+    max-width: 116px;
+  }
+  .hmi-main[data-page="planning"] .heading-actions .btn {
+    max-width: 110px;
+    white-space: normal;
+    font-size: calc(8px * var(--ui-font-scale, 1));
+  }
+  .hmi-main[data-page="planning"] .toolbar:nth-child(2) > span:first-child {
+    display: none;
+  }
+  .hmi-main .toolbar .search-box input {
+    width: 130px;
+    min-width: 0;
+  }
+  .hmi-main .gantt-label strong {
+    font-size: calc(8px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .gantt-label small,
+  .hmi-main .gantt-label > .port-symbol {
+    display: none;
+  }
+  .hmi-main .gantt-label {
+    padding: 5px;
+  }
+  .hmi-main .gantt-block {
+    padding: 4px;
+  }
+  .hmi-main .gantt-block strong {
+    font-size: calc(8px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .gantt-block small {
+    font-size: calc(7px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .gantt-footer {
+    padding: 5px;
+  }
+  .hmi-main .gantt-legend {
+    font-size: calc(6px * var(--ui-font-scale, 1));
+    gap: 5px;
+  }
+  .hmi-main .gantt-legend .legend-color {
+    width: 5px;
+    height: 5px;
+  }
+  .hmi-workspace[data-panel="operations"] .right-stack {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+  .hmi-workspace[data-panel="analysis"] .dashboard-bottom {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+  .hmi-main .alert-copy p {
+    max-width: 250px;
+  }
+}
+@media (max-height: 650px) and (min-width: 901px) {
+  .topbar {
+    height: 44px;
+  }
+  .nav-bar,
+  .nav-item {
+    height: 32px;
+  }
+  .hmi-main {
+    padding-top: 6px;
+    gap: 6px;
+  }
+  .hmi-main .page-heading {
+    min-height: 31px;
+  }
+  .hmi-main .page-heading p {
+    display: none;
+  }
+  .hmi-main[data-page="overview"] .hmi-workspace {
+    grid-template-rows: 72px minmax(0, 1fr) 142px;
+    gap: 6px;
+  }
+  .hmi-main .metric {
+    padding: 6px 9px;
+  }
+  .hmi-main .metric-value {
+    font-size: calc(23px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .card-head {
+    min-height: 29px;
+    height: 29px;
+  }
+  .hmi-main .donut {
+    height: 80px;
+    width: 80px;
+  }
+  .hmi-main .product-symbol {
+    display: none;
+  }
+  .hmi-main .alert-item {
+    padding: 4px 0;
+  }
+  .hmi-main .planning-summary {
+    display: none;
+  }
+  .hmi-main .notice {
+    padding: 5px 8px;
+    font-size: calc(9px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .config-description {
+    font-size: calc(9px * var(--ui-font-scale, 1));
+    line-height: 1.4;
+  }
+  .hmi-main .form-grid {
+    gap: 8px;
+  }
+  .hmi-main .form-actions {
+    padding-top: 7px;
+  }
+  .hmi-main .config-nav button {
+    padding: 4px 8px;
+  }
+}
+.hmi-main .operations-card td {
+  padding: 4px 10px;
+}
+.hmi-main .gantt.compact .gantt-block small:last-of-type {
+  display: none;
+}
+.hmi-main .toolbar .search-box input {
+  padding-left: 28px;
+}
+.hmi-main .config-content[data-section="assets"] table {
+  table-layout: fixed;
+}
+.hmi-main .config-content[data-section="assets"] td,
+.hmi-main .config-content[data-section="assets"] th {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hmi-main .config-content[data-section="assets"] th:last-child {
+  width: 77px;
+}
+
+.hmi-main .gantt.compact .gantt-block {
+  padding: 6px 8px;
+}
+.hmi-main .gantt.compact .gantt-block strong {
+  margin-bottom: 2px;
+}
+@media (min-width: 901px) and (min-height: 651px) and (max-height: 800px) {
+  .hmi-main[data-page="overview"] .hmi-workspace {
+    grid-template-rows: 80px minmax(0, 1fr) 145px;
+  }
+  .hmi-main .products {
+    padding: 5px;
+  }
+  .hmi-main .product-symbol {
+    width: 21px;
+    height: 21px;
+    margin-bottom: 3px;
+  }
+  .hmi-main .donut {
+    width: 88px;
+    height: 88px;
+  }
+  .hmi-main .alert-item {
+    padding: 5px 0;
+  }
+}
+#app:has(.hmi-main) {
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr);
+}
+.hmi-main,
+.hmi-main .dashboard-middle,
+.hmi-main .dashboard-bottom,
+.hmi-main .metrics,
+.hmi-main .port-map-wrap {
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .hmi-main .metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .topbar {
+    gap: 8px;
+    min-width: 0;
+  }
+  .brand {
+    flex-shrink: 0;
+  }
+  .port-switch {
+    min-width: 0;
+  }
+  .port-switch > div {
+    min-width: 0;
+    width: 100%;
+  }
+  .port-switch select {
+    width: 100%;
+    max-width: 140px;
+  }
+  .user-button {
+    flex-shrink: 0;
+  }
+  .hmi-main .metric {
+    min-width: 0;
+  }
+  .hmi-main .metric-label {
+    font-size: calc(7px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .metric-foot {
+    font-size: calc(6px * var(--ui-font-scale, 1));
+  }
+  .hmi-main .page-heading > div:first-child {
+    min-width: 0;
+  }
+  .hmi-main .dashboard-middle,
+  .hmi-main .dashboard-bottom {
+    width: 100%;
+  }
+  .hmi-main .hmi-map-footer .btn {
+    white-space: normal;
+  }
+  .hmi-main .map-footer {
+    font-size: calc(7px * var(--ui-font-scale, 1));
+  }
+}
+.login-screen {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.login-screen .login-main {
+  min-height: 0;
+}
+@media (max-height: 700px) {
+  .login-form .field {
+    margin-top: 12px;
+  }
+  .login-form > .btn {
+    margin-top: 15px;
+    padding: 10px;
+  }
+  .login-form > p {
+    margin-bottom: 15px;
+  }
+  .demo-accounts {
+    margin-top: 15px;
+    padding-top: 12px;
+  }
+  .login-aside {
+    padding: 30px;
+  }
+  .login-copy h1 {
+    font-size: calc(39px * var(--ui-font-scale, 1));
+  }
+}
+@media (max-width: 650px) {
+  .login-screen {
+    grid-template-rows: 80px minmax(0, 1fr);
+  }
+  .login-aside {
+    min-height: 0;
+    padding: 18px 24px;
+  }
+  .login-copy {
+    display: none;
+  }
+  .login-main {
+    padding: 18px 25px;
+  }
+  .login-form .field {
+    margin-top: 13px;
+  }
+  .login-form > p {
+    margin-bottom: 15px;
+  }
+  .login-form > .btn {
+    margin-top: 16px;
+    padding: 10px;
+  }
+  .demo-accounts {
+    margin-top: 15px;
+    padding-top: 12px;
+  }
+}

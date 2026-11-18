@@ -1,0 +1,56 @@
+/* The rail expands over the workspace, leaving the map and timeline in place. */
+#app:has(.hmi-main) { grid-template-columns: 64px minmax(0,1fr); }
+#app > header { grid-column: 1 / -1; z-index: 1100; }
+#app > .app-sidebar { grid-column: 1; grid-row: 2; }
+#app > .hmi-main { grid-column: 2; }
+#app > .app-sidebar {
+  position: relative;
+  z-index: 1050;
+  width: 64px;
+  overflow: hidden;
+  border-right: 1px solid #ffffff14;
+  transition: width 160ms ease, box-shadow 160ms ease;
+}
+#app > .app-sidebar:is(:hover,:has(:focus-visible)) { width: 228px; box-shadow: 8px 0 24px #092c4526; }
+.app-sidebar .sidebar-caption { display: none; }
+.app-sidebar .nav-bar { width: 228px; padding: 12px 8px; gap: 7px; }
+.app-sidebar .nav-item { width: 48px; height: 44px; min-height: 44px; padding: 0 14px; gap: 12px; justify-content: flex-start; border-radius: 6px; overflow: hidden; transition: width 160ms ease, background 120ms ease; }
+.app-sidebar .nav-item > svg { width: 20px; height: 20px; flex: 0 0 20px; }
+.app-sidebar .nav-item .nav-label { display: block; flex: 1; min-width: 0; white-space: nowrap; font-size: calc(12px * var(--ui-font-scale, 1)); opacity: 0; transition: opacity 120ms ease; }
+.app-sidebar .nav-item .nav-count { display: block; opacity: 0; }
+.app-sidebar:is(:hover,:has(:focus-visible)) .nav-item { width: 212px; }
+.app-sidebar:is(:hover,:has(:focus-visible)) .nav-item :is(.nav-label,.nav-count) { opacity: 1; }
+.app-sidebar .nav-item:focus-visible { outline: 2px solid #9bd2ee; outline-offset: -2px; }
+.app-sidebar .sidebar-footer { display: block; width: 228px; min-width: 228px; opacity: 0; visibility: hidden; padding: 18px 20px; transition: opacity 120ms ease; }
+.app-sidebar:is(:hover,:has(:focus-visible)) .sidebar-footer { opacity: 1; visibility: visible; }
+.topbar { padding-left: 14px; gap: 16px; }
+.topbar .brand { display: flex; align-items: center; flex: none; min-width: 0; gap: 8px; padding: 0 18px 0 0; margin: 0; border-right: 1px solid #ffffff24; text-decoration: none; color: #fff; }
+.topbar .brand-icon { display: grid; place-items: center; width: 28px; height: 28px; border: 0; background: transparent; color: #d7f1ff; }
+.topbar .brand-icon svg { width: 25px; height: 25px; }
+.topbar .brand-name { display: block; font-size: calc(21px * var(--ui-font-scale, 1)); font-weight: 650; letter-spacing: -.5px; line-height: 1; }
+.topbar .brand-tag { display: none; }
+.topbar .port-switch { display: flex; flex: 0 1 auto; min-width: 0; max-width: 420px; padding: 0; }
+.topbar .port-switch > div { min-width: 0; }
+.topbar .port-switch select { max-width: 100%; width: 100%; text-overflow: ellipsis; }
+@media (max-width: 700px) {
+  #app:has(.hmi-main) { grid-template-columns: 48px minmax(0,1fr); }
+  #app > .app-sidebar { width: 48px; }
+  .app-sidebar .nav-bar { padding: 10px 4px; }
+  .app-sidebar .nav-item { width: 40px; padding: 0 10px; }
+  .topbar { padding: 0 9px; gap: 8px; }
+  .topbar .brand { gap: 4px; padding-right: 8px; }
+  .topbar .brand-icon { width: 22px; height: 24px; }
+  .topbar .brand-icon svg { width: 21px; height: 21px; }
+  .topbar .brand-name { font-size: calc(16px * var(--ui-font-scale, 1)); }
+  .topbar .port-switch { flex: 1; max-width: none; }
+  .topbar .port-switch .port-symbol { display: none; }
+  .topbar .port-switch select { min-width: 0; font-size: calc(10px * var(--ui-font-scale, 1)); }
+  .topbar .eyebrow { font-size: calc(7px * var(--ui-font-scale, 1)); }
+  .topbar .top-spacer, .topbar .divider { display: none; }
+  .topbar .user-button { padding: 0; min-width: 26px; }
+  .topbar .user-meta, .topbar .user-button > svg { display: none; }
+  .topbar .icon-btn { flex: none; width: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app > .app-sidebar, .app-sidebar .nav-item, .app-sidebar .nav-label, .app-sidebar .sidebar-footer { transition: none; }
+}

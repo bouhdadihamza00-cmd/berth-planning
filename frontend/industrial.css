@@ -1,0 +1,1096 @@
+/* Industrial display contract: neutral process context; blue interaction;
+   green loading/ready, cyan unloading, amber waiting, red delay/fault.
+   Borders, labels and line styles retain meaning without color. */
+:root {
+  --ink: #20272d;
+  --muted: #56616b;
+  --teal: #205f98;
+  --deep: #252d34;
+  --line: #cbd0d4;
+  --bg: #e6e8ea;
+  --green: #258452;
+  --blue: #007c91;
+  --amber: #9a6700;
+  --red: #be3030;
+  --shadow: none;
+  font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+  font-size: 13px;
+}
+body {
+  background: var(--bg);
+}
+h1,
+h2,
+h3,
+h4,
+.metric-value,
+.product-value,
+.brand-name,
+.leaflet-container {
+  font-family: inherit;
+}
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: 0;
+  font-weight: 600;
+}
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+button,
+a,
+input,
+select,
+textarea {
+  outline-offset: 2px;
+}
+:focus-visible {
+  outline: 2px solid var(--teal);
+}
+button:disabled {
+  opacity: 0.55;
+}
+.topbar {
+  background: #252d34;
+  color: #fff;
+  border-bottom: 1px solid #13191e;
+}
+.topbar .brand-icon {
+  background: transparent;
+  border: 1px solid #7b858d;
+  border-radius: 2px;
+}
+.brand-name {
+  font-weight: 600;
+  letter-spacing: 0;
+  font-size: 22px;
+}
+.brand-tag {
+  letter-spacing: 1px;
+}
+.topbar .brand-tag,
+.topbar .eyebrow,
+.topbar .clock,
+.topbar .user-dept {
+  color: #c6cdd2;
+}
+.topbar .divider {
+  background: #59636c;
+}
+.topbar .port-switch {
+  border-color: #59636c;
+}
+.topbar .port-symbol {
+  color: #d7dde1;
+  background: transparent;
+}
+.topbar .avatar {
+  background: #46515c;
+  border: 1px solid #73808a;
+  color: white;
+  border-radius: 2px;
+}
+.topbar .user-button > svg,
+.topbar .icon-btn {
+  color: #d7dde1;
+}
+.topbar .icon-btn:hover {
+  background: #46515c;
+  color: white;
+}
+.nav-bar {
+  gap: 0;
+  padding: 0 14px;
+  background: #f4f5f6;
+  border-top: 0;
+}
+.nav-item {
+  padding: 0 18px;
+  color: #414b54;
+  font-size: 12px;
+  border-right: 1px solid #d8dce0;
+}
+.nav-item:first-child {
+  border-left: 1px solid #d8dce0;
+}
+.nav-item:hover {
+  background: #e5e9ed;
+}
+.nav-item.active {
+  background: #e0e9f1;
+  color: #174b78;
+}
+.nav-item.active:after {
+  height: 3px;
+  border-radius: 0;
+  background: var(--teal);
+}
+.nav-right {
+  color: #56616b;
+  padding-left: 12px;
+}
+.nav-count,
+.badge-count {
+  background: #dce1e5;
+  color: #303b44;
+  border-radius: 2px;
+}
+.hmi-main {
+  padding: 10px 12px 4px;
+  gap: 8px;
+}
+.hmi-main h1 {
+  font-size: 21px;
+  font-weight: 600;
+}
+.hmi-main .page-heading p {
+  color: #56616b;
+  font-size: 11px;
+  margin-top: 4px;
+}
+.demo-pill {
+  border: 1px solid #929ca5;
+  border-radius: 2px;
+  background: #f2f3f4;
+  color: #414b54;
+  font-size: 10px;
+}
+.demo-pill.live {
+  background: #f2f3f4;
+  color: #236641;
+  border-color: #98aa9f;
+}
+.card,
+.metric,
+.summary-card,
+.hmi-main .card,
+.list-card,
+.report-card,
+.cargo-fields,
+.rule-defaults,
+.permission-grid,
+.notice,
+.detail-section,
+.modal {
+  border-radius: 2px;
+  box-shadow: none;
+}
+.hmi-main .card,
+.metric,
+.summary-card {
+  border: 1px solid #bfc6cc;
+  background: #fff;
+}
+.hmi-main .card-head {
+  background: #f0f2f3;
+  border-bottom: 1px solid #cbd0d4;
+  padding: 0 12px;
+  height: 36px;
+  min-height: 36px;
+}
+.hmi-main .card-title h2 {
+  color: #20272d;
+  font-size: 12px;
+  font-weight: 600;
+}
+.hmi-main .card-title > svg {
+  width: 19px;
+  height: 19px;
+  color: #4b5863;
+  stroke-width: 1.8;
+}
+.hmi-main .card-meta {
+  color: #56616b;
+  font-size: 10px;
+}
+.btn,
+.icon-btn,
+.map-control,
+.search-box,
+input,
+select,
+textarea,
+.hmi-panel-tabs,
+.hmi-panel-tabs button {
+  border-radius: 2px;
+  box-shadow: none;
+}
+.btn {
+  border-color: #aeb7bf;
+  background: #fafbfc;
+  color: #26323c;
+}
+.btn:hover {
+  border-color: #788b9a;
+  background: #e8edf1;
+}
+.btn.primary {
+  background: #205f98;
+  border-color: #174b78;
+  color: white;
+}
+.btn.primary:hover {
+  background: #174b78;
+}
+.btn.ghost {
+  background: transparent;
+  color: #205f98;
+}
+.btn.danger {
+  color: #9f2424;
+  border-color: #b57d7d;
+}
+.hmi-main .btn {
+  font-size: 11px;
+  padding: 7px 10px;
+}
+.hmi-main .btn.small {
+  font-size: 10px;
+  padding: 5px 8px;
+}
+.icon-btn {
+  color: #46535e;
+}
+.icon-btn:hover {
+  background: #e2e8ed;
+  color: #174b78;
+}
+.field label {
+  color: #3c4852;
+  font-size: 11px;
+  font-weight: 600;
+}
+.field input,
+.field select,
+.field textarea,
+.toolbar input,
+.toolbar select,
+.rules-form td input,
+.rules-form td select {
+  background: #fff;
+  border-color: #aab4bd;
+  color: #20272d;
+  border-radius: 2px;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #205f98;
+  box-shadow: 0 0 0 1px #205f98;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #697681;
+  opacity: 1;
+}
+.hmi-main .toolbar input,
+.hmi-main .toolbar select {
+  font-size: 11px;
+}
+.hmi-main .toolbar {
+  border-bottom-color: #cbd0d4;
+}
+.segmented {
+  border: 1px solid #aeb7bf;
+  border-radius: 2px;
+  padding: 0;
+  background: #f2f4f5;
+}
+.segmented button {
+  border-radius: 0;
+  padding: 6px 10px;
+  color: #46535e;
+}
+.segmented button + button {
+  border-left: 1px solid #cbd0d4;
+}
+.segmented button.active {
+  background: #dbe6ef;
+  color: #174b78;
+  box-shadow: inset 0 -2px #205f98;
+}
+.section-tabs {
+  border-bottom-color: #bfc6cc;
+}
+.hmi-main .section-tabs button {
+  color: #46535e;
+  font-size: 12px;
+}
+.section-tabs button.active {
+  color: #174b78;
+}
+.section-tabs button.active:after {
+  border-radius: 0;
+  background: #205f98;
+}
+/* A continuous instrument strip, without decorative icon tiles. */
+.hmi-main[data-page="overview"] .hmi-workspace {
+  grid-template-rows: 88px minmax(0, 1fr) 168px;
+}
+.hmi-main .metrics {
+  gap: 0;
+  border: 1px solid #bfc6cc;
+  background: white;
+}
+.hmi-main .metric {
+  border: 0;
+  border-right: 1px solid #cbd0d4;
+  border-radius: 0;
+  padding: 8px 12px;
+  text-align: left;
+}
+.hmi-main .metric:last-child {
+  border-right: 0;
+}
+.hmi-main .metric:hover {
+  background: #f3f6f8;
+  box-shadow: inset 0 -2px #205f98;
+}
+.hmi-main .metric-top {
+  height: 22px;
+  display: block;
+  margin: 0;
+}
+.hmi-main .metric-label {
+  font-size: 11px;
+  line-height: 13px;
+  font-weight: 600;
+  max-width: calc(100% - 25px);
+  color: #46535e;
+}
+.hmi-main .metric-icon,
+.hmi-main .metric:nth-child(n) .metric-icon {
+  background: transparent;
+  border-radius: 0;
+  color: #65727d;
+  top: 9px;
+  right: 9px;
+  width: 25px;
+  height: 25px;
+}
+.hmi-main .metric-icon svg {
+  width: 24px;
+  height: 24px;
+}
+.hmi-main .metric-value {
+  font-size: 29px;
+  line-height: 1.12;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: #20272d;
+}
+.hmi-main .metric-unit {
+  font-size: 15px;
+  font-weight: 400;
+  margin-left: 3px;
+}
+.hmi-main .metric-foot {
+  color: #56616b;
+  font-size: 9px;
+  margin-top: 4px;
+}
+.hmi-main .metric-foot.positive {
+  color: #365b45;
+}
+.hmi-main .metric-foot.warning {
+  color: #805600;
+}
+.hmi-main .metric-foot.danger {
+  color: #aa2525;
+}
+.hmi-main .mini-meter {
+  height: 3px;
+  border-radius: 0;
+  background: #dce1e5;
+}
+.mini-meter span,
+.full-progress span,
+.table-progress .progress-track span {
+  background: #617a8b;
+  border-radius: 0;
+}
+.progress-track,
+.full-progress {
+  border-radius: 0;
+  background: #dfe4e7;
+}
+.hmi-main .planning-summary {
+  gap: 0;
+  border: 1px solid #bfc6cc;
+}
+.hmi-main .summary-card {
+  border: 0;
+  border-right: 1px solid #cbd0d4;
+  border-radius: 0;
+  padding: 8px 12px;
+}
+.hmi-main .summary-card:last-child {
+  border-right: 0;
+}
+.hmi-main .summary-icon {
+  color: #536472;
+  background: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 0;
+}
+.hmi-main .summary-icon svg {
+  width: 24px;
+  height: 24px;
+}
+.hmi-main .summary-card span {
+  font-size: 10px;
+  color: #56616b;
+}
+/* Tables carry the operational detail. */
+.hmi-main th {
+  color: #46535e;
+  background: #f4f5f6;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-bottom: 1px solid #bfc6cc;
+}
+.hmi-main td {
+  color: #20272d;
+  font-size: 11px;
+  border-bottom-color: #e0e3e6;
+}
+.hmi-main tbody tr:nth-child(even) {
+  background: #f6f7f8;
+}
+.hmi-main tbody tr.clickable:hover {
+  background: #e5edf4;
+}
+.hmi-main .berths-card td {
+  font-size: 10px;
+  padding: 5px 9px;
+}
+.hmi-main .vessel-cell {
+  color: #20272d;
+  font-weight: 600;
+}
+.hmi-main .operations-card .vessel-cell small {
+  display: block;
+  margin-left: 0 !important;
+  font-size: 9px;
+  color: #56616b;
+}
+.hmi-main .mini-ship {
+  display: none;
+}
+.table-progress > span {
+  color: #46535e !important;
+  font-variant-numeric: tabular-nums;
+}
+.available-text,
+.subtle,
+.config-description,
+.field small,
+.list-copy p {
+  color: #56616b;
+}
+.hmi-main .config-description {
+  font-size: 11px;
+}
+.hmi-pager {
+  background: #f0f2f3;
+  color: #46535e;
+  border-color: #cbd0d4;
+  font-size: 10px;
+}
+.hmi-pager button {
+  border-color: #acb6be;
+  border-radius: 2px;
+}
+.hmi-pager button:hover {
+  background: #dbe6ef;
+}
+.status,
+.hmi-main .status,
+.hmi-main .berths-card .status {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 2px 0;
+  font-size: 10px;
+  font-weight: 600;
+}
+.status .dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 0;
+}
+.status.green {
+  color: #236b45;
+  background: transparent;
+  border: 0;
+}
+.status.blue {
+  color: #006b80;
+  background: transparent;
+  border: 0;
+}
+.status.amber {
+  color: #8b5e00;
+  background: transparent;
+  border: 0;
+}
+.status.red {
+  color: #ae2727;
+  background: transparent;
+  border: 0;
+}
+.status:not(.green):not(.blue):not(.amber):not(.red) {
+  color: #56616b;
+  background: transparent;
+  border: 0;
+}
+/* Cargo is a comparable set of readings; department bars have one shared scale. */
+.hmi-main .products {
+  padding: 10px 0;
+  align-items: stretch;
+}
+.hmi-main .product {
+  text-align: left;
+  padding: 2px 12px;
+  border-color: #cbd0d4;
+}
+.hmi-main .product-symbol,
+.hmi-main .product:nth-child(n) .product-symbol {
+  background: none;
+  color: #536472;
+  border-radius: 0;
+  width: 26px;
+  height: 26px;
+  margin: 0 0 4px;
+}
+.hmi-main .product-symbol svg {
+  width: 24px;
+  height: 24px;
+}
+.hmi-main .product-label {
+  font-size: 11px;
+  line-height: 1.3;
+}
+.hmi-main .product-label small {
+  color: #56616b;
+  font-size: 10px;
+}
+.hmi-main .product-value {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+.hmi-main .product-value small {
+  color: #56616b;
+  font-size: 11px;
+}
+.hmi-main .product-change {
+  color: #56616b;
+  font-size: 9px;
+  line-height: 1.3;
+}
+.delay-breakdown {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  padding: 7px 12px;
+  gap: 6px;
+}
+.delay-total {
+  font-size: 10px;
+  color: #56616b;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid #dce1e5;
+  padding-bottom: 5px;
+}
+.delay-total strong {
+  font-size: 21px;
+  font-weight: 600;
+  color: #20272d;
+  font-variant-numeric: tabular-nums;
+}
+.delay-total small {
+  font-size: 11px;
+  font-weight: 400;
+}
+.delay-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 50px 32px;
+  gap: 5px;
+  align-items: center;
+  font-size: 10px;
+  position: relative;
+  padding-bottom: 5px;
+}
+.delay-line b,
+.delay-line small {
+  font-size: 10px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.delay-line small {
+  color: #56616b;
+}
+.delay-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: #647c8e;
+}
+.hmi-main .alerts-list {
+  padding: 0 12px;
+}
+.hmi-main .alert-item {
+  align-items: center;
+  padding: 8px 0;
+  border-color: #dce1e5;
+}
+.hmi-main .alert-symbol,
+.hmi-main .alert-symbol.red {
+  background: transparent;
+  border-radius: 0;
+  color: #9a6700;
+  width: 21px;
+}
+.hmi-main .alert-symbol.red {
+  color: #be3030;
+}
+.hmi-main .alert-symbol svg {
+  width: 20px;
+  height: 20px;
+}
+.hmi-main .alert-copy h4 {
+  font-size: 11px;
+  font-weight: 600;
+}
+.hmi-main .alert-copy p {
+  font-size: 10px;
+  color: #56616b;
+}
+.alert-severity {
+  border-radius: 2px;
+  border: 1px solid #c4a45b;
+  background: #fff8e6;
+  color: #805600;
+  font-size: 10px !important;
+}
+.alert-severity.high {
+  border-color: #c88b8b;
+  background: #fff1f0;
+  color: #aa2525;
+}
+.notice {
+  background: #f2f5f7;
+  border: 1px solid #b8c4ce;
+  color: #3e515f;
+}
+.notice.warning {
+  background: #fff8e6;
+  border-color: #c4a45b;
+  color: #805600;
+}
+.notice.error {
+  background: #fff1f0;
+  border-color: #c88b8b;
+  color: #aa2525;
+}
+.notice.success {
+  background: #f1f7f3;
+  border-color: #a5bcad;
+  color: #236b45;
+}
+/* Map controls remain neutral; vessel color is reserved for operational state. */
+.hmi-main .map-control {
+  background: #f9fafb;
+  color: #303d47;
+  border: 1px solid #aab4bd;
+  box-shadow: 0 1px 2px #0002;
+  border-radius: 2px;
+  font-size: 11px;
+}
+.map-control.active {
+  color: #174b78;
+}
+.map-search input {
+  background: #fff;
+  border: 1px solid #aab4bd;
+  color: #20272d;
+  border-radius: 2px;
+  font-size: 11px;
+}
+.hmi-main .map-legend {
+  background: #252d34ed !important;
+  border: 1px solid #88939b !important;
+  border-radius: 2px;
+  width: 143px;
+  font-size: 10px;
+  color: #edf0f2;
+}
+.map-legend h4 {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+.legend-color {
+  border-radius: 0 !important;
+}
+.ship-label {
+  background: #252d34f2 !important;
+  border-color: #8997a1 !important;
+  border-radius: 2px !important;
+  box-shadow: 0 1px 2px #0004 !important;
+}
+.ship-label small {
+  color: #d2d9de !important;
+}
+.vessel-silhouette .vessel-hull {
+  fill: #222b32f5;
+}
+.vessel-silhouette {
+  filter: drop-shadow(0 0 2px var(--vessel-color));
+}
+.map-caption {
+  border-radius: 2px;
+}
+.hmi-main .map-footer {
+  background: #f0f2f3;
+  color: #46535e;
+  font-size: 10px;
+}
+.basemap-status {
+  position: absolute;
+  z-index: 800;
+  left: 10px;
+  right: 45px;
+  top: 48px;
+  padding: 8px 10px;
+  background: #fff8e6;
+  color: #704b00;
+  border: 1px solid #b99b51;
+  font:
+    11px/1.4 "Segoe UI",
+    Arial,
+    sans-serif;
+  box-shadow: 0 1px 3px #0002;
+  pointer-events: none;
+}
+/* Schedule bars share neutral bodies; leading bands encode state. */
+.gantt-label,
+.gantt-time-head {
+  border-color: #c4cbd1;
+}
+.gantt-label.head,
+.gantt-time-head {
+  background: #edf0f2;
+  color: #3e4b55;
+}
+.hmi-main .gantt-label strong {
+  font-size: 11px;
+}
+.hmi-main .gantt-label small {
+  color: #56616b;
+  font-size: 9px;
+}
+.gantt-label .port-symbol {
+  background: none;
+  color: #65727c;
+  border-radius: 0;
+}
+.gantt-hours {
+  color: #56616b;
+  font-size: 10px;
+}
+.gantt-day {
+  font-size: 11px;
+  border-bottom-color: #cbd0d4;
+}
+.gantt-row {
+  background-color: #fafbfc;
+  border-bottom-color: #cbd0d4;
+  background-image: linear-gradient(90deg, #dce1e5 1px, transparent 1px);
+}
+.hmi-main .gantt-block,
+.hmi-main .gantt-block.blue,
+.hmi-main .gantt-block.amber,
+.hmi-main .gantt-block.neutral,
+.hmi-main .gantt-block.red,
+.hmi-main .gantt-block.draft {
+  --state: #258452;
+  border: 1px solid #9ba9b3;
+  border-left: 5px solid var(--state);
+  border-radius: 2px;
+  background: #f0f3f5;
+  color: #20272d;
+  box-shadow: none;
+}
+.hmi-main .gantt-block.blue {
+  --state: #007c91;
+}
+.hmi-main .gantt-block.amber {
+  --state: #9a6700;
+  background: #fff9ec;
+}
+.hmi-main .gantt-block.red {
+  --state: #be3030;
+  background: #fff3f1;
+  border-color: #bf7777;
+  border-left-color: var(--state);
+}
+.hmi-main .gantt-block.neutral {
+  --state: #687580;
+}
+.hmi-main .gantt-block.draft {
+  --state: #205f98;
+  border: 2px dashed #205f98;
+  border-left: 5px solid #205f98;
+  background: #edf3f8;
+}
+.hmi-main .gantt-block strong {
+  font-size: 11px;
+  font-weight: 600;
+}
+.hmi-main .gantt-block small {
+  color: #46535e;
+  font-size: 10px;
+  opacity: 1;
+}
+.gantt-block .block-progress {
+  border-radius: 0;
+  background: #617a8b;
+}
+.hmi-main .resize-handle {
+  border-color: #8797a3;
+  background: #fff;
+  border-radius: 1px;
+  color: #46535e;
+}
+.gantt-footer {
+  background: #f0f2f3;
+  color: #46535e;
+  border-color: #cbd0d4;
+}
+.hmi-main .gantt-legend {
+  font-size: 10px;
+}
+.now-line {
+  border-color: #be3030;
+}
+/* Configuration uses the same panel and command vocabulary. */
+.config-nav {
+  background: #f0f2f3 !important;
+}
+.hmi-main .config-nav button {
+  font-size: 11px;
+  color: #3e4b55;
+  border-radius: 0;
+}
+.config-nav button:hover {
+  background: #e0e6eb;
+}
+.config-nav button.active {
+  background: #dbe6ef;
+  color: #174b78;
+  box-shadow: inset 3px 0 #205f98;
+}
+.config-nav .nav-caption {
+  color: #56616b;
+}
+.cargo-fields,
+.rule-defaults,
+.permission-grid {
+  background: #f4f5f6;
+  border-color: #cbd0d4;
+}
+.geo-editor-tools .btn.active {
+  background: #dbe6ef;
+  border-color: #205f98;
+  color: #174b78;
+}
+.hmi-main .page-footer {
+  color: #56616b;
+}
+.report-icon,
+.empty-icon {
+  color: #65727d;
+  background: #edf0f2;
+  border-radius: 2px;
+}
+.modal-head {
+  background: #edf0f2;
+  border-bottom-color: #bfc6cc;
+}
+.login-aside {
+  background: #252d34;
+}
+.login-copy h1 {
+  font-weight: 600;
+  letter-spacing: 0;
+}
+@media (min-height: 950px) {
+  .hmi-main[data-page="overview"] .hmi-workspace {
+    grid-template-rows: 112px minmax(0, 1fr) 210px;
+  }
+  .hmi-main .metric {
+    padding: 14px;
+  }
+  .hmi-main .metric-label {
+    font-size: 12px;
+    line-height: 14px;
+  }
+  .hmi-main .metric-value {
+    font-size: 34px;
+  }
+  .hmi-main .metric-foot {
+    font-size: 10px;
+  }
+  .hmi-main th {
+    font-size: 11px;
+  }
+  .hmi-main td {
+    font-size: 12px;
+    padding: 9px 10px;
+  }
+  .hmi-main .berths-card td {
+    font-size: 11px;
+  }
+  .delay-line {
+    font-size: 11px;
+    padding-bottom: 8px;
+  }
+  .delay-breakdown {
+    gap: 9px;
+  }
+  .hmi-main .alert-item {
+    padding: 12px 0;
+  }
+}
+@media (max-width: 1100px) {
+  .hmi-main .metric-label {
+    font-size: 10px;
+  }
+  .nav-item {
+    padding: 0 12px;
+  }
+  .hmi-main .product {
+    padding: 2px 8px;
+  }
+  .hmi-main .product-value {
+    font-size: 21px;
+  }
+}
+@media (max-width: 900px) {
+  .hmi-main[data-page="overview"] .hmi-workspace {
+    grid-template-rows: 136px 30px minmax(0, 1fr);
+  }
+  .hmi-main .metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .hmi-main .metric {
+    padding: 6px 10px;
+    border-bottom: 1px solid #cbd0d4;
+  }
+  .hmi-main .metric-top {
+    height: 20px;
+  }
+  .hmi-main .metric-value {
+    font-size: 23px;
+  }
+  .hmi-main .metric-foot {
+    display: none;
+  }
+  .hmi-main .metric-icon {
+    top: 6px;
+  }
+  .hmi-main .dashboard-bottom {
+    grid-template-columns: 1fr;
+  }
+  .delay-breakdown {
+    justify-content: center;
+    gap: 10px;
+  }
+}
+@media (max-width: 600px) {
+  .nav-item {
+    font-size: 10px;
+    padding: 0 10px;
+  }
+  .hmi-main h1 {
+    font-size: 18px;
+  }
+  .hmi-main .metric-label {
+    max-width: 100%;
+    font-size: 9px;
+  }
+  .hmi-main .metric-icon {
+    display: none;
+  }
+  .hmi-main .metric-value {
+    font-size: 22px;
+  }
+  .hmi-main .card-meta {
+    font-size: 9px;
+  }
+}
+
+.hmi-main .operations-card td {
+  padding: 3px 10px;
+  line-height: 13px;
+}
+.hmi-main .operations-card th,
+.hmi-main .berths-card th {
+  padding: 6px 10px;
+}
+.hmi-main .delay-breakdown {
+  gap: 4px;
+}
+.map-control,
+.map-caption,
+.map-legend {
+  backdrop-filter: none;
+}
+@media (min-height: 950px) {
+  .hmi-main .delay-breakdown {
+    gap: 9px;
+  }
+  .hmi-main .operations-card td {
+    padding: 7px 10px;
+  }
+}
+@media (max-height: 650px) and (min-width: 901px) {
+  .hmi-main[data-page="overview"] .hmi-workspace {
+    grid-template-rows: 76px minmax(0, 1fr) 158px;
+  }
+  .hmi-main .metric {
+    padding: 5px 10px;
+  }
+  .hmi-main .metric-value {
+    font-size: 25px;
+  }
+  .hmi-main .card-head {
+    height: 30px;
+    min-height: 30px;
+  }
+  .hmi-main .product-symbol {
+    display: none;
+  }
+}
+
+.hmi-main .operations-card .vessel-cell small {
+  margin-top: 0;
+}
+
+.hmi-main .products {
+  min-height: 0;
+  padding: 8px 0;
+}

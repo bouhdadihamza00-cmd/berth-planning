@@ -1,0 +1,151 @@
+/* A consistent work queue for exceptions, activity, approvals and reports. */
+.hmi-main[data-page="center"] { --workflow-ink: #193d53; --workflow-muted: #6b8190; --workflow-line: #dce6ed; padding: 14px 16px 16px; gap: 12px; background: #f2f6f9; }
+.hmi-main[data-page="center"] h1 { font-size: calc(24px * var(--ui-font-scale, 1)); font-weight: 650; letter-spacing: -.6px; }
+.hmi-main[data-page="center"] .page-heading p { font-size: calc(11px * var(--ui-font-scale, 1)); color: var(--workflow-muted); margin-top: 4px; }
+.hmi-main[data-page="center"] .heading-actions .btn { border-radius: 6px; padding: 7px 11px; }
+.hmi-main[data-page="center"] .hmi-workspace { gap: 12px; }
+.hmi-main[data-page="center"] .workflow-tabs { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; padding: 0; border: 0; height: auto; min-height: 64px; flex: none; overflow: visible; }
+.hmi-main[data-page="center"] .workflow-tabs > button { display: flex; align-items: center; gap: 10px; min-width: 0; height: 64px; padding: 10px 14px; background: #fff; color: #668191; border: 1px solid var(--workflow-line); border-radius: 8px; text-align: left; margin: 0; transition: border-color 120ms, background 120ms; }
+.hmi-main[data-page="center"] .workflow-tabs > button:after { display: none; }
+.hmi-main[data-page="center"] .workflow-tabs > button:hover { border-color: #99bacb; background: #fbfdfe; }
+.hmi-main[data-page="center"] .workflow-tabs > button.active { background: #133e58; border-color: #133e58; color: #fff; box-shadow: none; }
+.hmi-main[data-page="center"] .workflow-tabs > button:focus-visible { outline: 2px solid #1684ad; outline-offset: 2px; }
+.workflow-tab-icon { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 7px; background: #edf5f9; color: #42829e; }
+.workflow-tab-icon svg { width: 19px; height: 19px; }
+.workflow-tabs .active .workflow-tab-icon { background: #ffffff12; color: #9dd9f0; }
+.workflow-tab-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
+.workflow-tab-copy strong { font-size: calc(12px * var(--ui-font-scale, 1)); line-height: calc(15px * var(--ui-font-scale, 1)); font-weight: 600; }
+.workflow-tab-copy small { font-size: calc(10px * var(--ui-font-scale, 1)); line-height: calc(13px * var(--ui-font-scale, 1)); font-weight: 400; color: #8397a4; }
+.workflow-tabs .active small { color: #bdd5e2; }
+.workflow-tab-count { display: grid; place-items: center; flex: none; min-width: 24px; height: 24px; padding: 0 5px; background: #f0f4f7; border-radius: 6px; color: #5a798d; font-size: calc(12px * var(--ui-font-scale, 1)); font-weight: 600; }
+.workflow-tabs .active .workflow-tab-count { background: #ffffff19; color: #fff; }
+.hmi-main[data-page="center"] .card { border: 1px solid var(--workflow-line); border-radius: 9px; background: #fff; box-shadow: 0 2px 5px #17384c04; }
+.hmi-main[data-page="center"] .card-head { height: 42px; min-height: 42px; padding: 0 14px; background: #fff; border-bottom: 1px solid #e7eef3; }
+.hmi-main[data-page="center"] .card-title { gap: 7px; }
+.hmi-main[data-page="center"] .card-title h2 { font-size: calc(13px * var(--ui-font-scale, 1)); color: var(--workflow-ink); font-weight: 600; }
+.hmi-main[data-page="center"] .card-title > svg { width: 17px; height: 17px; color: #43809c; }
+.hmi-main[data-page="center"] .card-meta { font-size: calc(10px * var(--ui-font-scale, 1)); color: var(--workflow-muted); }
+.hmi-main[data-page="center"] .card-link { font-size: calc(11px * var(--ui-font-scale, 1)); color: #2c789a; }
+.hmi-main[data-page="center"] .toolbar { padding: 10px 14px; gap: 8px; background: #fafcfd !important; border-bottom: 1px solid #e6edf2; flex-wrap: wrap; }
+.hmi-main[data-page="center"] .search-box { background: #fff; border: 1px solid var(--workflow-line); border-radius: 5px; min-width: 210px; }
+.hmi-main[data-page="center"] .search-box input { min-width: 0; flex: 1; width: 100%; height: 30px; border: 0; background: transparent; box-shadow: none; font-size: calc(11px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="center"] .toolbar select { height: 32px; padding: 5px 9px; background: #fff; border: 1px solid var(--workflow-line); border-radius: 5px; color: #4d6c7f; font-size: calc(11px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="center"] .toolbar .subtle { margin-left: auto; font-size: calc(10px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="center"] .btn { border-radius: 5px; }
+.hmi-main[data-page="center"] th { background: #f5f8fa; color: #758b99; font-size: calc(10px * var(--ui-font-scale, 1)); font-weight: 550; padding: 9px 14px; border-bottom: 1px solid #e2eaf0; }
+.hmi-main[data-page="center"] td { padding: 13px 14px; font-size: calc(11px * var(--ui-font-scale, 1)); line-height: 1.5; border-bottom: 1px solid #eaf0f4; }
+.hmi-main[data-page="center"] tbody tr:nth-child(even) { background: #fcfdfe; }
+.hmi-main[data-page="center"] tbody tr.clickable:hover { background: #f0f7fb; }
+.hmi-main[data-page="center"] .workflow-alerts td:first-child { width: 39%; }
+.hmi-main[data-page="center"] .workflow-alerts .vessel-cell { font-size: calc(12px * var(--ui-font-scale, 1)); font-weight: 600; color: #284c62; }
+.hmi-main[data-page="center"] .workflow-alerts td > small { font-size: calc(10px * var(--ui-font-scale, 1)); line-height: calc(16px * var(--ui-font-scale, 1)); color: #7b909e; max-width: none !important; white-space: normal; }
+.hmi-main[data-page="center"] .hmi-workspace > .notice { padding: 9px 13px; font-size: calc(10px * var(--ui-font-scale, 1)); border: 1px solid #dce6ed; border-radius: 6px; background: #eaf2f7; color: #607e90; gap: 8px; }
+.hmi-main[data-page="center"] .approval-tickets th:nth-child(1) { width: 21%; }
+.hmi-main[data-page="center"] .approval-tickets th:nth-child(2) { width: 10%; }
+.hmi-main[data-page="center"] .approval-tickets th:nth-child(3) { width: 13%; }
+.hmi-main[data-page="center"] .approval-tickets th:nth-child(4) { width: 23%; }
+.hmi-main[data-page="center"] .approval-tickets th:nth-child(5) { width: 12%; }
+.hmi-main[data-page="center"] .approval-tickets th:nth-child(6) { width: 21%; }
+.hmi-main[data-page="center"] .approval-tickets td { padding: 16px 14px; }
+.hmi-main[data-page="center"] .ticket-reference { font-size: calc(10px * var(--ui-font-scale, 1)); letter-spacing: .3px; color: #5f8aa1; }
+.hmi-main[data-page="center"] .ticket-vessel { margin-top: 5px; font-size: calc(13px * var(--ui-font-scale, 1)); color: #24495f; }
+.hmi-main[data-page="center"] .ticket-reason { margin-top: 6px; font-size: calc(11px * var(--ui-font-scale, 1)); line-height: calc(17px * var(--ui-font-scale, 1)); color: #788e9c; }
+.hmi-main[data-page="center"] .ticket-meta { font-size: calc(10px * var(--ui-font-scale, 1)); line-height: calc(15px * var(--ui-font-scale, 1)); color: #7c929f; }
+.hmi-main[data-page="center"] .ticket-schedule { gap: 5px; padding-left: 10px; border-left: 2px solid #e2eaf1; font-size: calc(11px * var(--ui-font-scale, 1)); color: #55758a; }
+.hmi-main[data-page="center"] .ticket-proposed { color: #8162a6; font-size: calc(10px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="center"] .ticket-validation-clear { color: #38816b; font-size: calc(10px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="center"] .ticket-validation-error { color: #b56550; font-size: calc(11px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="center"] .approval-actions { align-items: flex-start; gap: 7px; }
+.hmi-main[data-page="center"] .approval-actions .btn { background: #fff; border-color: #dce6ed; font-size: calc(10px * var(--ui-font-scale, 1)); padding: 5px 8px; }
+.hmi-main[data-page="center"] .approval-actions .btn.primary { background: #173f58; border-color: #173f58; color: #fff; }
+.hmi-main[data-page="center"] .approval-actions .btn.danger { color: #b56559; background: #fff; border-color: #ecdcd7; }
+.hmi-main[data-page="center"] .notification-category-key { padding: 7px 14px; gap: 7px; border-bottom-color: #e7eef3; background: #fff; }
+.hmi-main[data-page="center"] .notification-category-label { font-size: calc(9px * var(--ui-font-scale, 1)); line-height: calc(14px * var(--ui-font-scale, 1)); font-weight: 500; border-radius: 4px; padding: 2px 6px; }
+.hmi-main[data-page="center"] #notification-list { padding: 0 14px; }
+.hmi-main[data-page="center"] .notification-item { display: grid; grid-template-columns: 32px minmax(0,1fr) auto; gap: 12px; align-items: start; border: 0; border-bottom: 1px solid #e9eff3; border-radius: 0; padding: 16px 10px; margin: 0; background: #fff; }
+.hmi-main[data-page="center"] .notification-item.is-unread { background: #f3f9fc; box-shadow: inset 3px 0 #4e9abc; }
+.hmi-main[data-page="center"] .notification-item:hover { background: #edf6fa; }
+.hmi-main[data-page="center"] .notification-item > .port-symbol { width: 30px; height: 30px; background: #edf4f8; color: #6d91a4; border-radius: 7px; }
+.hmi-main[data-page="center"] .notification-item .list-copy h3 { font-size: calc(12px * var(--ui-font-scale, 1)); line-height: calc(18px * var(--ui-font-scale, 1)); font-weight: 600; color: #2b4f65; }
+.hmi-main[data-page="center"] .notification-item .list-copy p { max-width: none; white-space: normal; font-size: calc(11px * var(--ui-font-scale, 1)); line-height: calc(17px * var(--ui-font-scale, 1)); color: #7b909e; }
+.hmi-main[data-page="center"] .notification-item > small { font-size: calc(10px * var(--ui-font-scale, 1)); line-height: calc(18px * var(--ui-font-scale, 1)); color: #8ba0ad; }
+.hmi-main[data-page="center"] .notification-item .badge-count { font-size: calc(8px * var(--ui-font-scale, 1)); background: #dcedf6; color: #347f9f; border-radius: 4px; padding: 2px 5px; margin-left: 5px; }
+@media (max-width: 1000px) {
+  .hmi-main[data-page="center"] .workflow-tabs > button { padding: 9px 10px; gap: 7px; }
+  .workflow-tab-copy small { font-size: calc(9px * var(--ui-font-scale, 1)); }
+  .hmi-main[data-page="center"] .approval-tickets table { min-width: 1030px; }
+  .hmi-main[data-page="center"] .workflow-alerts table { min-width: 780px; }
+}
+@media (max-width: 600px) {
+  .hmi-main[data-page="center"] { padding: 10px 10px 16px; }
+  .hmi-main[data-page="center"] h1 { font-size: calc(21px * var(--ui-font-scale, 1)); }
+  .hmi-main[data-page="center"] .workflow-tabs { grid-template-columns: repeat(2,minmax(0,1fr)); min-height: 112px; gap: 6px; }
+  .hmi-main[data-page="center"] .workflow-tabs > button { height: 53px; padding: 7px 9px; gap: 6px; }
+  .workflow-tab-icon { width: 24px; height: 24px; }
+  .workflow-tab-icon svg { width: 16px; height: 16px; }
+  .workflow-tab-copy strong { font-size: calc(10px * var(--ui-font-scale, 1)); }
+  .workflow-tab-copy small { display: none; }
+  .workflow-tab-count { min-width: 19px; height: 21px; font-size: calc(10px * var(--ui-font-scale, 1)); }
+  .hmi-main[data-page="center"] .toolbar { padding: 8px; gap: 6px; }
+  .hmi-main[data-page="center"] .toolbar .search-box { flex: 1 1 100%; min-width: 0; }
+  .hmi-main[data-page="center"] .notification-item { grid-template-columns: 24px minmax(0,1fr); gap: 8px; padding: 12px 8px; }
+  .hmi-main[data-page="center"] .notification-item > small { grid-column: 2; }
+  .hmi-main[data-page="center"] #notification-list { padding: 0 7px; }
+  .hmi-main[data-page="center"] .notification-filters select { max-width: 100%; }
+}
+html[data-theme="dark"] .hmi-main[data-page="center"] { --workflow-ink: #d6e7ef; --workflow-muted: #9db5c5; --workflow-line: #345165; background: #102b3e; }
+html[data-theme="dark"] .hmi-main[data-page="center"] :is(.card,.card-head,.workflow-tabs > button,.notification-item,.notification-category-key) { background: #16364b; color: #c6dce8; }
+html[data-theme="dark"] .hmi-main[data-page="center"] .workflow-tabs > button.active { background: #285874; }
+html[data-theme="dark"] .hmi-main[data-page="center"] .toolbar { background: #143145 !important; }
+html[data-theme="dark"] .hmi-main[data-page="center"] :is(th,.notification-item.is-unread) { background: #1c4056; }
+html[data-theme="dark"] .hmi-main[data-page="center"] tbody tr:nth-child(even) { background: #17394f; }
+html[data-theme="dark"] .hmi-main[data-page="center"] :is(.notification-item .list-copy h3,.ticket-vessel,.workflow-alerts .vessel-cell) { color: #d4e6ef; }
+html[data-theme="dark"] .hmi-main[data-page="center"] :is(.search-box,.toolbar select,.approval-actions .btn) { background: #17364b; color: #c4d8e3; border-color: #365568; }
+
+/* Reports: keep configuration and preview actions visible at every height. */
+.hmi-main[data-page="center"] .report-workbench { grid-template-columns: minmax(280px,320px) minmax(0,1fr); min-height: 0; }
+.report-workbench .report-controls { flex: 1; padding: 0; gap: 0; }
+.report-section { display: grid; gap: 12px; padding: 18px; border-bottom: 1px solid var(--workflow-line); }
+.report-section h4 { margin: 0 0 2px; color: var(--workflow-muted); font-size: calc(10px * var(--ui-font-scale, 1)); font-weight: 650; letter-spacing: .7px; text-transform: uppercase; }
+.report-workbench .report-controls label, .report-workbench .report-multi-field { font-size: calc(11px * var(--ui-font-scale, 1)); font-weight: 500; color: var(--workflow-ink); gap: 6px; min-width: 0; }
+.report-workbench .report-controls :is(input:not([type="checkbox"]),select) { height: 35px; padding: 7px 9px; border: 1px solid var(--workflow-line); border-radius: 5px; background: #fafcfd; color: var(--workflow-ink); font-size: calc(11px * var(--ui-font-scale, 1)); }
+.report-date-grid, .report-filter-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.report-filter-grid { padding-top: 14px; }
+.report-filter-grid > label { grid-column: 1/-1; }
+.report-advanced > summary, .report-fields > summary { cursor: pointer; color: #307d9a; font-size: calc(11px * var(--ui-font-scale, 1)); font-weight: 600; padding: 4px 0; }
+.report-workbench .report-multi-dropdown { background: #fafcfd; border-color: var(--workflow-line); border-radius: 5px; }
+.report-workbench .report-multi-options label { font-size: calc(11px * var(--ui-font-scale, 1)); }
+.report-workbench .report-fields { margin: 0; padding: 16px 18px; }
+.report-workbench .report-fields .check-row { padding: 5px 0; }
+.report-builder-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 14px; border-top: 1px solid var(--workflow-line); background: #fff; flex: none; }
+.report-builder-actions .btn { justify-content: center; padding: 10px 9px; font-size: calc(11px * var(--ui-font-scale, 1)); }
+.report-builder-actions .primary { background: #173f58; border-color: #173f58; color: white; }
+.hmi-main[data-page="center"] .report-preview > .card-head { height: auto; min-height: 60px; flex-wrap: wrap; gap: 10px; padding: 12px 18px; }
+.report-workbench .card-head h3 { display: flex; align-items: center; gap: 8px; font-size: calc(13px * var(--ui-font-scale, 1)); color: var(--workflow-ink); }
+.hmi-main[data-page="center"] .report-preview > .card-head .toolbar { border: 0; background: transparent !important; padding: 0; gap: 6px; }
+.report-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; background: radial-gradient(ellipse at center,#f1f7fb,transparent 70%); }
+.report-empty-icon { display: grid; place-items: center; width: 72px; height: 72px; background: #eaf3f8; color: #4c88a3; border: 1px solid #dceaf2; border-radius: 18px; margin-bottom: 24px; }
+.report-empty-icon svg { width: 30px; height: 30px; }
+.report-empty > small { font-size: calc(9px * var(--ui-font-scale, 1)); letter-spacing: 1.3px; color: var(--workflow-muted); }
+.report-empty h3 { margin: 12px 0; font-size: calc(23px * var(--ui-font-scale, 1)); font-weight: 600; color: var(--workflow-ink); }
+.report-empty p { max-width: 340px; font-size: calc(12px * var(--ui-font-scale, 1)); line-height: 1.8; color: var(--workflow-muted); margin: 0; }
+.report-empty-steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px; margin-top: 32px; color: #7494a7; font-size: calc(10px * var(--ui-font-scale, 1)); }
+.report-workbench .report-summary { display: flex; flex-wrap: wrap; gap: 18px 28px; padding: 18px; background: #f8fbfd; }
+.report-workbench .report-summary b { color: var(--workflow-ink); font-size: calc(22px * var(--ui-font-scale, 1)); font-variant-numeric: tabular-nums; }
+.report-workbench .report-preview > .notice { margin: 0; padding: 10px 18px; border-radius: 0; font-size: calc(10px * var(--ui-font-scale, 1)); }
+.report-workbench .report-table table { min-width: 100%; }
+.report-workbench .report-table th { position: sticky; top: 0; z-index: 1; white-space: nowrap; }
+.report-workbench .report-footer { flex: none; border-top: 1px solid var(--workflow-line); padding: 12px 18px; font-size: calc(10px * var(--ui-font-scale, 1)); }
+html[data-theme="dark"] .report-workbench :is(.report-builder-actions,.report-controls select,.report-controls input:not([type="checkbox"]),.report-multi-dropdown,.report-summary,.report-empty-icon) { background: #193c51; color: #d6e7ef; border-color: #345165; }
+html[data-theme="dark"] .report-empty { background: none; }
+@media(max-width: 800px) {
+  .hmi-main[data-page="center"] .report-workbench { display: flex; flex-direction: column; overflow: auto; }
+  .hmi-main[data-page="center"] .report-builder { flex: none; overflow: visible; }
+  .report-workbench .report-controls { overflow: visible; }
+  .hmi-main[data-page="center"] .report-preview { flex: none; min-height: 420px; }
+  .report-workbench .report-table { max-height: 500px; }
+  .report-section { padding: 14px; }
+}
+.report-workbench .report-fields { overflow: visible; max-height: none; flex: none; }
+.hmi-main[data-page="center"] .report-preview > .notice:not(.error) { background: #f3f7fa; border: 0; border-bottom: 1px solid var(--workflow-line); color: var(--workflow-muted); line-height: 1.6; }
+html[data-theme="dark"] .hmi-main[data-page="center"] .report-preview > .notice:not(.error) { background: #193c51; }

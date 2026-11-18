@@ -1,0 +1,104 @@
+/* Applied last so every workspace and dialog uses the same accessibility settings. */
+html { --preference-control-height: calc(30px * var(--ui-font-scale, 1)); }
+:is(#app,#overlay,#assistant-chat) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),select,.btn) { min-height: var(--preference-control-height); }
+.leaflet-container { font-size: calc(12px * var(--ui-font-scale, 1)); }
+html[data-density="comfortable"] { --preference-control-height: calc(38px * var(--ui-font-scale, 1)); }
+html[data-density="comfortable"] :is(#app,#overlay,#assistant-chat) :is(td,th) { padding-block: 14px !important; }
+html[data-density="comfortable"] :is(#app,#overlay,#assistant-chat) :is(.btn,input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),select,textarea) { padding-block: 9px; }
+html[data-density="comfortable"] :is(.card-head,.modal-head) { height: auto; min-height: calc(54px * var(--ui-font-scale, 1)); padding-block: 10px; }
+html[data-density="comfortable"] :is(.list-card,.notification-item,.report-section,.preference-setting-row) { padding-block: 18px !important; }
+html[data-density="comfortable"] :is(.form-grid,.report-controls,.step-reviewers) { row-gap: 18px; }
+html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-motion="reduced"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+html[data-motion="full"] #assistant-chat { transition: left 170ms ease, top 170ms ease, width 170ms ease; }
+html[data-contrast="high"] { --preference-ink: #112a3b; --preference-line: #45647a; --muted: #24465c; --line: #45647a; }
+html[data-theme="dark"][data-contrast="high"] { --preference-ink: #fff; --preference-line: #b2cbdc; --muted: #e1edf6; --line: #b2cbdc; }
+html[data-contrast="high"] :is(.card,.modal,.btn,input,select,textarea,fieldset,.rule-category-card,.workflow-template) { border-color: var(--preference-line) !important; }
+html[data-contrast="high"] :is(.card,.modal,.report-controls) :is(p,small,label,th,td,h2,h3,h4,.subtle,.card-meta,.report-footer,.rule-category-footer) { color: var(--preference-ink) !important; }
+html[data-contrast="high"] :is(.card,.modal) { --workflow-muted: var(--preference-ink); --workflow-line: var(--preference-line); }
+html[data-contrast="high"] :focus-visible { outline: 3px solid var(--preference-line) !important; outline-offset: 3px; }
+html[dir="rtl"] :is(input[type="number"],input[type="date"],input[type="datetime-local"],input[type="email"],input[type="url"],.gantt,.leaflet-container) { direction: ltr; }
+html[dir="rtl"] :is(.modal-head,.card-head,.toolbar,.workflow-template-head) { text-align: start; }
+.hmi-main[data-page="overview"] .throughput-products .product-label { flex-shrink: 0; height: auto; min-height: calc(13px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="overview"] .metric-top { height: auto; min-height: calc(21px * var(--ui-font-scale, 1)); }
+/* Text can grow; dashboard sections keep their intrinsic height and scroll as a page. */
+#app .topbar { height: auto; min-height: calc(48px * var(--ui-font-scale, 1)); padding-block: 8px; }
+#app .topbar .port-switch { align-items: center; }
+#app .topbar .port-switch .eyebrow { line-height: 1.4; height: auto; }
+.hmi-main[data-page="overview"] .hmi-workspace { overflow: auto; }
+.hmi-main[data-page="overview"] .metrics { height: auto; align-items: stretch; }
+.hmi-main[data-page="overview"] .metric { min-height: calc(100px * var(--ui-font-scale, 1)); height: auto; }
+.hmi-main[data-page="overview"] .metric-top { flex-shrink: 0; }
+.hmi-main[data-page="overview"] .metric-label { white-space: normal; }
+.hmi-main[data-page="overview"] .metric-foot { height: auto; min-height: calc(12px * var(--ui-font-scale, 1)); white-space: normal; }
+.hmi-main[data-page="overview"] .dashboard-bottom { align-items: stretch; }
+.hmi-main[data-page="overview"] .dashboard-bottom .card { overflow: visible; }
+.hmi-main[data-page="overview"] .products.throughput-products { flex: none; height: auto; align-content: start; align-items: stretch; }
+.hmi-main[data-page="overview"] .throughput-products .throughput-product { min-height: 0; height: auto; justify-content: flex-start; }
+.hmi-main[data-page="overview"] .throughput-products .product-value { flex: none; margin: 5px 0; }
+.hmi-main[data-page="overview"] .delay-summary { flex: none; height: auto; padding-block: 14px; }
+.hmi-main[data-page="overview"] .dashboard-bottom .alerts-list { flex: none; max-height: none; overflow: visible; }
+@media(max-width: 999px) {
+  .hmi-main[data-page="overview"] .hmi-workspace { grid-template-rows: max-content max-content minmax(420px,1fr); }
+}
+/* Map overlays use content-sized rows instead of competing absolute offsets. */
+.hmi-main .port-map-wrap { display: grid; grid-template-columns: minmax(0,1fr); grid-template-rows: max-content max-content minmax(0,1fr); gap: 8px; padding: 12px 56px 12px 12px; isolation: isolate; }
+.hmi-main #port-map { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.hmi-main .map-top-left { position: relative; inset: auto; grid-row: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; z-index: 500; }
+.hmi-main .map-top-left .map-search { position: relative; inset: auto; width: clamp(130px,18vw,220px); max-width: 100%; }
+.hmi-main .map-top-left .map-search input { width: 100%; height: auto; box-sizing: border-box; }
+.hmi-main .map-weather { position: relative; inset: auto; grid-row: 2; max-width: 100%; width: fit-content; align-self: start; z-index: 500; }
+.hmi-main .map-top-left .map-control { height: auto; min-height: var(--preference-control-height); }
+.hmi-main .map-search-results { inset-inline: 0; width: max-content; min-width: 100%; max-width: min(320px,70vw); }
+@media(max-width: 700px) { #app .topbar { gap: 8px; padding-block: 6px; } .hmi-main .port-map-wrap { padding: 8px 46px 8px 8px; } }
+#app:has(.hmi-main) { grid-template-rows: max-content minmax(0,1fr); }
+#app > header { height: auto; min-height: 0; }
+.hmi-main > .page-heading { height: auto; min-height: calc(42px * var(--ui-font-scale, 1)); flex-shrink: 0; }
+.hmi-main .map-legend { position: relative; inset: auto; grid-row: 3; align-self: end; justify-self: start; margin: 0; max-height: none; z-index: 500; }
+@media(min-width: 1000px) {
+ .hmi-main[data-page="overview"] .hmi-workspace { grid-template-rows: max-content minmax(calc(330px * var(--ui-font-scale, 1) + 100px),1fr) max-content; }
+}
+#app > .app-sidebar:is(:hover,:has(:focus-visible)) { width: calc(228px * var(--ui-font-scale, 1)); }
+.app-sidebar .nav-bar { width: calc(228px * var(--ui-font-scale, 1)); }
+.app-sidebar:is(:hover,:has(:focus-visible)) .nav-item { width: calc(212px * var(--ui-font-scale, 1)); }
+.app-sidebar .sidebar-footer { width: calc(228px * var(--ui-font-scale, 1)); min-width: calc(228px * var(--ui-font-scale, 1)); }
+@media(max-width: 999px) {
+ .hmi-main[data-page="overview"] .hmi-workspace[data-panel="map"] { grid-template-rows: max-content max-content max-content; }
+ .hmi-main[data-page="overview"] .hmi-workspace[data-panel="map"] .dashboard-middle { grid-template-rows: max-content; }
+ .hmi-main[data-page="overview"] .port-map-wrap { flex: none; height: auto; min-height: 0; grid-template-rows: max-content max-content minmax(220px,max-content); }
+}
+@media(max-width: 600px) { .report-date-grid { grid-template-columns: minmax(0,1fr); } }
+/* Native dialogs own focus containment and backdrop dismissal. */
+dialog.modal { padding: 0; margin: auto; color: var(--ink); max-height: calc(100dvh - 32px); max-width: calc(100vw - 32px); }
+dialog.modal:not([open]) { display: none; }
+dialog:modal { overscroll-behavior: contain; }
+dialog::backdrop { background: #102b3b70; backdrop-filter: blur(3px); overflow: hidden; overscroll-behavior: contain; }
+html[data-theme="dark"] dialog::backdrop { background: #050b13b8; }
+.record-link { display: block; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: inherit; cursor: pointer; }
+.record-link:focus-visible { outline: 2px solid #1684ad; outline-offset: 3px; }
+/* Shared interaction states stay independent of each workspace's surface styling. */
+html { --control-focus: #076fae; --control-ease: cubic-bezier(0.23,1,0.32,1); }
+html[data-theme="dark"] { --control-focus: #9bd6ff; }
+:is(#app,#overlay,#assistant-chat) :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible {
+  outline: 2px solid var(--control-focus);
+  outline-offset: 3px;
+}
+.topbar :is(button,a,input,select):focus-visible { --control-focus: #b9e5ff; }
+:is(input,textarea) { caret-color: var(--control-focus); }
+::selection { background: #b8dcf3; color: #062e4b; }
+:is(.btn,.icon-btn):disabled { cursor: not-allowed; opacity: .55; }
+:is(.btn,.icon-btn):enabled:active:not(:focus-visible) { scale: .97; }
+:is(.btn,.icon-btn):focus-visible { transition: none !important; }
+html[data-motion="reduced"] :is(.btn,.icon-btn):active { scale: none; }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  html:not([data-motion="reduced"]) :is(.btn,.icon-btn) {
+    transition: background-color 150ms var(--control-ease), border-color 150ms var(--control-ease), scale 150ms var(--control-ease);
+  }
+}
+@media (pointer: coarse) {
+  :is(#app,#overlay,#assistant-chat) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),select,.btn,.icon-btn,.map-control) { min-height: max(44px,var(--preference-control-height)); }
+  :is(#app,#overlay,#assistant-chat) :is(.btn,.icon-btn,.map-control) { min-width: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.btn,.icon-btn):active { scale: none; }
+  html *, html *::before, html *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

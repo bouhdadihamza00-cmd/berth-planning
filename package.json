@@ -1,0 +1,25 @@
+{
+  "name": "portside-operations",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Multi-port operations, berth planning and approval workflows",
+  "scripts": {
+    "dev": "./scripts/start.sh",
+    "start": "./scripts/start.sh",
+    "test:timeline": "node --test tests/timeline.test.mjs",
+    "test:maps": "node --test tests/basemaps.test.mjs tests/vessels.test.mjs",
+    "test": ".venv311/bin/python -m unittest discover -s tests -v",
+    "check": "node --check frontend/timeline.js && node --check frontend/source-feed.js && node --check frontend/vessels.js && node --check frontend/basemaps.js && node --check frontend/app.js && node --check frontend/hmi.js && node --check frontend/cargo.js && node --check frontend/administration.js && node --check frontend/geography.js && node --check frontend/planning.js && node --check frontend/configuration.js && node --check frontend/workflows.js && node --check frontend/reporting.js && node --check frontend/rule-workbench.js && node --check frontend/asset-constraints.js && node --check frontend/removal.js && node --check frontend/port-workspace.js && node --check frontend/preferences.js && node --check frontend/connectors.js && node --check frontend/documents.js && .venv311/bin/python -m compileall -q backend",
+    "ai": "./scripts/start-local-ai.sh",
+    "start:local": "./scripts/start-local-stack.sh"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "leaflet-draw": "^1.0.4",
+    "lucide": "^1.72.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
+}
