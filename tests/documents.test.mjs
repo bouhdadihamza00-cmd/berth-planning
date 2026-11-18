@@ -247,3 +247,32 @@ test("assistant analytics use recorded measures and scenario access follows perm
   window.P.can = () => false;
   assert.doesNotMatch(renderAssistant(), /data-action="scenario"/);
 });
+
+test("assistant capacity views use stored occupancy and escape asset names", () => {
+  const S = setup();
+  renderAssistant();
+  S.operationalAssistant.analysis = { findings: [], metrics: {
+    berth_load: [{ name: '<Berth A>', occupancy_percent: 50 }],
+    equipment_load: [{ name: 'Loader', occupancy_percent: 0 }],
+    occupancy_basis: 'Union of planned intervals',
+  } };
+  const html = renderAssistant();
+  assert.match(html, /&lt;Berth A&gt;/);
+  assert.match(html, /width:50%/);
+  assert.match(html, /<strong>0%<\/strong>/);
+  assert.match(html, /<details class="assistant-capacity-note">/);
+  assert.match(html, /Union of planned intervals/);
+  assert.doesNotMatch(html, /<Berth A>/);
+});
+
+test("assistant distinguishes unloaded metrics from measured zero and links model empty states", () => {
+  const S = setup();
+  let html = renderAssistant();
+  assert.match(html, /class="assistant-kpi"[\s\S]*?<strong>—<\/strong>/);
+  assert.match(html, /data-open-assistant-tab="models"/);
+  S.operationalAssistant.analysis = { findings: [], metrics: { active_calls: 0 } };
+  html = renderAssistant();
+  assert.match(html, /class="assistant-kpi"[\s\S]*?<strong>0<\/strong>/);
+  assert.match(html, /assistant-evidence/);
+  assert.doesNotMatch(html, /assistant-module-empty/);
+});

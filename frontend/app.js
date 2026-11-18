@@ -2,8 +2,8 @@ import { confirmRemoval } from "./removal.js?v=5";
 import { mountWeather } from "./weather.js?v=11";
 import { portMapView, portMapBoundaryKey } from "./port-map-view.js?v=5";
 import { renderProductIcon, activeThroughputProducts } from "./cargo.js?v=11";
-import { mountAssistantChat } from "./assistant-chat.js?v=10";
-import { renderAssistant, bindAssistant } from "./documents.js?v=13";
+import { mountAssistantChat } from "./assistant-chat.js?v=11";
+import { renderAssistant, bindAssistant } from "./documents.js?v=14";
 import { applyPreferences, translateUI, getLocale } from "./preferences.js?v=7";
 import {
   sourceFeedModal,
@@ -32,7 +32,7 @@ import {
   delayForm,
   alertModal,
 } from "./workflows.js?v=28";
-import { renderConfig, bindConfig } from "./configuration.js?v=38";
+import { renderConfig, bindConfig } from "./configuration.js?v=39";
 const S = {
   user: null,
   ports: [],
