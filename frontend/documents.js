@@ -780,6 +780,30 @@ function findingEvidence(f) {
     typeof e === "string" ? e : JSON.stringify(e),
   );
 }
+const nativeAssistantTabs = () => typeof HTMLElement !== "undefined" && Object.hasOwn(HTMLElement.prototype, "focusGroup");
+const assistantTabs = [
+  ["analysis", "Analysis", "scan-line"],
+  ["analytics", "Analytics", "chart-no-axes-combined"],
+  ["trends", "Trends", "trending-up"],
+  ["forecasts", "Forecasts", "chart-spline"],
+  ["scenarios", "Scenarios", "git-branch"],
+  ["models", "Models", "cpu"],
+];
+function assistantWorkspace(s, analysis) {
+  const active = assistantTabs.some(([id]) => id === s.activeTab) ? s.activeTab : "analysis";
+  const panel = (id, body) => `<section role="tabpanel" id="assistant-panel-${id}" aria-labelledby="assistant-tab-${id}" tabindex="${active === id ? 0 : -1}" ${active === id ? "" : "hidden"}><div class="assistant-panel-body">${body}</div></section>`;
+  const metrics = Object.entries(s.analysis?.metrics || {}).filter(([, value]) => typeof value === "number");
+  const format = value => Number(value).toLocaleString(getLocale(), { maximumFractionDigits: 2 });
+  const pending = (title, description, items) => `<div class="assistant-module-heading"><div><h2>${title}</h2><p>${description}</p></div><span class="status amber">Model not connected</span></div><div class="assistant-module-empty">${icon("chart-no-axes-combined")}<h3>No results yet</h3><p>Connect a dedicated model to run this analysis.</p></div><div class="assistant-capabilities">${items.map(([name, detail]) => `<div><strong>${name}</strong><span>${detail}</span></div>`).join("")}</div>`;
+  return `<div class="assistant-workspace"><div class="assistant-tablist" role="tablist" focusgroup="tablist nomemory" aria-label="Operational assistant tools">${assistantTabs.map(([id, title, glyph]) => `<button type="button" role="tab" id="assistant-tab-${id}" data-assistant-tab="${id}" aria-selected="${active === id}" ${nativeAssistantTabs() ? "" : `tabindex="${active === id ? 0 : -1}"`} ${active === id ? "focusgroupstart" : ""}>${icon(glyph)}<span>${title}</span></button>`).join("")}</div><div class="assistant-panels">
+    ${panel("analysis", analysis)}
+    ${panel("analytics", `<div class="assistant-module-heading"><div><h2>Operational analytics</h2><p>Current planning and operating measures.</p></div><span class="status blue">Recorded data</span></div><dl class="assistant-analytics">${metrics.map(([key, value]) => `<div><dt>${esc(metricLabels[key] || label(key))}</dt><dd>${format(value)}</dd></div>`).join("") || '<div class="document-empty"><p>No analysis data available. Refresh analysis to load current measures.</p></div>'}</dl>`)}
+    ${panel("trends", pending("Trends", "Historical patterns across port operations.", [["Berth utilization", "Occupancy and congestion over time"], ["Vessel turnaround", "Waiting time and service duration"], ["Cargo throughput", "Volume and handling performance"]]))}
+    ${panel("forecasts", pending("Forecasts", "Forward-looking operational outlooks.", [["Arrival demand", "Expected vessel traffic and workload"], ["Berth occupancy", "Capacity pressure and availability"], ["Completion times", "Expected departures and delay risk"]]))}
+    ${panel("scenarios", `<div class="assistant-module-heading"><div><h2>Scenario planning</h2><p>Compare operational changes before proposing a plan.</p></div></div><div class="assistant-scenario-launch">${icon("git-branch")}<div><h3>Test a change</h3><p>Simulate a berth closure, equipment outage, vessel delay or handling-rate change.</p>${P().can("scenarios.create") ? '<button type="button" class="btn primary" data-action="scenario">Open scenario planner</button>' : '<p class="subtle">Scenario creation requires planning access.</p>'}</div></div><div class="assistant-capabilities"><div><strong>Evaluate constraints</strong><span>Check berth and equipment compatibility</span></div><div><strong>Compare alternatives</strong><span>Review proposed allocations and start times</span></div><div><strong>Submit for approval</strong><span>Keep changes within the planning workflow</span></div></div>`)}
+    ${panel("models", `<div class="assistant-module-heading"><div><h2>Model workspace</h2><p>Connection status by analytical capability.</p></div></div><div class="table-scroll"><table><thead><tr><th>Capability</th><th>Purpose</th><th>Status</th></tr></thead><tbody>${[["Operational assistant", "Explain current findings", s.ai?.configured ? "Connected" : "Not connected"], ["Trend analysis", "Detect historical patterns", "Not connected"], ["Forecasting", "Estimate future operating conditions", "Not connected"]].map(([name, purpose, state]) => `<tr><td><strong>${name}</strong></td><td>${purpose}</td><td><span class="status ${state === "Connected" ? "green" : "amber"}">${state}</span></td></tr>`).join("")}</tbody></table></div>`)}
+  </div></div>`;
+}
 export function renderAssistant() {
   const s = assistantState(),
     findings = s.analysis?.findings || [];
@@ -788,9 +812,9 @@ export function renderAssistant() {
   const query = (s.findingQuery || "").toLocaleLowerCase();
   const matches = (f) => JSON.stringify(f).toLocaleLowerCase().includes(query);
   const metrics = Object.entries(s.analysis?.metrics || {}).filter(
-    ([, value]) => typeof value === "number",
+    ([key, value]) => typeof value === "number" && ["active_calls", "occupied_berths", "calls_with_constraints", "unready_calls", "recorded_delay_hours"].includes(key),
   );
-  return `<section class="card intelligence-workbench">
+  return assistantWorkspace(s, `<section class="card intelligence-workbench">
     <div class="card-head"><h3>${icon("activity")}Operational intelligence</h3><button class="btn" id="refresh-intelligence" ${s.loading || s.asking ? "disabled" : ""}>${icon("refresh-cw")}<span>${s.loading ? "Refreshing…" : "Refresh analysis"}</span></button></div>
     <div class="intelligence-intro"><div class="intelligence-context"><span title="${esc(s.analysis?.metrics?.occupancy_basis || "")}">${icon("clock-3")}${s.analysis?.metrics?.window_start ? `${esc(date(s.analysis.metrics.window_start))} – ${esc(date(s.analysis.metrics.window_end))} · 48-hour planning window` : "Current planning window"}</span></div></div>
     ${s.error ? `<div class="notice error" role="alert">${esc(s.error)}</div>` : ""}
@@ -809,7 +833,7 @@ export function renderAssistant() {
               "",
             )}</ul><p><strong>Recommended action</strong> ${esc(selected.recommendation)}</p>`
         : ""
-    }</details><div id="intelligence-answer" class="intelligence-answer" aria-live="polite">${s.asking ? '<p class="subtle">Analyzing…</p>' : s.answer ? renderAnswer(s.answer) : ""}</div></aside></div></section>`;
+    }</details><div id="intelligence-answer" class="intelligence-answer" aria-live="polite">${s.asking ? '<p class="subtle">Analyzing…</p>' : s.answer ? renderAnswer(s.answer) : ""}</div></aside></div></section>`);
 }
 function renderAnswer(answer) {
   const findings = assistantState().analysis?.findings || [];
@@ -843,8 +867,40 @@ export function bindAssistant() {
     } else s.error = errorMessage(results[0].reason);
     if (results[1].status === "fulfilled") s.ai = results[1].value;
     else s.ai = { configured: false, message: errorMessage(results[1].reason) };
+    const focusedTab = document.activeElement?.dataset.assistantTab;
     redraw("intelligence");
+    if (focusedTab) document.querySelector(`[data-assistant-tab="${focusedTab}"]`)?.focus({ preventScroll: true });
   };
+  const tabs = [...document.querySelectorAll("[data-assistant-tab]")];
+  const activate = tab => {
+    s.activeTab = tab.dataset.assistantTab;
+    for (const button of tabs) {
+      const selected = button === tab;
+      button.setAttribute("aria-selected", String(selected));
+      if (nativeAssistantTabs()) button.removeAttribute("tabindex");
+      else button.tabIndex = selected ? 0 : -1;
+      button.toggleAttribute("focusgroupstart", selected);
+      const panel = document.querySelector("#assistant-panel-" + button.dataset.assistantTab);
+      panel.hidden = !selected;
+      panel.tabIndex = selected && !panel.querySelector("button,input,textarea,select,a[href]") ? 0 : -1;
+    }
+    tab.scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
+  };
+  for (const tab of tabs) {
+    tab.addEventListener("click", () => activate(tab));
+    tab.addEventListener("focus", () => activate(tab));
+    // Keep native focusgroup where available; older browsers use the same keyboard contract.
+    if (!nativeAssistantTabs()) tab.addEventListener("keydown", event => {
+      const rtl = document.documentElement.dir === "rtl";
+      const step = event.key === "ArrowRight" ? (rtl ? -1 : 1) : event.key === "ArrowLeft" ? (rtl ? 1 : -1) : 0;
+      if (!step && !["Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      tabs[event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (tabs.indexOf(tab) + step + tabs.length) % tabs.length].focus();
+    });
+  }
+  tabs.find(tab => tab.getAttribute("aria-selected") === "true")?.scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
+  for (const panel of document.querySelectorAll(".assistant-panels > [role=tabpanel]"))
+    panel.tabIndex = !panel.hidden && !panel.querySelector("button,input,textarea,select,a[href]") ? 0 : -1;
   document
     .querySelector("#refresh-intelligence")
     ?.addEventListener("click", () => {

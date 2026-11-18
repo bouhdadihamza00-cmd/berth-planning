@@ -218,3 +218,32 @@ test("document library omits provider and model diagnostics while retaining impo
   assert.match(html, /id="upload-planning-document"/);
   assert.match(html, /Import history/);
 });
+
+test("assistant modules render one selected panel and preserve the chosen tool", () => {
+  const S = setup();
+  let html = renderAssistant();
+  assert.equal((html.match(/role="tab" /g) || []).length, 6);
+  assert.equal((html.match(/role="tabpanel"/g) || []).length, 6);
+  assert.equal((html.match(/aria-selected="true"/g) || []).length, 1);
+  assert.match(html, /id="assistant-tab-analysis"[^>]*aria-selected="true"/);
+  S.operationalAssistant.activeTab = "forecasts";
+  html = renderAssistant();
+  assert.match(html, /id="assistant-tab-forecasts"[^>]*aria-selected="true"/);
+  assert.match(html, /id="assistant-panel-analysis"[^>]*hidden/);
+  assert.match(html, /id="assistant-panel-forecasts"[^>]*tabindex="0"[^>]*><div/);
+  assert.match(html, /Model not connected/);
+  S.portId = "another-port";
+  assert.match(renderAssistant(), /id="assistant-tab-analysis"[^>]*aria-selected="true"/);
+});
+
+test("assistant analytics use recorded measures and scenario access follows permissions", () => {
+  const S = setup();
+  renderAssistant();
+  S.operationalAssistant.analysis = { metrics: { active_calls: 7, waiting_calls: 0, window_start: "2026-11-18" }, findings: [] };
+  let html = renderAssistant();
+  assert.match(html, /<dt>Active calls<\/dt><dd>7<\/dd>/);
+  assert.match(html, /<dt>Waiting vessel calls<\/dt><dd>0<\/dd>/);
+  assert.match(html, /data-action="scenario"/);
+  window.P.can = () => false;
+  assert.doesNotMatch(renderAssistant(), /data-action="scenario"/);
+});

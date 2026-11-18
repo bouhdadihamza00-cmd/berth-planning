@@ -2,8 +2,8 @@ import { confirmRemoval } from "./removal.js?v=5";
 import { mountWeather } from "./weather.js?v=11";
 import { portMapView, portMapBoundaryKey } from "./port-map-view.js?v=5";
 import { renderProductIcon, activeThroughputProducts } from "./cargo.js?v=11";
-import { mountAssistantChat } from "./assistant-chat.js?v=9";
-import { renderAssistant, bindAssistant } from "./documents.js?v=12";
+import { mountAssistantChat } from "./assistant-chat.js?v=10";
+import { renderAssistant, bindAssistant } from "./documents.js?v=13";
 import { applyPreferences, translateUI, getLocale } from "./preferences.js?v=7";
 import {
   sourceFeedModal,
@@ -32,7 +32,7 @@ import {
   delayForm,
   alertModal,
 } from "./workflows.js?v=28";
-import { renderConfig, bindConfig } from "./configuration.js?v=36";
+import { renderConfig, bindConfig } from "./configuration.js?v=37";
 const S = {
   user: null,
   ports: [],
@@ -543,7 +543,7 @@ function renderApp() {
   cleanupMaps();
   $("#app").innerHTML =
     header() +
-    `<main>${S.page === "overview" ? overview() : S.page === "planning" ? renderPlanning() : S.page === "center" ? renderCenter() : S.page === "assistant" ? pageHeading("Operational assistant", "AI tools for operational analysis, planning assistance and document intelligence.", `${can("scenarios.create") ? btn("Scenario intelligence", "sparkles", "scenario") : ""}${can("config.view") ? btn("Document intelligence", "files", "assistant-documents") : ""}`) + renderAssistant() : renderConfig()}</main>`;
+    `<main>${S.page === "overview" ? overview() : S.page === "planning" ? renderPlanning() : S.page === "center" ? renderCenter() : S.page === "assistant" ? pageHeading("Operational assistant", "Analysis, trends, forecasts and planning scenarios.", `${can("scenarios.create") ? btn("Scenario intelligence", "sparkles", "scenario") : ""}${can("config.view") ? btn("Document intelligence", "files", "assistant-documents") : ""}`) + renderAssistant() : renderConfig()}</main>`;
   document.body.classList.toggle("historical-mode", !!S.data.port.source_feed);
   applyPreferences();
   prepareScreen(S.page);

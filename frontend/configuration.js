@@ -8,7 +8,7 @@ import {
   renderRuleWorkbench,
   bindRuleWorkbench,
 } from "./rule-workbench.js?v=9";
-import { renderDocuments, bindDocuments } from "./documents.js?v=12";
+import { renderDocuments, bindDocuments } from "./documents.js?v=13";
 import { renderConnectors, bindConnectors } from "./connectors.js?v=6";
 import { renderPreferences, bindPreferences } from "./preferences.js?v=7";
 import { renderCatalog, bindCatalog } from "./cargo.js?v=11";
