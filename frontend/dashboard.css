@@ -1,7 +1,7 @@
 /* Overview-only refinements; operational screens retain their existing layouts. */
 .hmi-main[data-page="overview"] {
   --dashboard-ink: #16364b;
-  --dashboard-muted: #637b8b;
+  --dashboard-muted: var(--muted);
   --dashboard-line: #dce6ed;
   background: #f2f6f9;
   padding: 14px 16px 16px;
@@ -73,18 +73,18 @@
   font-size: calc(10px * var(--ui-font-scale, 1));
   height: 25px;
 }
-.hmi-main[data-page="overview"] .right-stack th { background: #f8fafc; color: #657d8d; font-size: calc(9px * var(--ui-font-scale, 1)); font-weight: 550; padding: 6px 9px; border-bottom-color: #e7eef3; }
+.hmi-main[data-page="overview"] .right-stack th { background: #f8fafc; color: var(--muted); font-size: calc(9px * var(--ui-font-scale, 1)); font-weight: 550; padding: 6px 9px; border-bottom-color: #e7eef3; }
 .hmi-main[data-page="overview"] .right-stack td { font-size: calc(10px * var(--ui-font-scale, 1)); padding: 7px 9px; border-bottom: 1px solid #eef2f5; }
 .hmi-main[data-page="overview"] .right-stack tr:nth-child(even) { background: #fbfcfd; }
 .hmi-main[data-page="overview"] .right-stack tbody tr:hover { background: #f0f7fb; }
 .hmi-main[data-page="overview"] .right-stack .vessel-name { font-size: calc(11px * var(--ui-font-scale, 1)); color: #21465c; }
-.hmi-main[data-page="overview"] .right-stack .vessel-sub { color: #748896; font-size: calc(9px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="overview"] .right-stack .vessel-sub { color: var(--muted); font-size: calc(9px * var(--ui-font-scale, 1)); }
 .hmi-main[data-page="overview"] .table-progress .progress-track { height: 4px; background: #e8eff4; }
 .hmi-main[data-page="overview"] .map-control { border-color: #d1dce3; border-radius: 5px; background: #fffffff2; color: #244c63; box-shadow: 0 1px 3px #08243612; }
 .hmi-main[data-page="overview"] .map-search input { border-color: #d1dce3; border-radius: 5px; background: #fffffff2; }
 .hmi-main[data-page="overview"] .map-legend { background: #0c3249e8; border-color: #ffffff33; border-radius: 6px; box-shadow: 0 2px 8px #08243620; }
 .hmi-main[data-page="overview"] .map-legend h4 { font-size: calc(9px * var(--ui-font-scale, 1)); letter-spacing: .5px; }
-.hmi-main[data-page="overview"] .map-footer { background: #fafcfd; color: #6b8190; border-top: 1px solid #e7eef3; }
+.hmi-main[data-page="overview"] .map-footer { background: #fafcfd; color: var(--muted); border-top: 1px solid #e7eef3; }
 .hmi-main[data-page="overview"] .throughput-products { gap: 6px; }
 .hmi-main[data-page="overview"] .throughput-products .throughput-product { border-color: #e3ebf0; border-radius: 5px; padding: 6px 8px; }
 .hmi-main[data-page="overview"] .throughput-products .product-label { font-size: calc(10px * var(--ui-font-scale, 1)); line-height: calc(12px * var(--ui-font-scale, 1)); }
@@ -95,7 +95,7 @@
 .hmi-main[data-page="overview"] .delay-chart-legend { gap: 5px; }
 .hmi-main[data-page="overview"] .alerts-card .alert-item { padding: 5px 0; border-bottom-color: #e8eef3; }
 .hmi-main[data-page="overview"] .alerts-card .alert-copy h4 { font-size: calc(11px * var(--ui-font-scale, 1)); line-height: calc(13px * var(--ui-font-scale, 1)); color: #25485d; }
-.hmi-main[data-page="overview"] .alerts-card .alert-copy p { color: #657d8d; line-height: calc(12px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="overview"] .alerts-card .alert-copy p { color: var(--muted); line-height: calc(12px * var(--ui-font-scale, 1)); }
 .hmi-main[data-page="overview"] .alert-severity { border-radius: 4px; font-size: calc(9px * var(--ui-font-scale, 1)) !important; }
 @media (min-width: 1000px) {
   .hmi-main[data-page="overview"] .hmi-workspace { grid-template-rows: 102px minmax(340px,1fr) 164px; }
@@ -117,7 +117,7 @@
   .hmi-main[data-page="overview"] .metric { padding: 8px; }
   .hmi-main[data-page="overview"] .metric-value { font-size: calc(25px * var(--ui-font-scale, 1)); line-height: calc(28px * var(--ui-font-scale, 1)); }
 }
-html[data-theme="dark"] .hmi-main[data-page="overview"] { --dashboard-ink: #dfebf2; --dashboard-muted: #9db3c2; --dashboard-line: #304e61; background: #102b3e; }
+html[data-theme="dark"] .hmi-main[data-page="overview"] { --dashboard-ink: #dfebf2; --dashboard-muted: var(--muted); --dashboard-line: #304e61; background: #102b3e; }
 html[data-theme="dark"] .hmi-main[data-page="overview"] :is(.card,.metric,.card-head) { background: #16364b; }
 html[data-theme="dark"] .hmi-main[data-page="overview"] .metric-label { color: #bfd2df; }
 html[data-theme="dark"] .hmi-main[data-page="overview"] .metric:first-child { background: #22516d; }

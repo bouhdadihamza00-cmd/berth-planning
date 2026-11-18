@@ -1,22 +1,22 @@
-import { confirmRemoval } from "./removal.js?v=5";
-import { mountWeather } from "./weather.js?v=11";
-import { portMapView, portMapBoundaryKey } from "./port-map-view.js?v=5";
-import { renderProductIcon, activeThroughputProducts } from "./cargo.js?v=11";
-import { mountAssistantChat } from "./assistant-chat.js?v=11";
-import { renderAssistant, bindAssistant } from "./documents.js?v=14";
-import { applyPreferences, translateUI, getLocale } from "./preferences.js?v=7";
+import { confirmRemoval } from "./removal.js?v=6";
+import { mountWeather } from "./weather.js?v=12";
+import { portMapView, portMapBoundaryKey } from "./port-map-view.js?v=6";
+import { renderProductIcon, activeThroughputProducts } from "./cargo.js?v=12";
+import { mountAssistantChat } from "./assistant-chat.js?v=12";
+import { renderAssistant, bindAssistant } from "./documents.js?v=15";
+import { applyPreferences, translateUI, getLocale } from "./preferences.js?v=8";
 import {
   sourceFeedModal,
   sourcePlanModal,
   sourceCallDetails,
-} from "./source-feed.js?v=8";
-import { mountVessels, aisObservationPresentation } from "./vessels.js?v=9";
-import { attachBasemap } from "./basemaps.js?v=4";
+} from "./source-feed.js?v=9";
+import { mountVessels, aisObservationPresentation } from "./vessels.js?v=10";
+import { attachBasemap } from "./basemaps.js?v=5";
 import {
   prepareScreen,
   activateScreen,
   activateModalLists,
-} from "./hmi.js?v=11";
+} from "./hmi.js?v=12";
 import {
   renderPlanning,
   fitTimeline,
@@ -25,14 +25,14 @@ import {
   proposalForm,
   scenarioForm,
   historyModal,
-} from "./planning.js?v=31";
+} from "./planning.js?v=32";
 import {
   renderCenter,
   bindCenter,
   delayForm,
   alertModal,
-} from "./workflows.js?v=28";
-import { renderConfig, bindConfig } from "./configuration.js?v=39";
+} from "./workflows.js?v=29";
+import { renderConfig, bindConfig } from "./configuration.js?v=40";
 const S = {
   user: null,
   ports: [],
@@ -203,7 +203,7 @@ function toast(message, error = false) {
   setTimeout(() => el.remove(), 6000);
 }
 function icons() {
-  window.lucide?.createIcons({ attrs: { "stroke-width": 1.7 } });
+  window.lucide?.createIcons({ attrs: { "stroke-width": 1.7, "aria-hidden": "true", focusable: "false" } });
 }
 function modal(title, body, wide = false) {
   let dialog = $("#overlay dialog");
@@ -304,10 +304,8 @@ function aisStateLabel(ais = S.data.ais) {
 }
 function aisMapSummary() {
   const ais = S.data.ais;
-  if (ais.provider === "marinetraffic-client")
-    return `MarineTraffic client · ${aisStateLabel(ais)}`;
   return ais.provider === "workbook-demo"
-    ? "Working Excel demo · No AIS coordinates"
+    ? "Imported plan · No coordinates"
     : ais.mode === "historical"
       ? "Historical report · No coordinates"
       : aisStateLabel(ais);
@@ -324,7 +322,7 @@ function header() {
     ["assistant", "brain-circuit", "Operational assistant"],
     ["configuration", "sliders-horizontal", "Configuration"],
   ];
-  return `<aside class="app-sidebar"><div class="sidebar-caption">WORKSPACE</div><nav class="nav-bar" aria-label="Primary navigation">${links.map(([id, ic, label]) => `<button class="nav-item ${S.page === id ? "active" : ""}" data-nav="${id}" aria-label="${label}" ${S.page === id ? 'aria-current="page"' : ""}>${icon(ic)}<span class="nav-label">${label}</span>${id === "center" && S.data.stats.open_alerts ? `<span class="nav-count">${S.data.stats.open_alerts}</span>` : ""}</button>`).join("")}</nav><div class="sidebar-footer"><div class="sidebar-port-code">${esc(S.data.port.code)}</div><span>${esc(S.data.port.name)}</span><small>${esc(S.data.port.timezone)}</small><div class="sidebar-mode"><span class="dot"></span>${aisStateLabel()}</div></div></aside><header><div class="topbar"><a class="brand" href="#" data-action="overview" aria-label="Portside overview"><span class="brand-icon">${icon("anchor")}</span><span><span class="brand-name">${esc(S.data.port.brand || "Portside")}</span><span class="brand-tag">Operations console</span></span></a><div class="port-switch"><span class="port-symbol">${icon("map-pin")}</span><div><div class="eyebrow">Selected port</div><select id="port-select" aria-label="Selected port">${S.ports.map((p) => `<option value="${p.id}" ${p.id === S.portId ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select></div></div><div class="top-spacer"></div><div class="clock" id="clock"></div><div class="divider"></div><button class="icon-btn" data-action="notifications" aria-label="Notifications">${icon("bell")}${unread ? '<span class="notification-dot"></span>' : ""}</button><div class="divider"></div><button class="user-button" data-action="profile"><span class="avatar">${S.user.name
+  return `<a class="skip-link" href="#workspace-heading">Skip to workspace</a><aside class="app-sidebar"><div class="sidebar-caption">WORKSPACE</div><nav class="nav-bar" aria-label="Primary">${links.map(([id, ic, label]) => `<button class="nav-item ${S.page === id ? "active" : ""}" data-nav="${id}" aria-label="${label}" ${S.page === id ? 'aria-current="page"' : ""}>${icon(ic)}<span class="nav-label">${label}</span>${id === "center" && S.data.stats.open_alerts ? `<span class="nav-count">${S.data.stats.open_alerts}</span>` : ""}</button>`).join("")}</nav><div class="sidebar-footer"><div class="sidebar-port-code">${esc(S.data.port.code)}</div><span>${esc(S.data.port.name)}</span><small>${esc(S.data.port.timezone)}</small><div class="sidebar-mode"><span class="dot"></span>${aisStateLabel()}</div></div></aside><header><div class="topbar"><a class="brand" href="#" data-action="overview" aria-label="Portside overview"><span class="brand-icon">${icon("anchor")}</span><span><span class="brand-name">${esc(S.data.port.brand || "Portside")}</span><span class="brand-tag">Operations console</span></span></a><div class="port-switch"><span class="port-symbol">${icon("map-pin")}</span><div><div class="eyebrow">Selected port</div><select id="port-select" aria-label="Selected port">${S.ports.map((p) => `<option value="${p.id}" ${p.id === S.portId ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select></div></div><div class="top-spacer"></div><div class="clock" id="clock"></div><div class="divider"></div><button class="icon-btn" data-action="notifications" aria-label="Notifications">${icon("bell")}${unread ? '<span class="notification-dot"></span>' : ""}</button><div class="divider"></div><button class="user-button" data-action="profile"><span class="avatar">${S.user.name
     .split(" ")
     .map((x) => x[0])
     .slice(0, 2)
@@ -343,7 +341,7 @@ function updateClock() {
   c.innerHTML = `<strong>${new Intl.DateTimeFormat(getLocale(), { timeZone: S.data.port.timezone, day: "2-digit", month: "short", year: "numeric" }).format(d)}</strong><br>${time(d)} <span style="color:#a2afb7">${esc(S.data.port.timezone)}</span>`;
 }
 function pageHeading(title, subtitle, actions = "", pill = true) {
-  return `<div class="page-heading"><div><div class="title-line"><h1>${title}</h1>${pill ? `<span class="demo-pill ${S.data.ais.mode === "live" ? "live" : ""}"><span class="dot" style="width:5px;height:5px"></span>${aisStateLabel()}</span>` : ""}</div><p>${subtitle}</p></div><div class="heading-actions">${actions}</div></div>`;
+  return `<div class="page-heading"><div><div class="title-line"><h1 id="workspace-heading" tabindex="-1">${title}</h1>${pill ? `<span class="demo-pill ${S.data.ais.mode === "live" ? "live" : ""}"><span class="dot" style="width:5px;height:5px"></span>${aisStateLabel()}</span>` : ""}</div><p>${subtitle}</p></div><div class="heading-actions">${actions}</div></div>`;
 }
 function cardHead(title, ic, meta = "", action = "", count = "") {
   return `<div class="card-head"><div class="card-title">${icon(ic)}<h2>${title}</h2>${count !== "" ? `<span class="count-pill">${count}</span>` : ""}</div>${action ? `<button class="card-link" data-action="${action}">${meta}${icon("arrow-up-right")}</button>` : `<span class="card-meta">${meta}</span>`}</div>`;
@@ -451,7 +449,7 @@ function overview() {
         : `Current vessel calls, berth occupancy and operational exceptions.`,
       `${btn(S.data.port.source_feed ? "Source data" : "Last 30 days", S.data.port.source_feed ? "file-spreadsheet" : "calendar-days", S.data.port.source_feed ? "source-feed" : "period", "hide-mobile")}${btn("Export report", "download", "export-overview")}`,
     ) +
-    `<div class="metrics">${metrics.map(([label, value, unit, foot, ic, cls], i) => `<button class="metric" data-metric="${i}"><div class="metric-top"><span class="metric-label">${label}</span><span class="metric-icon">${icon(ic)}</span></div><div class="metric-value" style="${i === 7 && value ? "color:#be3030" : ""}">${fmt(value, value % 1 ? 1 : 0)}<span class="metric-unit">${unit}</span></div>${cls === "meter" ? `<div class="mini-meter"><span style="width:${Math.min(value, 100)}%"></span></div>` : ""}<div class="metric-foot ${cls}">${i === 5 ? icon("check") : i === 7 ? icon("circle-dot") : ""}${foot}</div></button>`).join("")}</div><div class="dashboard-middle"><section class="card map-card">${cardHead("Port view", "map", aisMapSummary(), "", "")}<div class="port-map-wrap" id="map-container"><div id="port-map" class="port-map" aria-label="Interactive port map"></div><div class="map-top-left"><button class="map-control active" data-action="basemap">${icon("layers-2")}<span id="basemap-label">Satellite</span>${icon("chevron-down")}</button><button class="map-control" data-action="layers">${icon("list-filter")}Layers</button><div class="map-search"><input id="map-vessel-search" placeholder="Find a vessel…" aria-label="Find a vessel on the map"><div class="map-search-results" id="map-search-results"></div></div></div><aside id="port-weather" class="map-weather" aria-label="Port weather" aria-live="polite">Loading port weather…</aside><div class="map-right-controls"><button class="map-control" data-action="map-fullscreen" aria-label="Fullscreen map">${icon("expand")}</button><button class="map-control" data-action="map-recenter" aria-label="Recenter port">${icon("locate-fixed")}</button><button class="map-control" data-action="refresh" aria-label="Refresh positions">${icon("refresh-cw")}</button></div><div class="map-legend"><h4>VESSEL STATUS</h4>${(S.data.ais.provider === "marinetraffic-client") ? `<div class="legend-row"><span class="legend-color" style="background:#bfdae9"></span><span id="ais-observed-legend">${S.data.ais.historical_test ? "Historical/test AIS vessel" : "Observed AIS vessel"}</span></div>` : ""}${["Loading", "Unloading", "Waiting", "Delayed", "Berthed"].map((n) => `<div class="legend-row"><span class="legend-color" style="background:${colors[n]}"></span>${n === "Waiting" ? "Waiting / anchorage" : n}</div>`).join("")}<div class="legend-row" style="border-top:1px solid #8aa5af33;padding-top:8px;margin-top:10px"><span style="width:12px;border-top:3px solid #eb8d24"></span>Configured berths</div></div><div id="ais-empty-state" class="port-map-empty-state" ${aisHasNoPositions() || S.data.port.source_feed ? "" : "hidden"}><span class="ais-empty-icon">${icon("radio")}</span><div><strong>${S.data.port.source_feed ? "Vessel positions are not in these workbooks" : "No vessel positions received"}</strong><p>${S.data.port.source_feed ? "Use the berth plan and vessel lineup to explore the historical operation." : (S.data.ais.provider === "marinetraffic-client") ? esc(S.data.ais.message) : "No vessel positions have been received for this port area."}</p>${S.data.port.source_feed ? '<button type="button" class="btn small" data-action="source-feed">Open source data</button>' : '<button type="button" class="btn small" id="ais-open-settings">Tracking settings</button>'}</div></div></div><div class="map-footer"><span>${icon("map-pin")}${esc(S.data.port.name)} · ${S.data.berths.length} berths</span><span>${icon("refresh-cw")}${S.data.port.source_feed ? "Source date 28 Nov 2023" : "Updated " + time(new Date())}</span></div></section><div class="right-stack"><section class="card operations-card">${cardHead("Ongoing operations", "ship", "View all", "vessels", ops.length)}<div class="table-scroll"><table><thead><tr><th>Vessel / product</th><th>Berth</th><th>Progress</th><th>Est. finish</th></tr></thead><tbody>${
+    `<div class="metrics">${metrics.map(([label, value, unit, foot, ic, cls], i) => `<button class="metric" data-metric="${i}"><div class="metric-top"><span class="metric-label">${label}</span><span class="metric-icon">${icon(ic)}</span></div><div class="metric-value" style="${i === 7 && value ? "color:#be3030" : ""}">${fmt(value, value % 1 ? 1 : 0)}<span class="metric-unit">${unit}</span></div>${cls === "meter" ? `<div class="mini-meter"><span style="width:${Math.min(value, 100)}%"></span></div>` : ""}<div class="metric-foot ${cls}">${i === 5 ? icon("check") : i === 7 ? icon("circle-dot") : ""}${foot}</div></button>`).join("")}</div><div class="dashboard-middle"><section class="card map-card">${cardHead("Port view", "map", aisMapSummary(), "", "")}<div class="port-map-wrap" id="map-container"><div id="port-map" class="port-map" aria-label="Interactive port map"></div><div class="map-top-left"><button class="map-control active" data-action="basemap">${icon("layers-2")}<span id="basemap-label">Satellite</span>${icon("chevron-down")}</button><button class="map-control" data-action="layers">${icon("list-filter")}Layers</button><div class="map-search"><input id="map-vessel-search" placeholder="Find a vessel…" aria-label="Find a vessel on the map"><div class="map-search-results" id="map-search-results"></div></div></div><aside id="port-weather" class="map-weather" aria-label="Port weather" aria-live="polite">Loading port weather…</aside><div class="map-right-controls"><button class="map-control" data-action="map-fullscreen" aria-label="Fullscreen map">${icon("expand")}</button><button class="map-control" data-action="map-recenter" aria-label="Recenter port">${icon("locate-fixed")}</button><button class="map-control" data-action="refresh" aria-label="Refresh positions">${icon("refresh-cw")}</button></div><div class="map-legend"><h4>VESSEL STATUS</h4>${(S.data.ais.provider === "marinetraffic-client") ? `<div class="legend-row"><span class="legend-color" style="background:#bfdae9"></span><span id="ais-observed-legend">${S.data.ais.historical_test ? "Historical/test AIS vessel" : "Observed AIS vessel"}</span></div>` : ""}${["Loading", "Unloading", "Waiting", "Delayed", "Berthed"].map((n) => `<div class="legend-row"><span class="legend-color" style="background:${colors[n]}"></span>${n === "Waiting" ? "Waiting / anchorage" : n}</div>`).join("")}<div class="legend-row" style="border-top:1px solid #8aa5af33;padding-top:8px;margin-top:10px"><span style="width:12px;border-top:3px solid #eb8d24"></span>Configured berths</div></div><div id="ais-empty-state" class="port-map-empty-state" ${aisHasNoPositions() || S.data.port.source_feed ? "" : "hidden"}><span class="ais-empty-icon">${icon("radio")}</span><div><strong>${S.data.port.source_feed ? "Vessel positions are not in these workbooks" : "No vessel positions received"}</strong><p>${S.data.port.source_feed ? "Use the berth plan and vessel lineup to explore the historical operation." : (S.data.ais.provider === "marinetraffic-client") ? esc(S.data.ais.message) : "No vessel positions have been received for this port area."}</p>${S.data.port.source_feed ? '<button type="button" class="btn small" data-action="source-feed">Open source data</button>' : '<button type="button" class="btn small" id="ais-open-settings">Tracking settings</button>'}</div></div></div><div class="map-footer"><span>${icon("map-pin")}${esc(S.data.port.name)} · ${S.data.berths.length} berths</span><span>${icon("refresh-cw")}${S.data.port.source_feed ? "Source date 28 Nov 2023" : "Updated " + time(new Date())}</span></div></section><div class="right-stack"><section class="card operations-card">${cardHead("Ongoing operations", "ship", "View all", "vessels", ops.length)}<div class="table-scroll"><table><thead><tr><th scope=\"col\">Vessel / product</th><th scope=\"col\">Berth</th><th scope=\"col\">Progress</th><th scope=\"col\">Est. finish</th></tr></thead><tbody>${
       ops
         .map(
           (c) =>
@@ -459,7 +457,7 @@ function overview() {
         )
         .join("") ||
       `<tr><td colspan="4">${empty("No ongoing operations")}</td></tr>`
-    }</tbody></table></div></section><section class="card berths-card">${cardHead("Berth status", "anchor", "Open planning", "planning")}<div class="table-scroll"><table><thead><tr><th>Berth</th><th>Status</th><th>Vessel</th><th>Progress</th></tr></thead><tbody>${
+    }</tbody></table></div></section><section class="card berths-card">${cardHead("Berth status", "anchor", "Open planning", "planning")}<div class="table-scroll"><table><thead><tr><th scope=\"col\">Berth</th><th scope=\"col\">Status</th><th scope=\"col\">Vessel</th><th scope=\"col\">Progress</th></tr></thead><tbody>${
       berths
         .map((b) => {
           const c = calls.find(
@@ -1139,7 +1137,7 @@ function vesselList(filter = () => true, title = "Vessel calls") {
   const rows = S.data.calls.filter(filter);
   modal(
     title,
-    `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><p class="config-description" style="margin:0">${rows.length} stored vessel calls in ${esc(S.data.port.code)}</p>${can("calls.create") ? btn("New nomination", "plus", "modal-new-call", "primary") : ""}</div><div class="table-scroll"><table><thead><tr><th>Vessel</th><th>Cargo</th><th>Quantity</th><th>Berth</th><th>ETA</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows.map((c) => `<tr class="clickable" data-vessel="${c.id}"><td class="vessel-cell">${esc(c.name)}</td><td>${esc(c.product)}</td><td>${fmt(c.quantity)} t</td><td>${esc(berth(c.berth_id)?.code || "—")}</td><td>${date(c.eta)}</td><td>${status(c.status)}</td><td>${can("config.edit") ? `<button class="btn small danger" data-remove-record="${c.id}" data-remove-kind="calls">Remove</button>` : ""}</td></tr>`).join("")}</tbody></table></div>`,
+    `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><p class="config-description" style="margin:0">${rows.length} stored vessel calls in ${esc(S.data.port.code)}</p>${can("calls.create") ? btn("New nomination", "plus", "modal-new-call", "primary") : ""}</div><div class="table-scroll"><table><thead><tr><th scope=\"col\">Vessel</th><th scope=\"col\">Cargo</th><th scope=\"col\">Quantity</th><th scope=\"col\">Berth</th><th scope=\"col\">ETA</th><th scope=\"col\">Status</th><th scope=\"col\">Actions</th></tr></thead><tbody>${rows.map((c) => `<tr class="clickable" data-vessel="${c.id}"><td class="vessel-cell">${esc(c.name)}</td><td>${esc(c.product)}</td><td>${fmt(c.quantity)} t</td><td>${esc(berth(c.berth_id)?.code || "—")}</td><td>${date(c.eta)}</td><td>${status(c.status)}</td><td>${can("config.edit") ? `<button class="btn small danger" data-remove-record="${c.id}" data-remove-kind="calls">Remove</button>` : ""}</td></tr>`).join("")}</tbody></table></div>`,
     true,
   );
   bindRecords($("#overlay"));
@@ -1284,7 +1282,7 @@ function renderLogin() {
   document.querySelector("#assistant-chat")?.remove();
   S.assistantChat = null;
   $("#app").innerHTML =
-    `<div class="login-screen"><aside class="login-aside"><div class="brand"><span class="brand-icon">${icon("anchor")}</span><span><span class="brand-name">Portside</span><div class="brand-tag">Port operations & planning</div></span></div><div class="login-copy"><div class="eyebrow" style="color:#7cadb5;margin-bottom:20px">PORT OPERATIONS & BERTH PLANNING</div><h1>Port operations<br>& berth planning.</h1><p>Vessel schedules, berth allocation and operational coordination.</p></div><footer>Portside · Operations console</footer></aside><section class="login-main"><form class="login-form" id="login-form"><h2>Operator sign in</h2><p>Sign in to your operations workspace.</p>${field("Email address", "email", "", "email", 'required autocomplete="username" spellcheck="false"')}${field("Password", "password", "", "password", 'required autocomplete="current-password"')}<div class="login-error" id="login-error" role="alert"></div><button type="submit" class="btn primary">Sign in ${icon("arrow-right")}</button></form></section></div>`;
+    `<div class="login-screen"><aside class="login-aside"><div class="brand"><span class="brand-icon">${icon("anchor")}</span><span><span class="brand-name">Portside</span><div class="brand-tag">Port operations & planning</div></span></div><div class="login-copy"><h1>Port operations<br>& berth planning.</h1><p>Vessel schedules, berth allocation and operational coordination.</p></div><footer>Portside · Operations console</footer></aside><section class="login-main"><form class="login-form" id="login-form"><h2>Operator sign in</h2><p>Sign in to your operations workspace.</p>${field("Email address", "email", "", "email", 'required autocomplete="username" spellcheck="false"')}${field("Password", "password", "", "password", 'required autocomplete="current-password"')}<div class="login-error" id="login-error" role="alert"></div><button type="submit" class="btn primary">Sign in ${icon("arrow-right")}</button></form></section></div>`;
   icons();
   $("#login-form").onsubmit = async (e) => {
     e.preventDefault();

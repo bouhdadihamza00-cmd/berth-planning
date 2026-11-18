@@ -4,12 +4,21 @@ Port operations, berth planning and approval workflows in one application.
 
 ## Screenshots
 
-These captures use a separate, entirely synthetic example workspace. No customer records are included. A fresh installation starts empty; the example shown here is not loaded on startup.
+These captures use synthetic operational records in a separate example workspace, with public map imagery and weather. No customer records are included. A fresh installation starts empty; this example is not loaded on startup.
 
 ![Port overview with synthetic vessels](docs/screenshots/platform-overview.jpg)
 ![Berth planning with synthetic calls](docs/screenshots/platform-planning.jpg)
+
+<details>
+<summary>Workflows, reports, assistant and configuration</summary>
+
 ![Workflow center](docs/screenshots/platform-workflows.jpg)
+![Report preview with synthetic records](docs/screenshots/platform-reports.jpg)
+![Operational assistant with synthetic records](docs/screenshots/platform-assistant.jpg)
 ![Application configuration](docs/screenshots/platform-configuration.jpg)
+![External integrations](docs/screenshots/platform-integrations.jpg)
+
+</details>
 
 ## Run locally
 
@@ -59,5 +68,7 @@ node --test tests/*.test.mjs
 ```
 
 Tests use temporary databases and explicit synthetic fixtures. No private workbooks are required.
+
+The shared interface conventions are documented in [DESIGN.md](DESIGN.md).
 
 The frontend uses browser ES modules, Leaflet and Lucide. The backend uses FastAPI, SQLite and OR-Tools. This is a local application foundation; production deployments need authentication and infrastructure hardening appropriate to their environment. See [architecture](docs/architecture.md) and [third-party licenses](docs/third-party.md).

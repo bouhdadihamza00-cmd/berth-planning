@@ -1,4 +1,4 @@
-/* Applied last so every workspace and dialog uses the same accessibility settings. */
+/* Shared visual and accessibility settings, applied after workspace styles. */
 html { --preference-control-height: calc(30px * var(--ui-font-scale, 1)); }
 :is(#app,#overlay,#assistant-chat) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),select,.btn) { min-height: var(--preference-control-height); }
 .leaflet-container { font-size: calc(12px * var(--ui-font-scale, 1)); }
@@ -102,3 +102,86 @@ html[data-motion="reduced"] :is(.btn,.icon-btn):active { scale: none; }
   :is(.btn,.icon-btn):active { scale: none; }
   html *, html *::before, html *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Shared visual system: brand, surfaces, typography and controls across every workspace. */
+html {
+  color-scheme: light;
+  --ui-canvas: #f2f6f9;
+  --ui-surface: #fff;
+  --ui-subtle: #f7fafc;
+  --ui-border: #d8e3eb;
+  --ui-control-border: #7b8f9f;
+  --ui-danger: #a43c35;
+  --muted: #526c7e;
+  --preference-control-height: calc(32px * var(--ui-font-scale,1));
+}
+html[data-theme="dark"] {
+  --ui-canvas: #102536;
+  --ui-surface: #19394d;
+  --ui-subtle: #21455b;
+  --ui-border: #3b596d;
+  --ui-control-border: #849db0;
+  --ui-danger: #ffb4a8;
+  --muted: #b2c4d2;
+}
+#app .hmi-main { background: var(--ui-canvas); padding-bottom: 20px; }
+#app .hmi-main > .page-heading { align-items: center; gap: 16px; padding-block: 2px; }
+#app .hmi-main > .page-heading h1 { color: var(--ink); font-size: calc(24px * var(--ui-font-scale,1)); line-height: 1.25; letter-spacing: -.025em; font-weight: 650; margin: 0; }
+#app .hmi-main > .page-heading p { color: var(--muted); font-size: calc(12px * var(--ui-font-scale,1)); line-height: 1.5; margin-top: 5px; }
+#app .hmi-main .card:not(.config-nav), #overlay .modal { border-color: var(--ui-border); border-radius: 9px; box-shadow: none; }
+#app .hmi-main .card:not(.config-nav) { background: var(--ui-surface); }
+#app .hmi-main .card-head { height: auto; min-height: calc(44px * var(--ui-font-scale,1)); padding: 12px 16px; gap: 12px; flex-wrap: wrap; border-bottom-color: var(--ui-border); background: var(--ui-surface); }
+#app .hmi-main .card-head :is(h2,h3) { font-size: calc(14px * var(--ui-font-scale,1)); color: var(--ink); line-height: 1.4; font-weight: 600; }
+#app .hmi-main .card-head :is(.card-title,.card-link) { min-width: 0; }
+#app .hmi-main :is(.subtle,.card-meta,.config-description) { color: var(--muted); line-height: 1.5; }
+#app .hmi-main .card-meta { font-size: calc(11px * var(--ui-font-scale,1)); }
+:is(#app,#overlay,#assistant-chat) .btn { background: var(--ui-surface); border: 1px solid var(--ui-control-border); color: var(--ink); border-radius: 6px; box-shadow: none; font-size: calc(12px * var(--ui-font-scale,1)); line-height: 1.35; padding: 7px 11px; gap: 7px; }
+:is(#app,#overlay,#assistant-chat) .btn.small { font-size: calc(11px * var(--ui-font-scale,1)); padding: 5px 9px; }
+:is(#app,#overlay,#assistant-chat) .btn.primary { background: #ff970d; border-color: #b96b0a; color: #082f49; }
+:is(#app,#overlay,#assistant-chat) .btn.danger { color: var(--ui-danger); border-color: var(--ui-danger); }
+:is(#app,#overlay,#assistant-chat) .btn.ghost { background: transparent; border-color: transparent; color: var(--control-focus); }
+:is(#app,#overlay,#assistant-chat) .btn svg { width: 16px; height: 16px; flex: none; }
+:is(#app,#overlay,#assistant-chat) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),select,textarea) { background: var(--ui-surface); color: var(--ink); border-color: var(--ui-control-border); border-radius: 5px; font-size: calc(12px * var(--ui-font-scale,1)); line-height: 1.45; }
+:is(#app,#overlay,#assistant-chat) ::placeholder { color: var(--muted); opacity: 1; }
+:is(#app,#overlay) .field > label { color: var(--ink); font-size: calc(12px * var(--ui-font-scale,1)); line-height: 1.5; }
+:is(#app,#overlay) .field { min-width: 0; }
+:is(#app,#overlay) :is(input,select,textarea):focus-visible { border-color: var(--control-focus); }
+#app .hmi-main .table-scroll :is(th,td), #overlay .table-scroll :is(th,td) { font-size: calc(12px * var(--ui-font-scale,1)); line-height: 1.45; }
+#app .hmi-main .table-scroll th, #overlay .table-scroll th { color: var(--muted); background: var(--ui-subtle); font-weight: 600; }
+#app .hmi-main .table-scroll td, #overlay .table-scroll td { border-bottom-color: var(--ui-border); }
+#app .hmi-main .table-scroll td .subtle { font-size: calc(11px * var(--ui-font-scale,1)); }
+.skip-link { position: fixed; inset: 8px auto auto 8px; z-index: 5000; padding: 12px 18px; border: 2px solid var(--control-focus); border-radius: 6px; background: var(--ui-surface); color: var(--ink); transform: translateY(-200%); text-decoration: none; }
+.skip-link:focus { transform: none; }
+@media(hover:hover) and (pointer:fine) {
+  :is(#app,#overlay,#assistant-chat) .btn:enabled:hover { background: var(--ui-subtle); border-color: var(--control-focus); }
+  :is(#app,#overlay,#assistant-chat) .btn.primary:enabled:hover { background: #ffab37; border-color: #b96b0a; }
+  :is(#app,#overlay,#assistant-chat) .btn.danger:enabled:hover { background: var(--ui-subtle); border-color: var(--ui-danger); }
+}
+@media(max-width:700px) {
+  #app .hmi-main > .page-heading { align-items: flex-start; gap: 10px; }
+  #app .hmi-main > .page-heading h1 { font-size: calc(21px * var(--ui-font-scale,1)); }
+  #app .hmi-main .card-head { padding: 12px; }
+  :is(#app,#overlay,#assistant-chat) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),select,textarea) { font-size: max(16px,calc(12px * var(--ui-font-scale,1))); }
+}
+@media(forced-colors:active) {
+  html, html[data-theme="dark"] { --ink: CanvasText; --muted: CanvasText; --ui-canvas: Canvas; --ui-surface: Canvas; --ui-subtle: Canvas; --ui-border: CanvasText; --ui-control-border: ButtonText; --ui-danger: LinkText; --control-focus: Highlight; }
+  :is(#app,#overlay,#assistant-chat) .btn { background: ButtonFace; border-color: ButtonText; color: ButtonText; }
+  :is(.app-sidebar .nav-item.active,[role="tab"][aria-selected="true"],.workflow-tabs button[aria-pressed="true"],.config-nav button[aria-pressed="true"]) { outline: 2px solid Highlight; outline-offset: -4px; }
+}
+
+/* Header identity stays on the inverse surface rather than adopting form styling. */
+#app #port-select { background: transparent; border-color: transparent; color: inherit; font-size: calc(13px * var(--ui-font-scale,1)); }
+#app #port-select option { background: var(--ui-surface); color: var(--ink); }
+@media(max-width:700px) {
+  #app .hmi-main > .page-heading { flex-direction: column; align-items: stretch; }
+  #app .hmi-main > .page-heading .heading-actions { width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: flex-start; }
+  #app .hmi-main > .page-heading .heading-actions .btn { max-width: 100%; width: auto; flex: 1 1 auto; white-space: normal; }
+}
+#app .report-builder-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+#app .report-builder-actions .btn { flex: 1 1 120px; white-space: normal; }
+@media(max-width:700px) {
+  :is(#app,#overlay,#assistant-chat) .btn { height: auto; min-width: 0; max-inline-size: 100%; white-space: normal; overflow-wrap: anywhere; }
+}
+
+#app .workflow-tabs > button { position: relative; }
+#app .workflow-tabs > button.active::after { display: block; content: ""; position: absolute; inset: auto 14px 3px; height: 0; width: auto; background: none; border-block-end: 2px solid #ff970d; }

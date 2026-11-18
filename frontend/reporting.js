@@ -1,4 +1,4 @@
-import { getLocale } from "./preferences.js?v=7";
+import { getLocale } from "./preferences.js?v=8";
 const P = () => window.P;
 const datasets = [
   ["daily_situation", "Daily situation"],
@@ -40,10 +40,10 @@ function options(values, selected) {
     .join("");
 }
 function select(label, key, values) {
-  return `<label>${label}<select data-report-key="${key}">${options(values, state()[key])}</select></label>`;
+  return `<label for="report-${key}">${label}<select id="report-${key}" name="${key}" data-report-key="${key}">${options(values, state()[key])}</select></label>`;
 }
 function input(label, key, type = "text") {
-  return `<label>${label}<input type="${type}" data-report-key="${key}" value="${P().esc(state()[key] || "")}" ${type === "text" ? 'placeholder="Any"' : ""}></label>`;
+  return `<label for="report-${key}">${label}<input id="report-${key}" name="${key}" type="${type}" data-report-key="${key}" value="${P().esc(state()[key] || "")}" ${type === "text" ? 'placeholder="Any"' : ""}></label>`;
 }
 function multi(label, key, values) {
   const selected = state()[key] || [];
@@ -64,13 +64,13 @@ export function renderReports() {
     [...new Set(sources.map((c) => c[key]).filter(Boolean))].sort();
   const rows = result?.rows || [],
     fields = result?.fields || [];
-  return `<section class="report-workbench"><aside class="card report-builder"><div class="card-head"><h3>${icon("list-filter")}Build your report</h3></div><div class="report-controls"><section class="report-section"><h4>01 · Data source</h4>
+  return `<section class="report-workbench"><aside class="card report-builder"><div class="card-head"><h3>${icon("list-filter")}Build your report</h3></div><div class="report-controls"><section class="report-section"><h4>Data source</h4>
     ${select("Data type", "dataset", datasets)}
     ${select("Data version", "origin", [
       ["working", "Current working version"],
       ["original", "Original workbook snapshot"],
     ])}
-    </section><section class="report-section"><h4>02 · Period & presentation</h4><div class="report-date-grid">${input("From", "start", "date")}${input("Through", "end", "date")}</div>
+    </section><section class="report-section"><h4>Period & presentation</h4><div class="report-date-grid">${input("From", "start", "date")}${input("Through", "end", "date")}</div>
     ${select("Apply date interval to", "date_basis", [
       ["report_date", "Workbook date / working planned start"],
       ["eta", "Expected arrival"],
@@ -94,7 +94,7 @@ export function renderReports() {
       ["month", "Month"],
       ["year", "Year"],
     ])}
-    </section><section class="report-section"><h4>03 · Narrow your results</h4>${input("Search records", "search")}<details class="report-advanced"><summary>Advanced filters</summary><div class="report-filter-grid">${input("Customer / destination", "customer")}${input("Supplier / origin", "supplier")}
+    </section><section class="report-section"><h4>Filters</h4>${input("Search records", "search")}<details class="report-advanced"><summary>Advanced filters</summary><div class="report-filter-grid">${input("Customer / destination", "customer")}${input("Supplier / origin", "supplier")}
     ${multi("Import / export", "directions", unique("direction"))}${multi("Products", "products", unique("product"))}${multi("Grades", "grades", unique("grade"))}${multi("Sub-grades", "subgrades", unique("subgrade"))}
     ${multi("Quais / berths", "berths", S.data.berths.map((b) => b.code).sort())}${multi("Statuses", "statuses", unique("status"))}
     </div></details></section>
@@ -119,8 +119,8 @@ export function renderReports() {
             )
             .join(
               "",
-            )}</div><div class="notice"><span>${result.notes.map(esc).join("<br>")}</span></div><div class="table-scroll report-table"><table><thead><tr>${result.columns.map((f) => `<th>${esc(f.label)}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${result.columns.map((f) => `<td>${row[f.id] === null || row[f.id] === undefined ? '<span class="subtle">—</span>' : esc(f.type === "number" ? Number(row[f.id]).toLocaleString(getLocale(), { maximumFractionDigits: 3 }) : row[f.id])}</td>`).join("")}</tr>`).join("") || `<tr><td colspan="${result.columns.length}">No matching records. Widen the date interval or remove filters.</td></tr>`}</tbody></table></div><div class="subtle report-footer">${rows.length} of ${result.total_rows} result rows${result.truncated ? " · Preview limited to 500 rows; download includes up to 10,000 rows." : ""} · ${esc(result.origin === "original" ? "Original workbook snapshot" : "Current working version")}</div>`
-        : `<div class="report-empty"><div class="report-empty-icon">${icon("file-chart-column")}</div><small>YOUR OPERATIONAL DATA, IN FOCUS</small><h3>${esc(datasets.find(([id]) => id === q.dataset)?.[1] || "Report preview")}</h3><p>Set your period and filters, then generate a preview to explore the records and totals.</p><div class="report-empty-steps"><span>01 Configure</span><span>02 Preview</span><span>03 Export</span></div></div>`
+            )}</div>${result.notes.length ? `<details class="report-data-notes"><summary>Data notes</summary><p>${result.notes.map(esc).join("<br>")}</p></details>` : ""}<div class="table-scroll report-table"><table><thead><tr>${result.columns.map((f) => `<th scope=\"col\">${esc(f.label)}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${result.columns.map((f) => `<td>${row[f.id] === null || row[f.id] === undefined ? '<span class="subtle">—</span>' : esc(f.type === "number" ? Number(row[f.id]).toLocaleString(getLocale(), { maximumFractionDigits: 3 }) : row[f.id])}</td>`).join("")}</tr>`).join("") || `<tr><td colspan="${result.columns.length}">No matching records. Widen the date interval or remove filters.</td></tr>`}</tbody></table></div><div class="subtle report-footer">${rows.length} of ${result.total_rows} result rows${result.truncated ? " · Preview limited to 500 rows; download includes up to 10,000 rows." : ""} · ${esc(result.origin === "original" ? "Original workbook snapshot" : "Current working version")}</div>`
+        : `<div class="report-empty"><div class="report-empty-icon">${icon("file-chart-column")}</div><h3>${esc(datasets.find(([id]) => id === q.dataset)?.[1] || "Report preview")}</h3><p>Choose your filters, then generate a preview.</p></div>`
     }
   </section></section>`;
 }

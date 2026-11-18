@@ -1,23 +1,23 @@
-import { confirmRemoval } from "./removal.js?v=5";
+import { confirmRemoval } from "./removal.js?v=6";
 import {
   renderPortDirectory,
   renderAssetInventory,
   bindPortInventory,
-} from "./port-workspace.js?v=5";
+} from "./port-workspace.js?v=6";
 import {
   renderRuleWorkbench,
   bindRuleWorkbench,
-} from "./rule-workbench.js?v=9";
-import { renderDocuments, bindDocuments } from "./documents.js?v=14";
-import { renderConnectors, bindConnectors } from "./connectors.js?v=7";
-import { renderPreferences, bindPreferences } from "./preferences.js?v=7";
-import { renderCatalog, bindCatalog } from "./cargo.js?v=11";
+} from "./rule-workbench.js?v=10";
+import { renderDocuments, bindDocuments } from "./documents.js?v=15";
+import { renderConnectors, bindConnectors } from "./connectors.js?v=8";
+import { renderPreferences, bindPreferences } from "./preferences.js?v=8";
+import { renderCatalog, bindCatalog } from "./cargo.js?v=12";
 import {
   renderDepartments,
   bindDepartments,
   permissionLabels,
-} from "./administration.js?v=6";
-import { initGeography } from "./geography.js?v=9";
+} from "./administration.js?v=7";
+import { initGeography } from "./geography.js?v=10";
 const P = () => window.P;
 const sections = [
   [
@@ -96,7 +96,7 @@ export function renderConfig() {
           )
           .map(
             ([id, ic, title, tabs]) =>
-              `<button class="${group[0] === id ? "active" : ""}" data-config-tab="${tabs.find(([tab]) => tab !== "users" || can("users.view"))[0]}">${icon(ic)}${title}</button>`,
+              `<button class="${group[0] === id ? "active" : ""}" aria-pressed="${group[0] === id}" data-config-tab="${tabs.find(([tab]) => tab !== "users" || can("users.view"))[0]}">${icon(ic)}${title}</button>`,
           )
           .join(
             "",
@@ -576,7 +576,7 @@ async function loadUsers() {
     S.configUsers = rows;
     if (!$("#users-list")) return;
     $("#users-list").innerHTML =
-      `<div class="table-scroll"><table><thead><tr><th>Person</th><th>Department</th><th>Port role</th><th>Capabilities</th><th></th></tr></thead><tbody>${rows
+      `<div class="table-scroll"><table><thead><tr><th scope=\"col\">Person</th><th scope=\"col\">Department</th><th scope=\"col\">Port role</th><th scope=\"col\">Capabilities</th><th scope=\"col\"></th></tr></thead><tbody>${rows
         .map((u) => {
           const m = u.memberships.find((m) => m.port_id === S.portId);
           return `<tr><td><div class="vessel-cell">${esc(u.name)}</div><small class="subtle">${esc(u.email)}</small></td><td>${esc(m.department)}</td><td>${esc(m.role)}</td><td>${m.permissions.length} permissions</td><td>${can("users.edit") ? `<button class="btn small" data-edit-user="${u.id}">Edit access</button>${u.id !== S.user.id && (!u.superadmin || S.user.superadmin) ? `<button class="btn small danger" data-remove-user="${u.id}">Remove</button>` : ""}` : ""}</td></tr>`;

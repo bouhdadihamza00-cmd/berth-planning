@@ -8,4 +8,6 @@ Keep routine screens concise and professional. Avoid persistent provider/model i
 
 # Design refinement
 
+Read `DESIGN.md` before interface changes; it defines the shared visual system and verification expectations.
+
 Use the installed `impeccable`, `design-taste-frontend` (Leon Lin's Taste Skill), and `emil-design-eng` skills for interface changes. Apply their relevant operational UI guidance within Portside's existing design: consistent shared controls, readable data, keyboard access, restrained motion and touch targets. Preserve the navy/blue identity, orange primary actions, compact map overlays and working 18px font setting. Marketing page recipes do not apply to this operations application.

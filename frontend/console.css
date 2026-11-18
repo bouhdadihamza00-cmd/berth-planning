@@ -3485,10 +3485,10 @@ html[data-theme="dark"] .catalog-delete-confirm { background: #49372f; }
 .throughput-flow svg { width: 10px; height: 10px; }
 .hmi-main .throughput-products .product-label { font-size: calc(10px * var(--ui-font-scale, 1)); line-height: calc(12px * var(--ui-font-scale, 1)); min-height: 24px; white-space: normal; overflow-wrap: anywhere; font-weight: 600; color: var(--ink); }
 .hmi-main .throughput-products .product-value { display: flex; align-items: baseline; gap: 4px; font-size: calc(25px * var(--ui-font-scale, 1)); line-height: calc(27px * var(--ui-font-scale, 1)); margin: auto 0 2px; font-variant-numeric: tabular-nums; letter-spacing: -.6px; }
-.hmi-main .throughput-products .product-value small { color: #6e8799; font-size: calc(10px * var(--ui-font-scale, 1)); font-weight: 400; letter-spacing: 0; }
+.hmi-main .throughput-products .product-value small { color: var(--muted); font-size: calc(10px * var(--ui-font-scale, 1)); font-weight: 400; letter-spacing: 0; }
 .throughput-share-track { height: 3px; width: 100%; border-radius: 3px; background: #e8f0f6; overflow: hidden; }
 .throughput-share-track > span { display: block; height: 100%; border-radius: inherit; background: var(--cargo-color); }
-.throughput-product-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 5px; font-size: calc(8px * var(--ui-font-scale, 1)); line-height: calc(11px * var(--ui-font-scale, 1)); color: #6a8396; font-variant-numeric: tabular-nums; }
+.throughput-product-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 5px; font-size: calc(8px * var(--ui-font-scale, 1)); line-height: calc(11px * var(--ui-font-scale, 1)); color: var(--muted); font-variant-numeric: tabular-nums; }
 .throughput-trend { color: #365e77; }
 html[data-theme="dark"] .hmi-main .throughput-products .throughput-product { background: #16364d; border-color: #35576f; }
 html[data-theme="dark"] .hmi-main .throughput-products .throughput-product:hover { background: #20465f; border-color: var(--cargo-color); }

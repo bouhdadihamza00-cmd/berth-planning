@@ -24,7 +24,7 @@ test('port configuration exposes directory then inventory without redundant tabs
     window.P.can = () => true;
     assert.match(inventory, /data-config-tab="ports"/);
     assert.doesNotMatch(inventory, /config-section-tabs/);
-    assert.match(inventory, /config-nav[\s\S]*class="active" data-config-tab="ports"/);
+    assert.match(inventory, /config-nav[\s\S]*class="active" aria-pressed="true" data-config-tab="ports"/);
   } finally { delete globalThis.window; }
 });
 

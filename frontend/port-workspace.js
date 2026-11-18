@@ -23,7 +23,7 @@ export function renderAssetInventory() {
     )
     .join(
       "",
-    )}</div><div class="search-box">${icon("search")}<input type="search" id="port-asset-search" placeholder="Find a berth or equipment…" aria-label="Search port infrastructure"></div><div class="spacer"></div><button class="btn small" data-config-tab="geography">${icon("map")}Port map</button>${can("config.edit") ? btn("Add berth", "plus", "add-berth") + btn("Add equipment", "plus", "add-equipment") : ""}</div><div class="table-scroll"><table class="port-asset-table"><thead><tr><th>Asset</th><th>Type</th><th>Operational details</th><th>Status</th><th>Map position</th><th>Actions</th></tr></thead><tbody>${
+    )}</div><div class="search-box">${icon("search")}<input type="search" id="port-asset-search" placeholder="Find a berth or equipment…" aria-label="Search port infrastructure"></div><div class="spacer"></div><button class="btn small" data-config-tab="geography">${icon("map")}Port map</button>${can("config.edit") ? btn("Add berth", "plus", "add-berth") + btn("Add equipment", "plus", "add-equipment") : ""}</div><div class="table-scroll"><table class="port-asset-table"><thead><tr><th scope=\"col\">Asset</th><th scope=\"col\">Type</th><th scope=\"col\">Operational details</th><th scope=\"col\">Status</th><th scope=\"col\">Map position</th><th scope=\"col\">Actions</th></tr></thead><tbody>${
     rows
       .map((x) => {
         const placed = x.geometry && x.map_visible !== false;

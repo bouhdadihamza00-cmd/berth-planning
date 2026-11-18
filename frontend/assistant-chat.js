@@ -1,4 +1,4 @@
-import { assistantState } from './documents.js?v=14';
+import { assistantState } from './documents.js?v=15';
 
 const POSITION_KEY = 'portside-assistant-position';
 let removeResize = () => {};

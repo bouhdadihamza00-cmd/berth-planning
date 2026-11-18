@@ -1,12 +1,12 @@
-import { getPreferences, getLocale } from "./preferences.js?v=7";
-import { confirmRemoval } from "./removal.js?v=5";
-import { buildTimeline, shiftAnchor } from "./timeline.js?v=5";
+import { getPreferences, getLocale } from "./preferences.js?v=8";
+import { confirmRemoval } from "./removal.js?v=6";
+import { buildTimeline, shiftAnchor } from "./timeline.js?v=6";
 import {
   cargoFields,
   bindCargoFields,
   timingFields,
   bindTiming,
-} from "./cargo.js?v=11";
+} from "./cargo.js?v=12";
 const P = () => window.P;
 export function planningProposals(data, pending = {}) {
   const active = new Set(["Draft", "Submitted", "Approved", "Clarification requested"]);
@@ -839,7 +839,7 @@ export function scenarioForm() {
     S.scenario = result;
     await P().refresh(false);
     P().$("#scenario-output").innerHTML =
-      `<div class="scenario-result"><div style="display:flex;justify-content:space-between;align-items:center"><h3>${esc(result.name)}</h3>${status(result.status)}</div>${result.calls.length ? `<div class="scenario-stats"><div><strong>${fmt(result.added_delay_hours, 1)} h</strong><span>Additional schedule delay</span></div><div><strong>${fmt(result.waiting_hours, 1)} h</strong><span>Total projected waiting</span></div><div><strong>${result.calls.length}</strong><span>Operations scheduled</span></div></div><div class="table-scroll"><table><thead><tr><th>Vessel</th><th>Proposed berth</th><th>Proposed start</th><th>Completion</th><th></th></tr></thead><tbody>${result.calls.map((c) => `<tr><td>${esc(c.name)}</td><td>${esc(P().berth(c.berth_id)?.code || "—")}</td><td>${date(c.start)}</td><td>${date(c.end)}</td><td>${P().can("planning.draft") ? `<button class="btn small" data-scenario-propose="${c.id}">Propose</button>` : ""}</td></tr>`).join("")}</tbody></table></div>` : ""}${P().can("config.edit") ? `<button class="btn small danger" id="remove-scenario">Remove scenario</button>` : ""}<p class="config-description" style="margin:15px 0 0">${result.reasons.map(esc).join("<br>")}</p><small class="subtle">Scenario · Unpublished</small></div>`;
+      `<div class="scenario-result"><div style="display:flex;justify-content:space-between;align-items:center"><h3>${esc(result.name)}</h3>${status(result.status)}</div>${result.calls.length ? `<div class="scenario-stats"><div><strong>${fmt(result.added_delay_hours, 1)} h</strong><span>Additional schedule delay</span></div><div><strong>${fmt(result.waiting_hours, 1)} h</strong><span>Total projected waiting</span></div><div><strong>${result.calls.length}</strong><span>Operations scheduled</span></div></div><div class="table-scroll"><table><thead><tr><th scope=\"col\">Vessel</th><th scope=\"col\">Proposed berth</th><th scope=\"col\">Proposed start</th><th scope=\"col\">Completion</th><th scope=\"col\"></th></tr></thead><tbody>${result.calls.map((c) => `<tr><td>${esc(c.name)}</td><td>${esc(P().berth(c.berth_id)?.code || "—")}</td><td>${date(c.start)}</td><td>${date(c.end)}</td><td>${P().can("planning.draft") ? `<button class="btn small" data-scenario-propose="${c.id}">Propose</button>` : ""}</td></tr>`).join("")}</tbody></table></div>` : ""}${P().can("config.edit") ? `<button class="btn small danger" id="remove-scenario">Remove scenario</button>` : ""}<p class="config-description" style="margin:15px 0 0">${result.reasons.map(esc).join("<br>")}</p><small class="subtle">Scenario · Unpublished</small></div>`;
     document.querySelector("#remove-scenario")?.addEventListener("click", () => confirmRemoval(path(`/scenarios/${result.id}?revision=${result.revision}`), result.name, "This removes the hypothetical scenario. The published plan is unchanged."));
     P()
       .$$("[data-scenario-propose]")
@@ -878,7 +878,7 @@ export function historyModal() {
           const v = S.data.versions.find((x) => x.id === b.dataset.version);
           modal(
             "Compare " + v.label,
-            `<div class="table-scroll"><table><thead><tr><th>Vessel</th><th>Historical berth</th><th>Current berth</th><th>Historical start</th><th>Current start</th><th>Change</th></tr></thead><tbody>${v.calls
+            `<div class="table-scroll"><table><thead><tr><th scope=\"col\">Vessel</th><th scope=\"col\">Historical berth</th><th scope=\"col\">Current berth</th><th scope=\"col\">Historical start</th><th scope=\"col\">Current start</th><th scope=\"col\">Change</th></tr></thead><tbody>${v.calls
               .map((c) => {
                 const cur = S.data.calls.find((x) => x.id === c.id);
                 const changed =

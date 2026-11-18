@@ -2,7 +2,7 @@
 .hmi-main[data-page="configuration"] { padding: 14px 16px 16px; gap: 14px; background: #f2f6f9; }
 .hmi-main[data-page="configuration"] .config-layout { grid-template-columns: 210px minmax(0,1fr); gap: 18px; }
 .hmi-main[data-page="configuration"] .config-nav { background: transparent; border: 0; box-shadow: none; padding: 6px 0; gap: 5px; }
-.hmi-main[data-page="configuration"] .config-nav .nav-caption { padding: 10px 14px; color: #7b909e; font-size: calc(10px * var(--ui-font-scale, 1)); letter-spacing: 1px; }
+.hmi-main[data-page="configuration"] .config-nav .nav-caption { padding: 10px 14px; color: var(--muted); font-size: calc(10px * var(--ui-font-scale, 1)); letter-spacing: 1px; }
 .hmi-main[data-page="configuration"] .config-nav button { display: flex; align-items: center; gap: 10px; min-height: 44px; border: 1px solid transparent; border-radius: 7px; padding: 10px 13px; font-size: calc(12px * var(--ui-font-scale, 1)); color: #5c7789; background: transparent; text-align: left; }
 .hmi-main[data-page="configuration"] .config-nav button.active { background: #173f58; color: #fff; border-color: #173f58; }
 .hmi-main[data-page="configuration"] .config-nav button:hover:not(.active) { background: #e5eef4; }
@@ -13,7 +13,7 @@
 .hmi-main[data-page="configuration"] .port-directory-card { border-radius: 9px; border-color: #dce6ed; background: #fff; }
 .hmi-main[data-page="configuration"] .port-directory-card.current { border-color: #79a8bf; background: #f6fbfe; }
 .hmi-main[data-page="configuration"] .port-inventory-summary { background: #f8fbfd; }
-.hmi-main[data-page="configuration"] .port-asset-table th { background: #f4f8fa; color: #6f8797; }
+.hmi-main[data-page="configuration"] .port-asset-table th { background: #f4f8fa; color: var(--muted); }
 .hmi-main[data-page="configuration"] .port-asset-table td { padding-top: 14px; padding-bottom: 14px; }
 html[data-theme="dark"] .hmi-main[data-page="configuration"] { background: #102b3e; }
 html[data-theme="dark"] .hmi-main[data-page="configuration"] :is(.card-head,.port-directory-card,.port-inventory-summary,.port-asset-table th) { background: #193c51; color: #c9dfeb; border-color: #345165; }
@@ -34,9 +34,9 @@ html[data-theme="dark"] .hmi-main[data-page="configuration"] .port-directory-car
 .hmi-main .config-content > .rule-hub { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .rule-hub-body { overflow: auto; padding: 24px; }
 .rule-hub-intro { margin-bottom: 22px; }
-.rule-kicker { font-size: calc(9px * var(--ui-font-scale, 1)); letter-spacing: 1.3px; color: #7392a5; font-weight: 650; }
+.rule-kicker { font-size: calc(9px * var(--ui-font-scale, 1)); letter-spacing: 1.3px; color: var(--muted); font-weight: 650; }
 .rule-hub-intro h2 { font-size: calc(22px * var(--ui-font-scale, 1)); color: #24495f; font-weight: 600; margin: 9px 0; }
-.rule-hub-intro p, .rule-category-intro > p { font-size: calc(12px * var(--ui-font-scale, 1)); color: #78909f; line-height: 1.7; margin: 0; }
+.rule-hub-intro p, .rule-category-intro > p { font-size: calc(12px * var(--ui-font-scale, 1)); color: var(--muted); line-height: 1.7; margin: 0; }
 .rule-category-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
 .rule-category-card { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 12px; padding: 22px; border: 1px solid #dce6ed; border-radius: 9px; background: #fff; color: #24495f; cursor: pointer; min-width: 0; }
 .rule-category-card:hover { border-color: #7cabc2; background: #f8fcfe; }
@@ -44,22 +44,22 @@ html[data-theme="dark"] .hmi-main[data-page="configuration"] .port-directory-car
 .rule-category-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; color: #387b9a; background: #edf5fa; }
 .rule-category-icon svg { width: 21px; height: 21px; }
 .rule-category-card strong { font-size: calc(15px * var(--ui-font-scale, 1)); font-weight: 600; }
-.rule-category-card p { margin: 0; font-size: calc(12px * var(--ui-font-scale, 1)); line-height: 1.7; color: #78909f; }
+.rule-category-card p { margin: 0; font-size: calc(12px * var(--ui-font-scale, 1)); line-height: 1.7; color: var(--muted); }
 .rule-category-footer { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: auto; padding-top: 14px; border-top: 1px solid #eaf0f4; color: #4d819c; font-size: calc(11px * var(--ui-font-scale, 1)); }
 .rule-category-footer svg { width: 16px; height: 16px; }
-.rule-hub-note { display: flex; align-items: center; gap: 8px; margin-top: 22px; color: #78909f; font-size: calc(11px * var(--ui-font-scale, 1)); line-height: 1.7; }
+.rule-hub-note { display: flex; align-items: center; gap: 8px; margin-top: 22px; color: var(--muted); font-size: calc(11px * var(--ui-font-scale, 1)); line-height: 1.7; }
 .rule-hub-note svg { width: 16px; height: 16px; flex: none; }
 .rule-category-intro { padding: 16px 18px; border-bottom: 1px solid #e4edf2; }
 .rule-route { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 16px; }
-.rule-route-mode { font-size: calc(10px * var(--ui-font-scale, 1)); color: #718c9c; padding-right: 8px; }
+.rule-route-mode { font-size: calc(10px * var(--ui-font-scale, 1)); color: var(--muted); padding-right: 8px; }
 .rule-route-step { display: flex; align-items: center; gap: 9px; background: #f2f7fa; border: 1px solid #dfebf2; padding: 10px 14px; border-radius: 6px; font-size: calc(12px * var(--ui-font-scale, 1)); color: #2c5670; }
 .rule-route-step > b { display: grid; place-items: center; height: 24px; width: 24px; border-radius: 50%; background: #dfeef6; font-size: calc(11px * var(--ui-font-scale, 1)); }
-.rule-route-step small { display: block; margin-top: 4px; font-size: calc(10px * var(--ui-font-scale, 1)); color: #7a92a2; }
+.rule-route-step small { display: block; margin-top: 4px; font-size: calc(10px * var(--ui-font-scale, 1)); color: var(--muted); }
 #rule-categories-back { align-self: flex-start; margin-bottom: 10px; }
 .rule-list-page th { background: #f4f8fa; }
 .rule-list-page td { padding: 16px; }
 .rule-list-page th:last-child { width: 130px; }
-.rule-search-empty { padding: 20px; color: #78909f; }
+.rule-search-empty { padding: 20px; color: var(--muted); }
 .rule-edit-page .workflow-step { border-color: #dce6ed; border-radius: 8px; background: #fbfdfe; padding: 18px; }
 .rule-edit-page .workflow-step legend { color: #397a99; font-size: calc(11px * var(--ui-font-scale, 1)); font-weight: 600; }
 .rule-edit-page .workflow-step-actions { border-top: 1px solid #e6eef3; padding-top: 12px; }
@@ -78,7 +78,7 @@ html[data-theme="dark"] .rule-hub-intro h2 { color: #d5e6ef; }
 .workflow-template { border: 1px solid #dce6ed; border-radius: 8px; padding: 18px; }
 .workflow-template-head { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
 .workflow-template-head h3 { margin: 0 0 7px; font-size: calc(15px * var(--ui-font-scale, 1)); color: #24495f; }
-.workflow-template-head p { margin: 0; color: #7a92a2; font-size: calc(11px * var(--ui-font-scale, 1)); }
+.workflow-template-head p { margin: 0; color: var(--muted); font-size: calc(11px * var(--ui-font-scale, 1)); }
 .workflow-template-head p strong { color: #38816b; font-weight: 550; }
 .workflow-template-actions { display: flex; flex-wrap: wrap; gap: 7px; }
 .workflow-editor-controls { display: grid; grid-template-columns: minmax(180px,1fr) 150px; gap: 18px; max-width: 700px; margin-bottom: 14px; }

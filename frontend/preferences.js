@@ -39,13 +39,16 @@ export function getLocale() {
 }
 export const getRegionalLocale = getLocale;
 const entries = [
+  ["Data notes", "Notes sur les données", "ملاحظات البيانات"],
+  ["Choose your filters, then generate a preview.", "Choisissez les filtres, puis générez un aperçu.", "اختر عوامل التصفية ثم أنشئ معاينة."],
+  ["Skip to workspace", "Aller à l’espace de travail", "الانتقال إلى مساحة العمل"],
   ["Records", "Enregistrements", "السجلات"],
   ["Nominated (t)", "Quantité prévue (t)", "الكمية المخططة (طن)"],
   ["Handled (t)", "Quantité traitée (t)", "الكمية المناولة (طن)"],
   ["Remaining (t)", "Quantité restante (t)", "الكمية المتبقية (طن)"],
-  ["01 · Data source", "01 · Source des données", "01 · مصدر البيانات"],
-  ["02 · Period & presentation", "02 · Période et présentation", "02 · الفترة والعرض"],
-  ["03 · Narrow your results", "03 · Affiner les résultats", "03 · تصفية النتائج"],
+  ["Data source", "Source des données", "مصدر البيانات"],
+  ["Period & presentation", "Période et présentation", "الفترة والعرض"],
+  ["Filters", "Filtres", "التصفية"],
   ["Apply date interval to", "Appliquer la période à", "تطبيق الفترة على"],
   ["Through", "Jusqu’au", "حتى"],
   ["Customer / destination", "Client / destination", "العميل / الوجهة"],
@@ -577,7 +580,7 @@ export function renderPreferences() {
     `<select name="${key}" aria-label="${t(key === "motion" ? "Motion" : key === "contrast" ? "Contrast" : "Language & regional formats")}">${options.map(([value, label]) => `<option value="${value}" ${prefs[key] === value ? "selected" : ""}>${t(label)}</option>`).join("")}</select>`;
   const row = (symbol, title, description, control) =>
     `<div class="preference-setting-row"><span class="preference-setting-icon">${icon(symbol)}</span><div class="preference-setting-copy"><strong>${t(title)}</strong><p>${t(description)}</p></div>${control}</div>`;
-  return `<section class="card preferences-card">${cardHead(t("Appearance & usability"), "settings")}<form id="preferences-form" class="preferences-form"><div class="preferences-scroll"><div class="preferences-intro"><div><h2>${t("Make the workspace yours")}</h2><p>${t("Adjust how the platform looks and feels. Changes apply immediately.")}</p></div></div><div class="preferences-columns"><section class="preference-section"><div class="preference-section-heading">${icon("palette")}<h3>${t("Appearance")}</h3></div><fieldset class="preference-choice-field"><legend>${t("Theme")}</legend><div class="preference-theme-options">${[
+  return `<section class="card preferences-card">${cardHead(t("Appearance & usability"), "settings")}<form id="preferences-form" class="preferences-form"><div class="preferences-scroll"><div class="preferences-columns"><section class="preference-section"><div class="preference-section-heading">${icon("palette")}<h3>${t("Appearance")}</h3></div><fieldset class="preference-choice-field"><legend>${t("Theme")}</legend><div class="preference-theme-options">${[
     ["light", "Light", "sun"],
     ["dark", "Dark", "moon"],
     ["system", "Follow system", "monitor"],

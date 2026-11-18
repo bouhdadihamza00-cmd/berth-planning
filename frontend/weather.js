@@ -1,4 +1,4 @@
-import { getLocale } from "./preferences.js?v=7";
+import { getLocale } from "./preferences.js?v=8";
 export async function mountWeather() {
   const { S, api, path, esc, icon } = window.P;
   const container = document.querySelector('#port-weather');
