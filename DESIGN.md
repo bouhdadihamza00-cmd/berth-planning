@@ -12,7 +12,7 @@ Shared tokens live in `frontend/preferences.css`, after workspace styles. Light 
 
 Use the existing Segoe UI/system sans family. Page headings share a 24px reference size, section headings 14px, controls and table content 12px, and compact metadata 11px. All authored sizes scale through `--ui-font-scale`; mobile field text is at least 16px. The user's 11–18px setting remains authoritative. Preserve natural heights and wrapping as text grows.
 
-Use 8px gaps within actions, 12–16px internal spacing and 20–24px between distinct sections. Align titles and actions on common edges. Keep forms, reports and analytical workspaces naturally scrollable. Dense operational tables and the timeline may use their own scroll regions. Do not clip text to conceal overflow.
+Use 8px gaps within actions, 12–16px internal spacing and 20–24px between distinct sections. Align titles and actions on common edges. Keep forms, reports and analytical workspaces naturally scrollable. The overview is a fixed SCADA-style HMI: no page or card scrollbars. Its grid fits the viewport, with measured record pagination for operations, berths, cargo and alerts. Other operational tables and the timeline may use their own scroll regions. Do not clip text to conceal overflow.
 
 ## Controls, tables and states
 

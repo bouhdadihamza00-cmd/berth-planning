@@ -20,11 +20,11 @@ html[dir="rtl"] :is(input[type="number"],input[type="date"],input[type="datetime
 html[dir="rtl"] :is(.modal-head,.card-head,.toolbar,.workflow-template-head) { text-align: start; }
 .hmi-main[data-page="overview"] .throughput-products .product-label { flex-shrink: 0; height: auto; min-height: calc(13px * var(--ui-font-scale, 1)); }
 .hmi-main[data-page="overview"] .metric-top { height: auto; min-height: calc(21px * var(--ui-font-scale, 1)); }
-/* Text can grow; dashboard sections keep their intrinsic height and scroll as a page. */
+/* Header and map controls follow the configured text size. */
 #app .topbar { height: auto; min-height: calc(48px * var(--ui-font-scale, 1)); padding-block: 8px; }
 #app .topbar .port-switch { align-items: center; }
 #app .topbar .port-switch .eyebrow { line-height: 1.4; height: auto; }
-.hmi-main[data-page="overview"] .hmi-workspace { overflow: auto; }
+
 .hmi-main[data-page="overview"] .metrics { height: auto; align-items: stretch; }
 .hmi-main[data-page="overview"] .metric { min-height: calc(100px * var(--ui-font-scale, 1)); height: auto; }
 .hmi-main[data-page="overview"] .metric-top { flex-shrink: 0; }
@@ -54,9 +54,6 @@ html[dir="rtl"] :is(.modal-head,.card-head,.toolbar,.workflow-template-head) { t
 #app > header { height: auto; min-height: 0; }
 .hmi-main > .page-heading { height: auto; min-height: calc(42px * var(--ui-font-scale, 1)); flex-shrink: 0; }
 .hmi-main .map-legend { position: relative; inset: auto; grid-row: 3; align-self: end; justify-self: start; margin: 0; max-height: none; z-index: 500; }
-@media(min-width: 1000px) {
- .hmi-main[data-page="overview"] .hmi-workspace { grid-template-rows: max-content minmax(calc(330px * var(--ui-font-scale, 1) + 100px),1fr) max-content; }
-}
 #app > .app-sidebar:is(:hover,:has(:focus-visible)) { width: calc(228px * var(--ui-font-scale, 1)); }
 .app-sidebar .nav-bar { width: calc(228px * var(--ui-font-scale, 1)); }
 .app-sidebar:is(:hover,:has(:focus-visible)) .nav-item { width: calc(212px * var(--ui-font-scale, 1)); }
@@ -278,3 +275,43 @@ html[data-theme="dark"] {
 }
 
 #app :is(.workflow-tabs > button,.config-nav button,.assistant-tablist [role="tab"]):focus-visible { transition: none; }
+
+/* The overview is a single process display. Extra records use pages, not scrollbars. */
+#app .hmi-main[data-page="overview"] { padding: 10px 14px 14px; gap: 10px; }
+#app .hmi-main[data-page="overview"] .hmi-workspace { overflow: clip; grid-template-rows: max-content minmax(0,1fr) 200px; gap: 10px; }
+#app .hmi-main[data-page="overview"] :is(.dashboard-middle,.dashboard-bottom,.right-stack) { min-height: 0; gap: 10px; }
+#app .hmi-main[data-page="overview"] .metric { min-height: 0; padding: 9px 10px; }
+#app .hmi-main[data-page="overview"] .card-head { min-height: 0; padding: 8px 12px; gap: 6px; }
+#app .hmi-main[data-page="overview"] .card-head :is(h2,h3) { font-size: calc(12px * var(--ui-font-scale,1)); }
+#app .hmi-main[data-page="overview"] .hmi-overview-region { flex: 1; min-height: 0; overflow: clip !important; max-height: none; }
+#app .hmi-main[data-page="overview"] table { width: 100%; min-width: 0; table-layout: fixed; }
+#app .hmi-main[data-page="overview"] :is(th,td) { overflow-wrap: anywhere; white-space: normal; padding: 6px 8px; font-size: calc(10px * var(--ui-font-scale,1)); }
+#app .hmi-main[data-page="overview"] th:first-child { width: 32%; }
+#app .hmi-main[data-page="overview"] .table-progress { min-width: 0; gap: 4px; }
+#app .hmi-main[data-page="overview"] .table-progress .progress-track { width: auto; min-width: 12px; flex: 1; }
+#app .hmi-main[data-page="overview"] .hmi-pager { display: flex !important; min-height: 28px; height: auto; padding: 2px 8px; background: var(--ui-subtle); color: var(--muted); border-color: var(--ui-border); }
+#app .hmi-main[data-page="overview"] .hmi-pager button { background: var(--ui-surface); color: var(--ink); border-color: var(--ui-control-border); width: 28px; height: 24px; }
+#app .hmi-main[data-page="overview"] .hmi-pager button:disabled { opacity: .4; }
+#app .hmi-main[data-page="overview"] .products.throughput-products { flex: 1; min-height: 0; padding: 8px; }
+#app .hmi-main[data-page="overview"] .throughput-product { justify-content: center; }
+#app .hmi-main[data-page="overview"] .delay-summary { flex: 1; min-height: 0; padding: 8px 12px; }
+#app .hmi-main[data-page="overview"] .delay-chart-legend { gap: 4px; }
+#app .hmi-main[data-page="overview"] .alerts-list { padding-block: 0; }
+#app .hmi-main[data-page="overview"] .map-legend { display: flex; flex-wrap: wrap; gap: 5px 10px; padding: 8px 10px; width: min(100%,520px); max-width: 100%; }
+#app .hmi-main[data-page="overview"] .map-legend h4 { display: none; }
+#app .hmi-main[data-page="overview"] .map-legend .legend-row { margin: 0 !important; padding: 0 !important; border: 0 !important; }
+@media(max-width:999px) {
+  #app .hmi-main[data-page="overview"] .hmi-workspace { grid-template-rows: max-content max-content minmax(0,1fr); }
+  #app .hmi-main[data-page="overview"] .hmi-workspace[data-panel="map"] { grid-template-rows: max-content max-content minmax(0,1fr); }
+  #app .hmi-main[data-page="overview"] .hmi-workspace[data-panel="map"] .dashboard-middle { grid-template-rows: minmax(0,1fr); }
+  #app .hmi-main[data-page="overview"] .port-map-wrap { flex: 1; min-height: 0; grid-template-rows: max-content max-content minmax(0,1fr); }
+  #app .hmi-main[data-page="overview"] .hmi-overview-tabs { flex-wrap: wrap; }
+}
+
+@media(min-width:1000px) and (max-height:900px) {
+  #app .hmi-main[data-page="overview"] > .page-heading p { display: none; }
+  #app .hmi-main[data-page="overview"] .metric-foot { display: none; }
+}
+
+#app .hmi-main[data-page="overview"] .throughput-products .product-value { margin: 2px 0; font-size: calc(22px * var(--ui-font-scale,1)); line-height: 1.1; }
+#app .hmi-main[data-page="overview"] .throughput-share-track { flex: none; height: 3px; }
