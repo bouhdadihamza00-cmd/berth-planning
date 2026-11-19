@@ -68,7 +68,7 @@ Try the hosted application: **[Open the Portside demo](https://berth-planning-pr
 | Password | `PortsideDemo2026!` |
 | Access | Read-only, isolated demo workspace |
 
-The public account can browse the interface but cannot create, edit or delete records, manage users, or access the private client workspace. The demo starts empty; the repository screenshots show a separate synthetic example. Fresh clones remain empty and require their own administrator setup.
+The public account can browse the interface but cannot create, edit or delete records, manage users, or access the private client workspace. The hosted demo contains a synthetic Port Atlas product catalogue, seven unplaced docks and a personnel directory. Its 168 source vessel calls remain in document review until vessel lengths and drafts are supplied. The map is centred on Algeciras with live vessel observations through the configured tracking client; fictional docks and equipment have no map placement. Source documents use fixed UTC+01:00, which the demo preserves. Fresh clones remain empty and require their own administrator setup.
 
 This deployment runs on Railway's usage-limited trial and may sleep when idle or become unavailable when the trial credit expires. No OCP data is included. See [client trial hosting](docs/client-trial-hosting.md) for deployment, persistent storage and backup instructions.
 
