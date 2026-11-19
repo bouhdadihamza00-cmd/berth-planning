@@ -77,6 +77,32 @@ class EmptyInstallTests(unittest.TestCase):
             headers['origin'] = 'https://other.example.test'
             self.assertEqual(client.post('/api/auth/logout', headers=headers).status_code, 403)
 
+    def test_cloud_bootstrap_creates_only_once_and_preserves_records(self):
+        from unittest.mock import patch
+        from scripts.start_trial import initialize_trial
+        settings = dict(PORTOPS_DB=store.DB_PATH, PORTSIDE_SETUP_EMAIL='trial@example.org',
+                        PORTSIDE_SETUP_PASSWORD='test-trial-password')
+        with patch.dict('os.environ', settings):
+            self.assertTrue(initialize_trial())
+            with store.connect() as db:
+                port = db.execute('SELECT id FROM ports').fetchone()[0]
+                self.assertEqual(db.execute('SELECT count(*) FROM records').fetchone()[0], 0)
+                store.put(db, port, 'zones', {'name':'Keep client setup'}, 'keep')
+            with patch.dict('os.environ', {'PORTSIDE_SETUP_PASSWORD':''}):
+                self.assertFalse(initialize_trial())
+            with store.connect() as db:
+                self.assertEqual(store.records(db, port, 'zones')[0]['name'], 'Keep client setup')
+                self.assertEqual(db.execute('SELECT count(*) FROM users').fetchone()[0], 1)
+
+    def test_cloud_bootstrap_requires_first_login_credentials(self):
+        from unittest.mock import patch
+        from scripts.start_trial import initialize_trial
+        with patch.dict('os.environ', {'PORTOPS_DB':store.DB_PATH, 'PORTSIDE_SETUP_EMAIL':'', 'PORTSIDE_SETUP_PASSWORD':''}):
+            with self.assertRaisesRegex(ValueError, 'first startup'):
+                initialize_trial()
+            with store.connect() as db:
+                self.assertEqual(db.execute('SELECT count(*) FROM users').fetchone()[0], 0)
+
     def test_setup_validates_before_creating_accounts(self):
         for args in [('invalid', 'long-enough-password', 'Org', 'Port'), ('a@b.org', 'short', 'Org', 'Port'), ('a@b.org', 'long-enough-password', '', 'Port')]:
             with self.assertRaises(ValueError):

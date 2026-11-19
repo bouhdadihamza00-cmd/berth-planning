@@ -68,3 +68,21 @@ docker compose --env-file deploy/.env -f deploy/compose.yaml up -d --build
 Use `docker compose --env-file deploy/.env -f deploy/compose.yaml stop` to stop the trial. Do not use `down -v`: it deletes the client database and certificate volumes. The image includes the setup and backup commands, but never a database or default credentials.
 
 References: [Oracle Always Free limits](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm), [Caddy HTTPS](https://caddyserver.com/docs/automatic-https), [Compose health checks](https://docs.docker.com/compose/how-tos/startup-order/).
+
+## Railway alternative
+
+Railway can deploy the existing Dockerfile from GitHub with its own HTTPS domain. The trial is usage-limited: the account dashboard is the source of truth for remaining days and credit. Do not assume a 30-day uninterrupted deployment; services stop when credits expire or are exhausted. Review data-retention rules before the trial ends and export a backup.
+
+Configure the service before starting it:
+
+- Attach a persistent volume at `/app/data`.
+- Set `PORTOPS_DB=/app/data/portops.db` and `PORTOPS_AI_PROVIDER=disabled`.
+- Set `RAILWAY_RUN_UID=0` as required by Railway for root-owned volume mounts when the Docker image has a non-root default user.
+- Set private variables `PORTSIDE_SETUP_EMAIL` and `PORTSIDE_SETUP_PASSWORD` (at least 12 characters). Optional `PORTSIDE_SETUP_ORGANIZATION` and `PORTSIDE_SETUP_PORT` customize the empty workspace names.
+- Use `python scripts/start_trial.py` as the start command and `/api/health` as the health-check path. The script uses Railway's `PORT` and creates an empty workspace only when the mounted database has no users. Subsequent restarts preserve configuration and records.
+- Generate a Railway HTTPS domain after the health check passes. No Caddy service is needed on Railway.
+- Remove the setup password variable after the first successful startup; it is no longer required for an initialized database. Keep the login securely outside the repository.
+
+Do not load the local database or connector credentials. Use the same empty-workspace, login, upload, restart-persistence and backup checks described above before handing over the URL. Railway's free/trial volume is small, so download backups instead of accumulating large imported documents and repeated snapshots indefinitely.
+
+References: [Railway free/trial limits](https://docs.railway.com/pricing/free-plan), [volume mount permissions](https://docs.railway.com/volumes).
