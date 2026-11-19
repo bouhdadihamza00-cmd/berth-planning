@@ -108,7 +108,16 @@ function scrollRegion(host, items, mode, key) {
     clear.type = "button";
     clear.className = "btn small";
     clear.textContent = "Reset";
-    bar.append(search, column, values, count, clear);
+    const advanced = document.createElement("details");
+    advanced.className = "list-filter-options";
+    const toggle = document.createElement("summary");
+    toggle.textContent = "Filters";
+    const controls = document.createElement("div");
+    controls.className = "list-filter-controls";
+    controls.append(column, values, clear);
+    advanced.append(toggle, controls);
+    count.setAttribute("role", "status");
+    bar.append(search, count, advanced);
     host.before(bar);
     function filter() {
       const q = search.value.toLocaleLowerCase();
@@ -161,6 +170,29 @@ function scrollRegion(host, items, mode, key) {
 export function activateScreen() {
   const main = document.querySelector(".hmi-main");
   if (!main) return;
+  function revealSection(strip) {
+    const active = strip.querySelector('button[aria-pressed="true"]');
+    if (!active) return;
+    const item = active.getBoundingClientRect(), bounds = strip.getBoundingClientRect();
+    strip.scrollLeft += item.right > bounds.right ? item.right - bounds.right + 8 : item.left < bounds.left ? item.left - bounds.left - 8 : 0;
+  }
+  for (const selector of [".config-nav", ".workflow-tabs"]) {
+    const strip = main.querySelector(selector);
+    if (!strip) continue;
+    const buttons = [...strip.querySelectorAll("button")];
+    revealSection(strip);
+    strip.onkeydown = async event => {
+      const index = buttons.indexOf(event.target.closest("button"));
+      if (index < 0 || event.altKey || event.ctrlKey || event.metaKey) return;
+      const rtl = getComputedStyle(strip).direction === "rtl";
+      const step = event.key === "ArrowRight" ? (rtl ? -1 : 1) : event.key === "ArrowLeft" ? (rtl ? 1 : -1) : 0;
+      const next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1 : step ? (index + step + buttons.length) % buttons.length : -1;
+      if (next < 0) return;
+      event.preventDefault();
+      await buttons[next].onclick();
+      document.querySelector(`.hmi-main ${selector}`)?.querySelectorAll("button")[next]?.focus({ preventScroll: true });
+    };
+  }
   const pagers = [],
     seen = new WeakSet(),
     signatures = new WeakMap();
@@ -254,6 +286,7 @@ export function activateScreen() {
   });
   mutation.observe(main, { childList: true, subtree: true });
   const resize = () => {
+    main.querySelectorAll(".config-nav,.workflow-tabs").forEach(revealSection);
     window.P.fitTimeline();
     pagers.forEach((p) => p.fit());
     window.P.S.map?.invalidateSize();

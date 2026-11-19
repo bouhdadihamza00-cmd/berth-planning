@@ -29,3 +29,7 @@ Verify desktop, laptop and mobile layouts, 18px text, long labels, empty workspa
 ## Copy and data
 
 Routine copy is concise and professional. Keep validation, operational status, essential provenance and confirmations. Put secondary explanations behind disclosure. Do not add provider/model diagnostics, implementation commentary, unsupported trends or fabricated forecasts to routine screens. Never publish customer data or screenshots; repository examples use isolated synthetic records.
+
+## Responsive workspaces
+
+Workflow and assistant sections use compact horizontal navigation strips. Configuration uses the same strip below 900px; the selected section stays visible after navigation. Arrow keys and Home/End navigate configuration and workflow sections. On phones, general settings and document imports scroll with their workspace, with single-column fields and horizontal theme choices. Port actions align beneath the infrastructure summary. List search stays visible while column and exact-value filters expand through a native disclosure in normal flow.

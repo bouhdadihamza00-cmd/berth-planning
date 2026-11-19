@@ -185,3 +185,96 @@ html[data-theme="dark"] {
 
 #app .workflow-tabs > button { position: relative; }
 #app .workflow-tabs > button.active::after { display: block; content: ""; position: absolute; inset: auto 14px 3px; height: 0; width: auto; background: none; border-block-end: 2px solid #ff970d; }
+
+
+/* Workspaces share one rhythm; content determines height as text grows. */
+#app .hmi-main { padding: 16px 20px 24px; gap: 16px; }
+#app .hmi-main > .page-heading { padding-block: 4px; flex-wrap: wrap; }
+#app .hmi-main > .page-heading > div { min-inline-size: 0; }
+#app .heading-actions { flex-wrap: wrap; gap: 8px; }
+#app .hmi-main :is(.toolbar,.card-head,.form-actions) { min-inline-size: 0; }
+#app .hmi-main .card-head .card-title { flex-wrap: wrap; }
+#app .hmi-main :is(.metric-value,.summary-card b,.product-value,.table-progress,.report-summary b) { font-variant-numeric: tabular-nums; }
+#app .hmi-main .table-scroll :is(th,td) { padding-block: 11px; }
+#app .hmi-main .table-scroll tbody tr:hover { background: var(--ui-subtle); }
+#app .hmi-main .table-scroll:focus-visible { outline-offset: -3px; }
+#app .port-directory-grid { grid-template-columns: repeat(auto-fill,minmax(min(100%,280px),1fr)); gap: 16px; }
+#app .port-directory-card { display: flex; flex-direction: column; gap: 8px; min-inline-size: 0; }
+#app .port-directory-card h3 { overflow-wrap: anywhere; }
+#app .port-directory-card-bottom { margin-block-start: auto; justify-content: flex-start; }
+#app .port-directory-card-bottom > span { flex-basis: 100%; }
+
+/* Secondary filters expand in normal flow, so they cannot be clipped by cards. */
+#app .list-filter-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; }
+#app .list-filter-toolbar > input { flex: 1 1 140px; min-inline-size: 0; }
+#app .list-filter-toolbar > .subtle { margin-inline-start: auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#app .list-filter-options { flex: 0 0 auto; }
+#app .list-filter-options > summary { cursor: pointer; padding: 7px 9px; border: 1px solid var(--ui-control-border); border-radius: 5px; color: var(--ink); background: var(--ui-surface); font-weight: 600; }
+#app .list-filter-options[open] { flex-basis: 100%; }
+#app .list-filter-options[open] > summary { inline-size: fit-content; }
+#app .list-filter-controls { display: flex; flex-wrap: wrap; gap: 8px; padding-block-start: 10px; }
+#app .list-filter-controls select { flex: 1 1 120px; min-inline-size: 0; max-inline-size: 100%; }
+
+/* Workflow and assistant sections use the same compact navigation strip. */
+#app .hmi-main[data-page="center"] .workflow-tabs,
+#app .assistant-tablist { display: flex; flex-wrap: nowrap; gap: 4px; padding: 5px; min-height: 0; height: auto; border: 1px solid var(--ui-border); border-radius: 9px; background: var(--ui-surface); overflow-x: auto; flex: none; scroll-padding-inline: 5px; }
+#app .hmi-main[data-page="center"] .workflow-tabs > button,
+#app .assistant-tablist [role="tab"] { flex: 1 0 max-content; min-height: 44px; height: auto; padding: 10px 14px; border: 0; border-radius: 5px; gap: 8px; background: transparent; color: var(--muted); }
+#app .hmi-main[data-page="center"] .workflow-tabs > button.active,
+#app .assistant-tablist [aria-selected="true"] { background: #173f58; color: #fff; }
+#app .workflow-tab-icon { width: 20px; height: 24px; background: transparent; color: inherit; }
+#app .workflow-tab-copy { flex: none; }
+#app .workflow-tab-copy strong { font-size: calc(12px * var(--ui-font-scale,1)); line-height: 1.4; white-space: nowrap; }
+#app .workflow-tab-count { min-width: 22px; height: auto; padding: 3px 6px; font-size: calc(11px * var(--ui-font-scale,1)); }
+#app .assistant-workspace { gap: 16px; }
+#app .assistant-kpis { gap: 12px; margin-block-end: 16px; }
+#app .assistant-kpi { padding: 14px 16px; }
+#app .assistant-analysis-grid { gap: 16px; }
+#app .assistant-card-heading { padding: 14px 16px; }
+#app .assistant-priorities .intelligence-finding { min-height: 0; padding: 14px 16px; }
+#app .assistant-side-panels { gap: 16px; }
+#app .assistant-findings-search .search-box { padding: 0 10px; background: var(--ui-surface); border-color: var(--ui-control-border); }
+#app .assistant-findings-search input { background: transparent; }
+
+@media(max-width:900px) {
+  #app .hmi-main { padding: 12px 12px 20px; gap: 12px; }
+  #app .hmi-main[data-page="configuration"] .config-nav { display: flex; flex-direction: row; flex-wrap: nowrap; max-height: none; min-height: 54px; padding: 5px; overflow-x: auto; border: 1px solid var(--ui-border); background: var(--ui-surface); border-radius: 9px; }
+  #app .hmi-main[data-page="configuration"] .config-nav button { flex: 0 0 auto; min-height: 44px; font-size: calc(12px * var(--ui-font-scale,1)); padding: 10px 12px; white-space: nowrap; }
+  #app .hmi-main[data-page="configuration"] .config-nav .nav-caption { display: none; }
+}
+@media(max-width:700px) {
+  #app .hmi-main .form-grid { grid-template-columns: minmax(0,1fr); }
+  #app .hmi-main[data-page="configuration"] .hmi-workspace { overflow-y: auto; display: block; }
+  #app .hmi-main[data-page="configuration"] .config-layout { display: flex; flex-direction: column; gap: 12px; height: auto; }
+  #app .hmi-main[data-page="configuration"] .config-content { flex: none; }
+  #app .preferences-card, #app .preferences-form { flex: none; }
+  #app .preferences-scroll { overflow: visible; flex: none; padding: 14px; }
+  #app .preferences-columns { gap: 16px; }
+  #app .preference-section { padding: 14px; }
+  #app .preference-theme-options { grid-template-columns: minmax(0,1fr); }
+  #app .preference-theme-choice { display: flex; align-items: center; gap: 12px; }
+  #app .preference-theme-preview { width: 72px; height: 48px; flex: none; }
+  #app .preferences-footer { flex-wrap: wrap; gap: 12px; padding: 14px; }
+  #app .port-directory-grid { padding: 12px; }
+  #app .hmi-main[data-page="center"] .workflow-tabs { min-height: 56px; }
+  #app .assistant-module-intro { padding: 20px; }
+  #app .assistant-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  #app .assistant-kpi { padding: 12px; }
+  #app .assistant-kpi > div { gap: 6px; }
+  #app .assistant-kpi > strong { font-size: calc(25px * var(--ui-font-scale,1)); }
+  #app .assistant-kpi svg { width: 16px; height: 16px; }
+  #app .list-filter-options > summary { min-height: 44px; display: flex; align-items: center; }
+  #app .hmi-main .card-head .card-title { gap: 8px; }
+}
+
+#app .preference-choice-caption { flex: 1; min-inline-size: 0; }
+#app .document-empty { inline-size: 100%; min-inline-size: 0; overflow-wrap: anywhere; }
+@media(max-width:700px) {
+  #app .document-workbench { display: flex; flex-direction: column; overflow: visible; min-inline-size: 0; }
+  #app .document-workbench > .card { flex: none; min-height: 0; overflow: visible; }
+  #app .document-library-list { max-height: 260px; flex: none; }
+  #app .document-review .document-empty { padding: 24px 16px; }
+  #app .document-flow { gap: 12px; }
+}
+
+#app :is(.workflow-tabs > button,.config-nav button,.assistant-tablist [role="tab"]):focus-visible { transition: none; }

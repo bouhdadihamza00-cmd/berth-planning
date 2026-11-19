@@ -173,7 +173,7 @@ export function renderCenter() {
       "Operational alerts, schedule approvals and reports.",
       `${P().can("delays.create") ? btn("Declare operational delay", "plus", "delay", "primary") : ""}`,
     ) +
-    `<div class="section-tabs workflow-tabs" role="group" aria-label="Workflow sections">${tabs.map(([id, ic, title, count]) => `<button class="${S.tab === id ? "active" : ""}" aria-pressed="${S.tab === id}" data-center-tab="${id}"><span class="workflow-tab-icon">${icon(ic)}</span><span class="workflow-tab-copy"><strong>${title}</strong><small>${{alerts:"Operational exceptions",notifications:"Updates & activity",approvals:"Review & publish",reports:"Insights & exports"}[id]}</small></span>${count !== "" ? `<span class="workflow-tab-count">${count}</span>` : ""}</button>`).join("")}</div>` +
+    `<div class="section-tabs workflow-tabs" role="group" aria-label="Workflow sections">${tabs.map(([id, ic, title, count]) => `<button class="${S.tab === id ? "active" : ""}" aria-pressed="${S.tab === id}" data-center-tab="${id}"><span class="workflow-tab-icon">${icon(ic)}</span><span class="workflow-tab-copy"><strong>${title}</strong></span>${count !== "" ? `<span class="workflow-tab-count">${count}</span>` : ""}</button>`).join("")}</div>` +
     content
   );
 }
