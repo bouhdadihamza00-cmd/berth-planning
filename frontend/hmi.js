@@ -73,55 +73,24 @@ function addOverviewTabs(workspace) {
   workspace.insertBefore(tabs, workspace.querySelector(".dashboard-middle"));
 }
 
-export function overviewPageSize(heights, available) {
-  return Math.max(1, Math.floor(Math.max(0, available) / Math.max(1, ...heights)));
-}
-
-function overviewPager(host, items, key, mode) {
+function overviewScrollRegion(host) {
   host.classList.add("hmi-overview-region");
-  const pager = document.createElement("div");
-  pager.className = "hmi-pager";
-  const previous = document.createElement("button"), next = document.createElement("button");
-  previous.type = next.type = "button";
-  previous.textContent = "‹";
-  next.textContent = "›";
-  previous.setAttribute("aria-label", "Previous records");
-  next.setAttribute("aria-label", "Next records");
-  const label = document.createElement("span");
-  label.setAttribute("role", "status");
-  pager.append(previous, label, next);
-  host.after(pager);
-  let page = pageState.get(key) || 0, size = 1, frame;
-  function fit() {
-    if (!host.clientHeight) return;
-    items.forEach(item => item.hidden = false);
-    const header = host.querySelector("thead")?.getBoundingClientRect().height || 0;
-    const style = getComputedStyle(host);
-    const available = host.clientHeight - header - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom) - 2;
-    size = overviewPageSize(items.map(item => item.getBoundingClientRect().height), available);
-    if (mode === "grid") size *= style.gridTemplateColumns.split(/\s+/).filter(track => parseFloat(track) > 0).length || 1;
-    page = Math.min(page, Math.max(0, Math.ceil(items.length / size) - 1));
-    const start = page * size;
-    items.forEach((item, index) => item.hidden = index < start || index >= start + size);
-    pageState.set(key, page);
-    label.textContent = items.length ? `${start + 1}–${Math.min(start + size, items.length)} / ${items.length}` : "0";
-    previous.disabled = page === 0;
-    next.disabled = start + size >= items.length;
-    pager.dataset.single = String(items.length <= size);
-  }
-  previous.onclick = () => { page--; fit(); };
-  next.onclick = () => { page++; fit(); };
-  const observer = new ResizeObserver(() => {
-    cancelAnimationFrame(frame);
-    frame = requestAnimationFrame(fit);
-  });
-  observer.observe(host);
-  return { fit, destroy() { observer.disconnect(); cancelAnimationFrame(frame); pager.remove(); } };
+  host.tabIndex = 0;
+  host.setAttribute("role", "region");
+  host.setAttribute("aria-label", host.closest(".card")?.querySelector("h2,h3")?.textContent.trim() || "Dashboard records");
+  let idle;
+  const scrolling = () => {
+    host.classList.add("is-scrolling");
+    clearTimeout(idle);
+    idle = setTimeout(() => host.classList.remove("is-scrolling"), 900);
+  };
+  host.addEventListener("scroll", scrolling, { passive: true });
+  return { fit() {}, destroy() { clearTimeout(idle); host.removeEventListener("scroll", scrolling); } };
 }
 
 /** Native scrolling and composable table filters keep every record reachable. */
 function scrollRegion(host, items, mode, key) {
-  if (host.closest('.hmi-main[data-page="overview"]')) return overviewPager(host, items, key, mode);
+  if (host.closest('.hmi-main[data-page="overview"]')) return overviewScrollRegion(host);
   host.classList.add("hmi-scroll-region");
   const card = host.closest(".card");
   const hasSearch = card?.querySelector(

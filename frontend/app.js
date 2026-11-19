@@ -16,7 +16,7 @@ import {
   prepareScreen,
   activateScreen,
   activateModalLists,
-} from "./hmi.js?v=14";
+} from "./hmi.js?v=15";
 import {
   renderPlanning,
   fitTimeline,
