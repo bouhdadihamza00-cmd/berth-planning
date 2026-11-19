@@ -20,9 +20,9 @@ class AISContract(unittest.TestCase):
         from backend.main import check_port
         from fastapi import HTTPException
         for radius in (201, 1000, 5000):
-            check_port({'departments': ['Operations'], 'center': [-8.63, 33.12],
+            check_port({'name': 'Test port', 'code': 'TEST', 'departments': ['Operations'], 'center': [-8.63, 33.12],
                         'integration': {'provider': 'marinetraffic-client', 'radius_km': radius}})
         for radius in (5001, 0, float('nan'), True):
             with self.assertRaises(HTTPException):
-                check_port({'departments': ['Operations'], 'center': [-8.63, 33.12],
+                check_port({'name': 'Test port', 'code': 'TEST', 'departments': ['Operations'], 'center': [-8.63, 33.12],
                             'integration': {'provider': 'marinetraffic-client', 'radius_km': radius}})
