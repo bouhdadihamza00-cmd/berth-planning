@@ -60,7 +60,17 @@ External connectors are disabled until configured with your own authorized acces
 
 ## Client trial hosting
 
-See [the Oracle Cloud deployment guide](docs/client-trial-hosting.md) for an isolated empty trial with HTTPS, persistent storage and database backups. Cloud provisioning and account verification must be completed before it has a public URL.
+Try the hosted application: **[Open the Portside demo](https://berth-planning-production.up.railway.app/)**.
+
+| Public demo login | Value |
+| --- | --- |
+| Email | `demo@portside.local` |
+| Password | `PortsideDemo2026!` |
+| Access | Read-only, isolated demo workspace |
+
+The public account can browse the interface but cannot create, edit or delete records, manage users, or access the private client workspace. The demo starts empty; the repository screenshots show a separate synthetic example. Fresh clones remain empty and require their own administrator setup.
+
+This deployment runs on Railway's usage-limited trial and may sleep when idle or become unavailable when the trial credit expires. No OCP data is included. See [client trial hosting](docs/client-trial-hosting.md) for deployment, persistent storage and backup instructions.
 
 ## Development
 
