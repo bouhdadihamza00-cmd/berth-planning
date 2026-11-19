@@ -160,6 +160,9 @@ def check_geometry(g,types=None):
         for p in coords: polygon(p)
 
 def check_port(d):
+    for field in ["name", "code"]:
+        if not isinstance(d.get(field), str) or not d[field].strip(): raise HTTPException(422, f"Port {field} is required")
+        d[field] = d[field].strip()
     from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
     try: ZoneInfo(d.get('timezone','UTC'))
     except (ZoneInfoNotFoundError,ValueError): raise HTTPException(422,'Invalid time zone')

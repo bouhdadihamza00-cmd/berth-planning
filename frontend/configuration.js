@@ -3,7 +3,7 @@ import {
   renderPortDirectory,
   renderAssetInventory,
   bindPortInventory,
-} from "./port-workspace.js?v=6";
+} from "./port-workspace.js?v=7";
 import {
   renderRuleWorkbench,
   bindRuleWorkbench,
@@ -268,7 +268,8 @@ export function bindConfig() {
         }),
     );
     if ($("[data-action=new-port]"))
-      $("[data-action=new-port]").onclick = portForm;
+      $("[data-action=new-port]").onclick = () => portForm();
+    $$("[data-edit-port]").forEach(b => b.onclick = () => portForm(S.ports.find(p => p.id === b.dataset.editPort)));
     if ($("[data-action=new-org]"))
       $("[data-action=new-org]").onclick = () => {
         modal(
@@ -517,7 +518,7 @@ function equipmentForm(
     );
   });
 }
-async function portForm() {
+async function portForm(existing = null) {
   const {
     S,
     api,
@@ -531,24 +532,35 @@ async function portForm() {
     toast,
   } = P();
   try {
-    const orgs = await api("/organizations");
-    const users = await api(P().path("/users"));
+    const orgs = existing ? [] : await api("/organizations");
+    const users = existing ? [] : await api(P().path("/users"));
     modal(
-      "Create a port workspace",
-      `<form id="port-form"><div class="notice">${icon("map-pin")}New ports begin with an empty map. Default Production, Supply Chain and Operations departments are created automatically.</div><div class="form-grid">${field("Port name", "name", "", "text", "required")}${field("Port code", "code", "", "text", "required")}${select(
+      existing ? "Edit port details" : "Create a port workspace",
+      `<form id="port-form" aria-label="Port details"><div class="form-grid">${field("Port name", "name", existing?.name || "", "text", "required")}${field("Port code", "code", existing?.code || "", "text", "required")}${existing ? "" : select(
         "Organization",
         "org_id",
         orgs.map((o) => [o.id, o.name]),
         S.data.port.org_id,
-      )}${select(
+      )}${existing ? "" : select(
         "Assign port administrator",
         "admin_id",
         users.map((u) => [u.id, u.name]),
         S.user.id,
-      )}${field("Timezone", "timezone", "Africa/Casablanca", "text", "required")}${field("Center longitude", "longitude", -8.617, "number", 'step="0.000001" min="-180" max="180" required')}${field("Center latitude", "latitude", 33.113, "number", 'step="0.000001" min="-90" max="90" required')}</div><div class="form-actions"><button type="submit" class="btn primary">${icon("plus")}Create port & open map</button></div></form>`,
+      )}${field("Timezone", "timezone", existing?.timezone || "Africa/Casablanca", "text", "required")}${field("Center longitude", "longitude", existing?.center[0] ?? -8.617, "number", 'step="0.000001" min="-180" max="180" required')}${field("Center latitude", "latitude", existing?.center[1] ?? 33.113, "number", 'step="0.000001" min="-90" max="90" required')}</div><div class="form-actions"><button type="submit" class="btn primary">${icon(existing ? "save" : "plus")}${existing ? "Save changes" : "Create port & open map"}</button></div></form>`,
     );
     handleForm("#port-form", async (d) => {
       d.center = [Number(d.longitude), Number(d.latitude)];
+      if (existing) {
+        await api(`/ports/${encodeURIComponent(existing.id)}`, "PUT", {
+          revision: existing.revision, name: d.name.trim(), code: d.code.trim(),
+          timezone: d.timezone.trim(), center: d.center,
+        });
+        S.ports = await api("/ports");
+        closeModal();
+        await refresh();
+        toast("Port details saved.");
+        return;
+      }
       const port = await api("/ports", "POST", d);
       S.ports = await api("/ports");
       S.portId = port.id;

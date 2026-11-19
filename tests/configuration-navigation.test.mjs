@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { renderConfig } from '../frontend/configuration.js';
+import { renderConfig, bindConfig } from '../frontend/configuration.js';
 
 test('port configuration exposes directory then inventory without redundant tabs', () => {
   const port = { id: 'port-1', name: 'Test port', code: 'TEST', timezone: 'UTC' };
@@ -14,6 +14,11 @@ test('port configuration exposes directory then inventory without redundant tabs
     assert.match(directory, /ports-directory/);
     assert.match(directory, /data-switch-port="port-1"/);
     assert.match(directory, /data-remove-port="port-1"/);
+    assert.match(directory, /data-edit-port="port-1"/);
+    window.P.S.user = { superadmin: false, memberships: [] };
+    assert.doesNotMatch(renderConfig(), /data-edit-port/);
+    window.P.S.user.memberships = [{ port_id: port.id, permissions: ['config.edit'] }];
+    assert.match(renderConfig(), /data-edit-port="port-1"/);
     assert.doesNotMatch(directory, /config-section-tabs/);
     window.P.S.configTab = 'assets';
     const inventory = renderConfig();
@@ -46,5 +51,32 @@ test('integration settings share one page and legacy AIS navigation resolves to 
     assert.doesNotMatch(html, /config-section-tabs|connector-back|edit-ais-connector/);
     window.P.can = () => false;
     assert.doesNotMatch(renderConfig(), /id="new-data-connector"/);
+  } finally { delete globalThis.window; }
+});
+
+
+test('editing another port saves only details without switching workspace', async () => {
+  const port = { id: 'other', name: 'Other port', code: 'OTH', timezone: 'UTC', center: [-8, 33], revision: 7 };
+  const button = { dataset: { editPort: port.id } };
+  const requests = [];
+  let submit, html;
+  globalThis.window = { P: {
+    S: { configTab: 'ports', portId: 'current', ports: [port], user: {}, data: {} },
+    $: () => null, $$: selector => selector === '[data-edit-port]' ? [button] : [],
+    can: () => true, icon: () => '',
+    field: (label, name, value) => `<label>${label}<input name="${name}" value="${value}"></label>`,
+    modal: (title, body) => { html = body; }, handleForm: (selector, fn) => { submit = fn; },
+    closeModal: () => {}, refresh: async () => {}, toast: message => { if (/error/i.test(message)) assert.fail(message); },
+    api: async (url, method, payload) => { requests.push({url, method, payload}); return [port]; },
+  } };
+  try {
+    bindConfig();
+    await button.onclick();
+    assert.match(html, /value="Other port"/);
+    assert.match(html, /Save changes/);
+    assert.doesNotMatch(html, /name="admin_id"|name="org_id"/);
+    await submit({ name: ' Updated ', code: ' NEW ', timezone: 'UTC', longitude: '-9', latitude: '32' });
+    assert.deepEqual(requests[0], { url: '/ports/other', method: 'PUT', payload: { revision: 7, name: 'Updated', code: 'NEW', timezone: 'UTC', center: [-9, 32] } });
+    assert.equal(window.P.S.portId, 'current');
   } finally { delete globalThis.window; }
 });

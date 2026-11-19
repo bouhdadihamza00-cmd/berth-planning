@@ -41,6 +41,29 @@ class EmptyInstallTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'already has users'):
             create_workspace('other@example.org', 'another-test-password', 'Other', 'Other')
 
+    def test_port_details_edit_preserves_configuration_and_records(self):
+        port = create_workspace('owner@example.org', 'unique-test-password', 'Org', 'Original')
+        with TestClient(app) as client:
+            client.post('/api/auth/login', json={'email':'owner@example.org', 'password':'unique-test-password'})
+            with store.connect() as c:
+                store.put(c, port, 'zones', {'name':'Keep zone'}, 'keep-zone')
+            before = client.get(f'/api/ports/{port}/snapshot').json()
+            payload = dict(revision=before['port']['revision'], name='Renamed port', code='NEW', timezone='UTC', center=[-9, 32])
+            response = client.put(f'/api/ports/{port}', json=payload)
+            self.assertEqual(response.status_code, 200, response.text)
+            after = client.get(f'/api/ports/{port}/snapshot').json()
+            for key, value in payload.items():
+                if key != 'revision': self.assertEqual(after['port'][key], value)
+            for key, value in before['port']['rules'].items():
+                self.assertEqual(after['port']['rules'][key], value)
+            for key in ['integration', 'boundary', 'departments', 'cargo_catalog']:
+                self.assertEqual(after['port'][key], before['port'][key])
+            self.assertEqual(after['zones'], before['zones'])
+            self.assertNotEqual(client.put(f'/api/ports/{port}', json=payload).status_code, 200)
+            payload['revision'] = after['port']['revision']
+            payload['name'] = '   '
+            self.assertEqual(client.put(f'/api/ports/{port}', json=payload).status_code, 422)
+
     def test_setup_validates_before_creating_accounts(self):
         for args in [('invalid', 'long-enough-password', 'Org', 'Port'), ('a@b.org', 'short', 'Org', 'Port'), ('a@b.org', 'long-enough-password', '', 'Port')]:
             with self.assertRaises(ValueError):

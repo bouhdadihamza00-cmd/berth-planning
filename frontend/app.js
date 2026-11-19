@@ -32,7 +32,7 @@ import {
   delayForm,
   alertModal,
 } from "./workflows.js?v=29";
-import { renderConfig, bindConfig } from "./configuration.js?v=40";
+import { renderConfig, bindConfig } from "./configuration.js?v=41";
 const S = {
   user: null,
   ports: [],
