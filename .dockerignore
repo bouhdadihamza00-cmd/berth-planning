@@ -6,3 +6,16 @@ data
 .env
 .test-output
 __pycache__
+
+# Keep private exports and deployment credentials out of build contexts.
+exports
+**/.env
+**/.env.*
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+.oci
+.ssh
+.aws
+.codex
+.agents

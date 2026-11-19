@@ -1,0 +1,49 @@
+name: portside-trial
+services:
+  app:
+    build:
+      context: ..
+    restart: unless-stopped
+    init: true
+    environment:
+      PORTOPS_DB: /app/data/portops.db
+      PORTOPS_AI_PROVIDER: disabled
+      WEATHER_USER_AGENT: Portside/1.0 ${PORTSIDE_HOST:?Set PORTSIDE_HOST in deploy/.env}
+    command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+    volumes:
+      - portside_data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      PORTSIDE_HOST: ${PORTSIDE_HOST:?Set PORTSIDE_HOST in deploy/.env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+volumes:
+  portside_data:
+  caddy_data:
+  caddy_config:

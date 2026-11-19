@@ -64,6 +64,19 @@ class EmptyInstallTests(unittest.TestCase):
             payload['name'] = '   '
             self.assertEqual(client.put(f'/api/ports/{port}', json=payload).status_code, 422)
 
+    def test_https_proxy_login_uses_secure_cookie_and_checks_origin(self):
+        from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+        create_workspace('owner@example.org', 'unique-test-password', 'Org', 'Port')
+        proxy = ProxyHeadersMiddleware(app, trusted_hosts='*')
+        with TestClient(proxy, base_url='http://trial.example.test') as client:
+            headers = {'x-forwarded-proto':'https', 'origin':'https://trial.example.test'}
+            response = client.post('/api/auth/login', headers=headers, json={'email':'owner@example.org', 'password':'unique-test-password'})
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertIn('Secure', response.headers['set-cookie'])
+            self.assertIn('HttpOnly', response.headers['set-cookie'])
+            headers['origin'] = 'https://other.example.test'
+            self.assertEqual(client.post('/api/auth/logout', headers=headers).status_code, 403)
+
     def test_setup_validates_before_creating_accounts(self):
         for args in [('invalid', 'long-enough-password', 'Org', 'Port'), ('a@b.org', 'short', 'Org', 'Port'), ('a@b.org', 'long-enough-password', '', 'Port')]:
             with self.assertRaises(ValueError):

@@ -58,6 +58,10 @@ Configure your port location, berths, equipment, products, people and approval r
 
 External connectors are disabled until configured with your own authorized access. See [.env.example](.env.example), [integration documentation](docs/integrations.md), [weather](docs/weather.md), [marine data](docs/marine-data.md) and [AI setup](docs/ai-assistant.md). Provider availability and terms apply. Weather/marine observations are informational; operational berthing decisions require local verification.
 
+## Client trial hosting
+
+See [the Oracle Cloud deployment guide](docs/client-trial-hosting.md) for an isolated empty trial with HTTPS, persistent storage and database backups. Cloud provisioning and account verification must be completed before it has a public URL.
+
 ## Development
 
 ```sh
