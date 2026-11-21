@@ -928,13 +928,6 @@ textarea::placeholder {
   background: #edf0f2;
   border-bottom-color: #9dc8de;
 }
-.login-aside {
-  background: #062e4b;
-}
-.login-copy h1 {
-  font-weight: 600;
-  letter-spacing: 0;
-}
 @media (min-height: 950px) {
   .hmi-main[data-page="overview"] .hmi-workspace {
     grid-template-rows: 112px minmax(0, 1fr) 210px;
@@ -1787,12 +1780,6 @@ textarea::placeholder {
 }
 .hmi-main .page-footer {
   color: #255a79;
-}
-.login-aside {
-  background: #052e4b;
-}
-.login-main {
-  background: #c9e8f8;
 }
 @media (min-height: 950px) {
   .hmi-main[data-page="overview"] .hmi-workspace {

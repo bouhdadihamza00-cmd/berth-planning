@@ -930,13 +930,6 @@ textarea::placeholder {
   background: #edf0f2;
   border-bottom-color: #bfc6cc;
 }
-.login-aside {
-  background: #252d34;
-}
-.login-copy h1 {
-  font-weight: 600;
-  letter-spacing: 0;
-}
 @media (min-height: 950px) {
   .hmi-main[data-page="overview"] .hmi-workspace {
     grid-template-rows: 112px minmax(0, 1fr) 210px;

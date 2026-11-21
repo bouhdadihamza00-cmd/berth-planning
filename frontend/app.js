@@ -1431,7 +1431,15 @@ function renderLogin() {
   document.querySelector("#assistant-chat")?.remove();
   S.assistantChat = null;
   $("#app").innerHTML =
-    `<div class="login-screen"><aside class="login-aside"><div class="brand"><span class="brand-icon">${icon("anchor")}</span><span><span class="brand-name">Portside</span><div class="brand-tag">Port operations & planning</div></span></div><div class="login-copy"><h1>Port operations<br>& berth planning.</h1><p>Vessel schedules, berth allocation and operational coordination.</p></div><footer>Portside · Operations console</footer></aside><section class="login-main"><form class="login-form" id="login-form"><h2>Operator sign in</h2><p>Sign in to your operations workspace.</p>${field("Email address", "email", "", "email", 'required autocomplete="username" spellcheck="false"')}${field("Password", "password", "", "password", 'required autocomplete="current-password"')}<div class="login-error" id="login-error" role="alert"></div><button type="submit" class="btn primary">Sign in ${icon("arrow-right")}</button></form></section></div>`;
+    `<main class="login-screen">
+      <form class="login-form" id="login-form" method="post" action="/api/auth/login">
+        <div class="brand"><span class="brand-icon" aria-hidden="true">${icon("anchor")}</span><span class="brand-name">Portside</span></div>
+        ${field("Email address", "email", "", "email", 'required autocomplete="username" spellcheck="false" enterkeyhint="next"')}
+        ${field("Password", "password", "", "password", 'required autocomplete="current-password" enterkeyhint="go"')}
+        <div class="login-error" id="login-error" role="alert"></div>
+        <button type="submit" class="btn primary">Sign in</button>
+      </form>
+    </main>`;
   icons();
   $("#login-form").onsubmit = async (e) => {
     e.preventDefault();

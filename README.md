@@ -6,6 +6,7 @@ Port operations, berth planning and approval workflows in one application.
 
 These captures use synthetic operational records in a separate example workspace, with public map imagery and weather. No customer records are included. A fresh installation starts empty; this example is not loaded on startup.
 
+![Portside sign-in over a blue-hour harbor](docs/screenshots/platform-login.jpg)
 ![Port overview with synthetic vessels](docs/screenshots/platform-overview.jpg)
 ![Berth planning with synthetic calls](docs/screenshots/platform-planning.jpg)
 
