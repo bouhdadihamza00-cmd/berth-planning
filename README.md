@@ -4,7 +4,7 @@ Port operations, berth planning and approval workflows in one application.
 
 ## Screenshots
 
-These captures use synthetic operational records in a separate example workspace, with public map imagery and weather. No customer records are included. A fresh installation starts empty; this example is not loaded on startup.
+These screenshots were captured from the public Portside demo on Railway. The demo shows synthetic operational records alongside map imagery, weather and live AIS observations. A fresh installation starts with an empty workspace.
 
 ![Portside sign-in over a blue-hour harbor](docs/screenshots/platform-login.jpg)
 ![Port overview with synthetic vessels](docs/screenshots/platform-overview.jpg)
@@ -43,7 +43,7 @@ Configure your port location, berths, equipment, products, people and approval r
 - Application startup creates the schema only. It does not load ports, users, vessel calls, cargo catalogues, workbooks or demonstration records.
 - No shared default login or password is supplied. Setup requires your own password of at least 12 characters.
 - Local databases, uploaded documents, connector sessions, credentials and exports are excluded from Git. Do not add private files with `git add -f`.
-- The screenshots contain synthetic data. Test fixtures are explicitly loaded by tests and are never imported by normal startup.
+- The screenshots use synthetic operational records. Test fixtures are explicitly loaded by tests and are never imported by normal startup.
 - The private HTML export embeds local operational records. If you generate one, keep it inside the ignored `exports/` directory and do not publish it.
 - Existing local databases are preserved. Updating the application does not erase your records.
 
