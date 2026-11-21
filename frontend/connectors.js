@@ -39,8 +39,8 @@ export async function bindConnectors() {
     if (document.querySelector('#data-connector-form')) host.querySelectorAll('button').forEach(button => button.disabled = true);
   } catch (error) {
     if (!host.isConnected || port !== S.portId) return;
-    host.innerHTML = '<tr><td colspan="5" role="alert">Could not load connectors. <button type="button" class="btn small" id="retry-connectors">Retry</button></td></tr>';
-    document.querySelector('#retry-connectors').onclick = () => bindConnectors();
+    host.innerHTML = `<tr><td colspan="5">${P().asyncState({ error: "Could not load connectors.", retry: "connectors" })}</td></tr>`;
+    host.querySelector('[data-retry="connectors"]').onclick = () => bindConnectors();
     toast(error.message, true);
   }
 }

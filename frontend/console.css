@@ -1957,7 +1957,7 @@ textarea::placeholder {
     font-size: calc(21px * var(--ui-font-scale, 1));
   }
   .hmi-main .gantt-legend {
-    font-size: calc(7px * var(--ui-font-scale, 1));
+    font-size: max(var(--ui-type-min), calc(7px * var(--ui-font-scale, 1)));
   }
   .app-sidebar .brand-icon {
     width: 24px;

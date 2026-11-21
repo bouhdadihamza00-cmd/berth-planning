@@ -2,6 +2,17 @@
 import copy
 import json
 from fastapi import HTTPException
+from .store import records
+
+ACTIVE_DRAFT_STATUSES = ('Draft', 'Submitted', 'Clarification requested')
+
+
+def active_draft_for_call(c, port, call_id, exclude=None):
+    """Return the unfinished workflow blocking a new draft for this vessel call."""
+    return next((d for d in records(c, port, 'drafts')
+                 if d.get('call_id') == call_id
+                 and d.get('status') in ACTIVE_DRAFT_STATUSES
+                 and d['id'] != exclude), None)
 
 
 def reviewers(c, port):
@@ -46,13 +57,18 @@ def capture_workflow(c,port,workflow,author_id=None):
 def completed(step,decisions):
     approved={d['user_id'] for d in decisions if d['action']=='approve' and d.get('step_id')==step['id']}
     required=set(step.get('user_ids',[]))
-    return bool(required) and (required<=approved if step['decision']=='all' else bool(required & approved))
+    if not required:return False
+    if any(d['action']=='approve' and d.get('step_id')==step['id'] and d.get('admin_override') for d in decisions):return True
+    return required<=approved if step['decision']=='all' else bool(required & approved)
 
 
-def decision_step(workflow,decisions,user_id,requested=None):
+def decision_step(workflow,decisions,user_id,requested=None,override=False):
     remaining=[step for step in workflow['steps'] if not completed(step,decisions)]
     if workflow.get('mode','sequential')=='sequential':remaining=remaining[:1]
-    allowed=[step for step in remaining if user_id in step.get('user_ids',[]) and not any(d['action']=='approve' and d.get('step_id')==step['id'] and d['user_id']==user_id for d in decisions)]
+    if override:
+        allowed=remaining
+    else:
+        allowed=[step for step in remaining if user_id in step.get('user_ids',[]) and not any(d['action']=='approve' and d.get('step_id')==step['id'] and d['user_id']==user_id for d in decisions)]
     if requested:allowed=[step for step in allowed if step['id']==requested]
     if not allowed:raise HTTPException(403,'You are not an outstanding reviewer in an active approval step')
     return allowed[0]

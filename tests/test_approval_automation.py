@@ -136,6 +136,7 @@ class ApprovalAutomationTests(unittest.TestCase):
                 result = self.ok(self.action(self.draft(**change), 'submit'))
                 self.assertEqual(result['status'], 'Submitted')
                 self.assertFalse(result['automation']['auto_approve'])
+                self.ok(self.client.delete(self.url(f'/planning/drafts/{result["id"]}?revision={result["revision"]}')))
         self.ok(self.client.post(self.url(f'/calls/{before["id"]}/actuals'), json={'revision': before['revision'], 'status': 'Delayed'}))
         result = self.ok(self.action(self.draft(), 'submit'))
         self.assertTrue(result['validation']['warnings'])

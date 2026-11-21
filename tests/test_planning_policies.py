@@ -1,6 +1,6 @@
 import unittest
 from backend.policies import normalize_rules, policy_errors, approval_eligibility
-from backend.planning import validate, optimize
+from backend.planning import validate, optimize, align_forecast_for_earlier_start
 
 class PlanningPolicies(unittest.TestCase):
     def setUp(self):
@@ -30,6 +30,20 @@ class PlanningPolicies(unittest.TestCase):
     def test_bad_rules_rejected(self):
         for bad in [{'custom_rules':'x'},{'custom_rules':[{**self.rule,'berth_ids':[]}]},{'custom_rules':[{**self.rule,'effect':'execute'}]},{'custom_rules':[{**self.rule,'berth_ids':['unknown']}]}]:
             with self.assertRaises(ValueError):normalize_rules(bad,['B1','B2'])
+    def test_existing_draft_with_stale_eta_is_aligned_before_submission(self):
+        before={**self.call,'start':'2023-11-28T01:00:00Z','eta':'2023-11-27T22:00:00Z','ready_at':'2023-11-27T20:00:00Z'}
+        proposed={**before,'start':'2023-11-27T01:00:00Z','end':'2023-11-27T03:00:00Z'}
+        aligned=align_forecast_for_earlier_start(before,proposed)
+        self.assertEqual(aligned['eta'],'2023-11-26T22:00:00+00:00')
+        self.assertEqual(aligned['ready_at'],'2023-11-26T20:00:00+00:00')
+        self.assertEqual(validate(aligned,[],self.berths,self.equipment,{})['errors'],[])
+        arrived={**before,'actual_arrival':'2023-11-27T22:00:00Z'}
+        self.assertEqual(align_forecast_for_earlier_start(arrived,proposed)['eta'],proposed['eta'])
+    def test_earlier_planned_start_keeps_arrival_and_readiness_aligned(self):
+        proposed={**self.call,'start':'2023-11-27T01:00:00Z','end':'2023-11-27T03:00:00Z','eta':'2023-11-26T00:00:00Z','ready_at':'2023-11-25T00:00:00Z'}
+        self.assertEqual(validate(proposed,[],self.berths,self.equipment,{})['errors'],[])
+        arrived={**proposed,'actual_arrival':'2023-11-28T00:00:00Z'}
+        self.assertIn('The operation starts before vessel arrival',validate(arrived,[],self.berths,self.equipment,{})['errors'])
     def test_approval_modes_and_limits(self):
         proposed={**self.call,'start':'2023-11-28T02:00:00Z','end':'2023-11-28T04:00:00Z'}
         clean={'errors':[],'warnings':[]}

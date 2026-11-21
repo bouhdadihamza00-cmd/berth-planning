@@ -1,4 +1,4 @@
-import { renderKpiConfig, bindKpiConfig } from "./dashboard-kpis.js?v=31";
+import { renderKpiConfig, bindKpiConfig } from "./dashboard-kpis.js?v=43";
 import { confirmRemoval } from "./removal.js?v=6";
 import {
   renderPortDirectory,
@@ -9,10 +9,10 @@ import {
   renderRuleWorkbench,
   bindRuleWorkbench,
 } from "./rule-workbench.js?v=10";
-import { renderDocuments, bindDocuments } from "./documents.js?v=15";
-import { renderConnectors, bindConnectors } from "./connectors.js?v=8";
-import { renderPreferences, bindPreferences } from "./preferences.js?v=8";
-import { renderCatalog, bindCatalog } from "./cargo.js?v=12";
+import { renderDocuments, bindDocuments } from "./documents.js?v=16";
+import { renderConnectors, bindConnectors } from "./connectors.js?v=9";
+import { renderPreferences, bindPreferences } from "./preferences.js?v=13";
+import { renderCatalog, bindCatalog } from "./cargo.js?v=13";
 import {
   renderDepartments,
   bindDepartments,
@@ -61,7 +61,7 @@ const sections = [
       ["workflows", "Approval workflow"],
     ],
   ],
-  ["dashboard-kpis", "chart-column", "Dashboard KPIs", [["dashboard-kpis", "Dashboard KPIs"]]],
+  ["dashboard-kpis", "chart-column", "Platform variables", [["dashboard-kpis", "Platform variables"]]],
   ["imports", "files", "Document Imports", [["imports", "Document Imports"]]],
   [
     "integrations",

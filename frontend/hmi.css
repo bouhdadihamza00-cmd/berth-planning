@@ -223,7 +223,7 @@ body {
   font-size: calc(10px * var(--ui-font-scale, 1));
   padding: 5px 11px;
   border-radius: 3px;
-  color: #718895;
+  color: var(--muted);
 }
 .hmi-panel-tabs button.active {
   background: #fff;
@@ -236,7 +236,7 @@ body {
 /* Overview: one process display with a flexible geographic center. */
 .hmi-main[data-page="overview"] .hmi-workspace {
   display: grid;
-  grid-template-rows: 88px minmax(0, 1fr) 169px;
+  grid-template-rows: minmax(88px, max-content) minmax(0, 1fr) minmax(169px, max-content);
   gap: 9px;
 }
 .hmi-main .metrics {
@@ -344,7 +344,7 @@ body {
   margin-top: 5px;
 }
 .hmi-main .map-caption {
-  font-size: calc(7px * var(--ui-font-scale, 1));
+  font-size: max(var(--ui-type-min), calc(7px * var(--ui-font-scale, 1)));
   right: 10px;
   bottom: 20px;
 }
@@ -388,7 +388,7 @@ body {
   margin-top: 4px;
 }
 .hmi-main .product-change {
-  font-size: calc(7px * var(--ui-font-scale, 1));
+  font-size: max(var(--ui-type-min), calc(7px * var(--ui-font-scale, 1)));
   margin-top: 4px;
 }
 .hmi-main .delay-body {
@@ -824,7 +824,7 @@ body {
     display: none;
   }
   .hmi-main .metric-foot {
-    font-size: calc(7px * var(--ui-font-scale, 1));
+    font-size: max(var(--ui-type-min), calc(7px * var(--ui-font-scale, 1)));
   }
   .hmi-main .dashboard-bottom {
     grid-template-columns: 1fr 1fr 1.2fr;
@@ -843,7 +843,7 @@ body {
     font-size: calc(19px * var(--ui-font-scale, 1));
   }
   .hmi-main .donut-center span {
-    font-size: calc(7px * var(--ui-font-scale, 1));
+    font-size: max(var(--ui-type-min), calc(7px * var(--ui-font-scale, 1)));
   }
   .hmi-main .cause-list {
     min-width: 90px;
@@ -1060,10 +1060,10 @@ body {
   }
   .hmi-main .page-footer {
     height: 14px;
-    font-size: calc(7px * var(--ui-font-scale, 1));
+    font-size: max(var(--ui-type-min), calc(7px * var(--ui-font-scale, 1)));
   }
   .hmi-main .demo-pill {
-    font-size: calc(7px * var(--ui-font-scale, 1));
+    font-size: max(var(--ui-type-min), calc(7px * var(--ui-font-scale, 1)));
     padding: 3px 5px;
   }
   .hmi-main .hmi-panel-tabs button {
@@ -1199,13 +1199,13 @@ body {
     font-size: calc(8px * var(--ui-font-scale, 1));
   }
   .hmi-main .gantt-block small {
-    font-size: calc(7px * var(--ui-font-scale, 1));
+    font-size: max(var(--ui-type-min), calc(7px * var(--ui-font-scale, 1)));
   }
   .hmi-main .gantt-footer {
     padding: 5px;
   }
   .hmi-main .gantt-legend {
-    font-size: calc(6px * var(--ui-font-scale, 1));
+    font-size: max(var(--ui-type-min), calc(6px * var(--ui-font-scale, 1)));
     gap: 5px;
   }
   .hmi-main .gantt-legend .legend-color {
@@ -1376,10 +1376,10 @@ body {
     min-width: 0;
   }
   .hmi-main .metric-label {
-    font-size: calc(7px * var(--ui-font-scale, 1));
+    font-size: max(var(--ui-type-min), calc(7px * var(--ui-font-scale, 1)));
   }
   .hmi-main .metric-foot {
-    font-size: calc(6px * var(--ui-font-scale, 1));
+    font-size: max(var(--ui-type-min), calc(6px * var(--ui-font-scale, 1)));
   }
   .hmi-main .page-heading > div:first-child {
     min-width: 0;
@@ -1392,7 +1392,7 @@ body {
     white-space: normal;
   }
   .hmi-main .map-footer {
-    font-size: calc(7px * var(--ui-font-scale, 1));
+    font-size: max(var(--ui-type-min), calc(7px * var(--ui-font-scale, 1)));
   }
 }
 .login-screen {

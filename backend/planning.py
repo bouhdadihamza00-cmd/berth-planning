@@ -7,6 +7,28 @@ def dt(v):
     x=datetime.fromisoformat(v.replace('Z','+00:00'))
     return x.replace(tzinfo=timezone.utc) if x.tzinfo is None else x
 
+def _stamp(value):
+    try: return dt(value) if value else None
+    except (TypeError, ValueError): return None
+
+def align_forecast_for_earlier_start(before, proposed):
+    """Keep ETA/cargo-ready forecasts usable when a planned start is moved earlier."""
+    before=before or {}; proposed=dict(proposed or {})
+    if not proposed.get('start') or before.get('actual_arrival'): return proposed
+    start=_stamp(proposed.get('start')); eta=_stamp(proposed.get('eta'))
+    if not start or not eta or start>=eta: return proposed
+    old_start=_stamp(before.get('start')); old_eta=_stamp(before.get('eta'))
+    lead=(old_start-old_eta).total_seconds()/3600 if old_start and old_eta else 0
+    if not math.isfinite(lead) or lead<0: lead=0
+    proposed['eta']=(start-timedelta(hours=lead)).isoformat()
+    ready=_stamp(proposed.get('ready_at'))
+    if ready and start<ready:
+        old_ready=_stamp(before.get('ready_at'))
+        ready_lead=(old_start-old_ready).total_seconds()/3600 if old_start and old_ready else 0
+        if not math.isfinite(ready_lead) or ready_lead<0: ready_lead=0
+        proposed['ready_at']=(start-timedelta(hours=ready_lead)).isoformat()
+    return proposed
+
 def overlap(a,b,buffer=0): return dt(a['start']) < dt(b['end'])+timedelta(hours=buffer) and dt(a['end'])+timedelta(hours=buffer)>dt(b['start'])
 
 def compatible(call,berth,equipment,rules=None):
@@ -36,7 +58,12 @@ def validate(call,calls,berths,equipment,rules=None):
     start,end=dt(call['start']),dt(call['end'])
     if end<=start: errors.append('Completion must be after the start')
     if start<dt(call['eta']): errors.append('The operation starts before vessel arrival')
-    if call.get('ready_at') and start<dt(call['ready_at']): errors.append('Cargo will not be available at the planned start')
+    if call.get('actual_arrival') and start<dt(call['actual_arrival']): errors.append('The operation starts before vessel arrival')
+    if call.get('ready_at'):
+        try:
+            if start<dt(call['ready_at']): errors.append('Cargo will not be available at the planned start')
+        except ValueError:
+            errors.append('Cargo readiness time is invalid')
     if not call.get('ready',False): errors.append('Cargo readiness has not been confirmed')
     if e and (end-start).total_seconds()>0 and float(call['quantity'])/((end-start).total_seconds()/3600)>float(e.get('capacity',0)):
         errors.append('Required handling rate exceeds equipment capacity')

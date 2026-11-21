@@ -1,6 +1,10 @@
 /** Fixed-screen workspaces with native scrolling inside tables and forms. */
 let activeLayout;
 const pageState = new Map();
+const overviewTabMedia = window.matchMedia("(max-width: 900px)");
+overviewTabMedia?.addEventListener?.("change", () => {
+  document.querySelectorAll(".hmi-overview-tabs").forEach((el) => el._syncSemantics?.());
+});
 
 export function prepareScreen(page) {
   activeLayout?.destroy();
@@ -48,29 +52,90 @@ export function prepareScreen(page) {
 function addOverviewTabs(workspace) {
   const tabs = document.createElement("div");
   tabs.className = "hmi-panel-tabs hmi-overview-tabs";
-  tabs.setAttribute("aria-label", "Overview panels");
   const options = [
-    ["map", "Port map"],
-    ["operations", "Operations & berths"],
-    ["analysis", "Cargo & delays"],
-    ["alerts", "Alerts"],
+    ["map", "Port map", "overview-panel-middle"],
+    ["operations", "Operations & berths", "overview-panel-middle"],
+    ["analysis", "Cargo & delays", "overview-panel-bottom"],
+    ["alerts", "Alerts", "overview-panel-bottom"],
   ];
   const selected = pageState.get("overview-panel") || "map";
   workspace.dataset.panel = selected;
-  options.forEach(([id, label]) => {
+  const middle = workspace.querySelector(".dashboard-middle");
+  const bottom = workspace.querySelector(".dashboard-bottom");
+  const panels = [[middle, "overview-panel-middle"], [bottom, "overview-panel-bottom"]]
+    .filter(([el]) => el);
+  panels.forEach(([el, id]) => { el.id = id; });
+  const buttons = options.map(([id, label, controls]) => {
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = label;
-    b.classList.toggle("active", id === selected);
-    b.onclick = () => {
-      workspace.dataset.panel = id;
-      pageState.set("overview-panel", id);
-      [...tabs.children].forEach((x) => x.classList.toggle("active", x === b));
-      window.dispatchEvent(new Event("resize"));
-    };
+    b.id = `overview-tab-${id}`;
+    b.dataset.panelTab = id;
+    b.dataset.controls = controls;
     tabs.append(b);
+    return b;
   });
-  workspace.insertBefore(tabs, workspace.querySelector(".dashboard-middle"));
+  tabs._syncSemantics = () => {
+    const active = buttons.find((b) => b.dataset.panelTab === workspace.dataset.panel) || buttons[0];
+    if (overviewTabMedia.matches) {
+      tabs.setAttribute("role", "tablist");
+      tabs.setAttribute("aria-label", "Overview panels");
+      buttons.forEach((b) => {
+        b.setAttribute("role", "tab");
+        b.setAttribute("aria-controls", b.dataset.controls);
+        b.setAttribute("aria-selected", String(b === active));
+        b.tabIndex = b === active ? 0 : -1;
+      });
+      panels.forEach(([el, panelId]) => {
+        const owner = buttons.find((b) => b.dataset.controls === panelId && b === active);
+        el.setAttribute("role", "tabpanel");
+        if (owner) el.setAttribute("aria-labelledby", owner.id);
+        else el.removeAttribute("aria-labelledby");
+        el.tabIndex = owner ? 0 : -1;
+      });
+    } else {
+      tabs.removeAttribute("role");
+      tabs.removeAttribute("aria-label");
+      buttons.forEach((b) => {
+        b.removeAttribute("role");
+        b.removeAttribute("aria-controls");
+        b.removeAttribute("aria-selected");
+        b.tabIndex = 0;
+      });
+      panels.forEach(([el]) => {
+        el.removeAttribute("role");
+        el.removeAttribute("aria-labelledby");
+        el.removeAttribute("tabindex");
+      });
+    }
+  };
+  const select = (id, focus = false) => {
+    workspace.dataset.panel = id;
+    pageState.set("overview-panel", id);
+    const active = buttons.find((b) => b.dataset.panelTab === id) || buttons[0];
+    buttons.forEach((b) => b.classList.toggle("active", b === active));
+    tabs._syncSemantics();
+    if (focus) {
+      active.focus();
+      active.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+    window.dispatchEvent(new Event("resize"));
+  };
+  tabs.addEventListener("keydown", (e) => {
+    const i = buttons.findIndex((b) => b === document.activeElement);
+    if (i < 0) return;
+    let next = -1;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (i + 1) % buttons.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (i - 1 + buttons.length) % buttons.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = buttons.length - 1;
+    if (next < 0) return;
+    e.preventDefault();
+    select(buttons[next].dataset.panelTab, true);
+  });
+  buttons.forEach((b) => { b.onclick = () => select(b.dataset.panelTab); });
+  select(selected);
+  workspace.insertBefore(tabs, middle || workspace.querySelector(".dashboard-middle"));
 }
 
 function overviewScrollRegion(host) {

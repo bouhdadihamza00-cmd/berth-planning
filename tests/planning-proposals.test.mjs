@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { overlapsScheduleComparison, planningProposals, proposalConnectorPath } from '../frontend/planning.js';
+import { overlapsScheduleComparison, planningProposals, proposalConnectorPath, shiftForecastForEarlierStart } from '../frontend/planning.js';
 test('saved proposals persist through review until publication or cancellation', () => {
   const statuses = ['Draft', 'Submitted', 'Clarification requested', 'Approved', 'Published', 'Cancelled', 'Rejected'];
   const data = { drafts: statuses.map((status, i) => ({id: String(i), call_id: 'call', status, proposed: {name:'Vessel', berth_id:'B2'}})) };
@@ -21,6 +21,18 @@ test('only overlapping published and proposed intervals in a rendered berth row 
   const cards = [published, overlap, adjacent];
   assert.deepEqual(cards.map(card => overlapsScheduleComparison(card, cards)), [true, true, false]);
   assert.equal(overlapsScheduleComparison(published, [published, adjacent]), false);
+});
+test('moving a planned call earlier shifts its arrival and cargo forecast with it', () => {
+  const current = {start:'2026-12-02T10:00:00Z',eta:'2026-12-02T07:00:00Z',ready_at:'2026-12-02T05:00:00Z'};
+  const next = {start:'2026-12-01T10:00:00Z',end:'2026-12-02T00:00:00Z'};
+  assert.deepEqual(shiftForecastForEarlierStart(current,next), {
+    start:'2026-12-01T10:00:00Z',end:'2026-12-02T00:00:00Z',
+    eta:'2026-12-01T07:00:00.000Z',ready_at:'2026-12-01T05:00:00.000Z'
+  });
+  const arrived = {...current,actual_arrival:'2026-12-02T07:00:00Z'};
+  assert.equal(shiftForecastForEarlierStart(arrived,next).eta,undefined);
+  const later = {...next,start:'2026-12-03T10:00:00Z'};
+  assert.deepEqual(shiftForecastForEarlierStart(current,later),later);
 });
 test('proposal arrows use facing edges and stay inside narrow gaps', () => {
   const origin = {left: 10, top: 20};

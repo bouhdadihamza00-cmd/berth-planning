@@ -95,7 +95,16 @@ class Acceptance(unittest.TestCase):
         p=self.snapshot()['port']; p['boundary']={'type':'Polygon','coordinates':[[[0,0],[1,1],[2,2],[0,0]]]}; self.assertEqual(self.client.put('/api/ports/jph',json=p).status_code,422)
         self.login('viewer'); self.assertEqual(self.client.post('/api/ports/jph/calls',json=self.call_data()).status_code,403)
         self.assertEqual(self.client.post('/api/ports/jph/scenarios/run',json={}).status_code,403)
-    def test_15a_author_cannot_self_approve(self):
+    def test_15a_admin_can_approve_own_workflow_for_testing(self):
+        c=self.client.post('/api/ports/jph/calls',json=self.call_data()).json()
+        t=datetime.now(timezone.utc)+timedelta(days=24)
+        r=self.client.post('/api/ports/jph/planning/drafts',json={'call_id':c['id'],'base_revision':c['revision'],'reason':'Test administrator approval override','changes':{'start':t.isoformat(),'end':(t+timedelta(hours=15)).isoformat()}})
+        self.assertEqual(r.status_code,200,r.text); d=r.json()
+        r=self.client.post(f'/api/ports/jph/planning/drafts/{d["id"]}/submit',json={'revision':d['revision']}); self.assertEqual(r.status_code,200,r.text); d=r.json()
+        r=self.client.post(f'/api/ports/jph/planning/drafts/{d["id"]}/approve',json={'revision':d['revision']}); self.assertEqual(r.status_code,200,r.text); d=r.json()
+        self.assertEqual(d['status'],'Approved'); self.assertTrue(d['decisions'][0]['admin_override'])
+    def test_15c_non_admin_author_cannot_self_approve(self):
+        self.login('supply')
         c=self.client.post('/api/ports/jph/calls',json=self.call_data()).json()
         t=datetime.now(timezone.utc)+timedelta(days=24)
         r=self.client.post('/api/ports/jph/planning/drafts',json={'call_id':c['id'],'base_revision':c['revision'],'reason':'Test separate departmental approval','changes':{'start':t.isoformat(),'end':(t+timedelta(hours=15)).isoformat()}})

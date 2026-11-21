@@ -20,6 +20,45 @@ html[data-theme="dark"] .hmi-main[data-page="configuration"] :is(.card-head,.por
 html[data-theme="dark"] .hmi-main[data-page="configuration"] .config-nav button { color: #b8d0df; }
 html[data-theme="dark"] .hmi-main[data-page="configuration"] .config-nav button.active { background: #285874; }
 html[data-theme="dark"] .hmi-main[data-page="configuration"] .port-directory-card.current { background: #20475d; }
+/* Platform variables: tags, identifier, description and live value. */
+.hmi-main[data-page="configuration"] .platform-variables-table { width: 100%; table-layout: fixed; }
+.hmi-main[data-page="configuration"] .platform-variables-table th { background: #f4f8fa; color: var(--muted); font-size: calc(10px * var(--ui-font-scale, 1)); letter-spacing: .3px; }
+.hmi-main[data-page="configuration"] .platform-variables-table td { vertical-align: top; padding: 9px 12px; overflow-wrap: anywhere; }
+.hmi-main[data-page="configuration"] .platform-variables-table th:nth-child(1) { width: 19%; }
+.hmi-main[data-page="configuration"] .platform-variables-table th:nth-child(2) { width: 14%; }
+.hmi-main[data-page="configuration"] .platform-variables-table th:nth-child(3) { width: 30%; }
+.hmi-main[data-page="configuration"] .platform-variables-table th:nth-child(4) { width: 9%; }
+.hmi-main[data-page="configuration"] .platform-variables-table th:nth-child(5) { width: 7%; }
+.hmi-main[data-page="configuration"] .platform-variables-table th:nth-child(6) { width: 7%; }
+.hmi-main[data-page="configuration"] .platform-variables-table th:nth-child(7) { width: 14%; }
+.hmi-main[data-page="configuration"] .variable-tag { display: inline-block; padding: 3px 8px; border: 1px solid #c7dce8; border-radius: 5px; background: #e6f1f7; color: #2c6482; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: calc(10px * var(--ui-font-scale, 1)); }
+.hmi-main[data-page="configuration"] .platform-variables-table .variable-value { font-variant-numeric: tabular-nums; font-weight: 650; white-space: nowrap; }
+.hmi-main[data-page="configuration"] .variable-toolbar { padding: 10px 12px; }
+.hmi-main[data-page="configuration"] .platform-variables-table .variable-actions { white-space: nowrap; }
+.hmi-main[data-page="configuration"] .platform-variables-table .variable-actions .btn + .btn { margin-left: 6px; }
+/* Variable modals live in a top-level <dialog>, outside the configuration page. */
+#overlay dialog .static-field { min-height: 34px; padding: 7px 0; color: var(--muted); overflow-wrap: anywhere; }
+#overlay dialog .formula-field .subtle { margin: 6px 0 0; }
+#overlay dialog .formula-mentions {
+  position: fixed; z-index: 10; max-height: 180px; overflow-y: auto; padding: 5px;
+  background: #fff; border: 1px solid #c7dce8; border-radius: 8px;
+  box-shadow: 0 14px 36px #0d2a3c33, 0 2px 6px #0d2a3c18;
+}
+#overlay dialog .formula-mentions[hidden] { display: none; }
+#overlay dialog .formula-mention-head { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px 7px; color: #8aa1af; font-size: calc(9px * var(--ui-font-scale, 1)); letter-spacing: .6px; text-transform: uppercase; }
+#overlay dialog .formula-mention { display: grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr); align-items: center; gap: 10px; width: 100%; padding: 8px 9px; border: 0; border-radius: 5px; background: transparent; text-align: left; cursor: pointer; font-size: calc(11px * var(--ui-font-scale, 1)); }
+#overlay dialog .formula-mention code { color: #2c6482; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#overlay dialog .formula-mention small { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#overlay dialog .formula-mention.active,
+#overlay dialog .formula-mention:hover { background: #e6f1f7; }
+.hmi-main[data-page="configuration"] .formula-mark { margin-right: 6px; padding: 1px 4px; border-radius: 3px; background: #e6f1f7; color: #2c6482; font-size: 9px; font-weight: 700; }
+html[data-theme="dark"] #overlay dialog .formula-mentions { background: #17384c; border-color: #345165; }
+html[data-theme="dark"] #overlay dialog .formula-mention-head { color: #8fb3c8; }
+html[data-theme="dark"] #overlay dialog .formula-mention code { color: #a8d6ef; }
+html[data-theme="dark"] #overlay dialog .formula-mention.active,
+html[data-theme="dark"] #overlay dialog .formula-mention:hover { background: #1d445c; }
+html[data-theme="dark"] .hmi-main[data-page="configuration"] .platform-variables-table th { background: #193c51; }
+html[data-theme="dark"] .hmi-main[data-page="configuration"] .variable-tag { background: #1d445c; border-color: #345165; color: #a8d6ef; }
 @media(max-width: 900px) {
  .hmi-main[data-page="configuration"] .config-layout { grid-template-columns: minmax(0,1fr); gap: 10px; }
  .hmi-main[data-page="configuration"] .config-nav { flex-direction: row; flex-wrap: wrap; gap: 5px; }

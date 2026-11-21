@@ -24,11 +24,12 @@ WIDGETS = {
     'widget_delays': dict(name='Operational delays', width=3, height=2, min_width=2, min_height=2),
     'widget_alerts': dict(name='Alerts & planning risks', width=2, height=2, min_width=2, min_height=2),
     'widget_calls': dict(name='Vessel calls', width=3, height=2, min_width=2, min_height=2, optional=True),
-    'widget_clock': dict(name='Port clock', width=1, height=1, min_width=1, min_height=1, max_width=4, max_height=2, optional=True),
-    'widget_weather': dict(name='Weather', width=5, height=2, min_width=3, max_width=5, min_height=1, max_height=2, optional=True),
+    'widget_clock': dict(name='Port clock', width=1, height=1, min_width=1, min_height=1, max_width=4, max_height=2, optional=True),  # legacy; merged into widget_weather
+    'widget_weather': dict(name='Weather & clock', width=5, height=2, min_width=3, max_width=5, min_height=1, max_height=2, optional=True),
 }
 CARD_ICONS = ("activity", "anchor", "calendar-clock", "chart-column", "clipboard-check",
               "clock-alert", "container", "gauge", "hourglass", "package", "ship", "timer", "triangle-alert")
+CUSTOM_VARIABLE_TYPES = ('Count', 'Percent', 'Duration', 'Quantity')
 VARIABLES = {
     'active_calls': 'Vessels in port or at anchorage',
     'upcoming_arrivals': 'Arrivals in the next 48 hours',
@@ -48,6 +49,48 @@ for days in (7, 30, 90):
             ('waiting_hours', 'Average waiting time, hours'), ('turnaround_hours', 'Average turnaround, hours'),
         ):
             VARIABLES[f'{metric}_{direction}_{days}d'] = f'{label} · {direction} · {days} days'
+
+# Short display names; the identifier in VARIABLES is the tag used in formulas.
+VARIABLE_NAMES = {
+    'active_calls': 'Active calls',
+    'upcoming_arrivals': 'Upcoming arrivals',
+    'berth_occupancy_pct': 'Berth occupancy',
+    'waiting_hours': 'Waiting time',
+    'turnaround_hours': 'Turnaround',
+    'adherence_pct': 'Schedule adherence',
+    'delay_hours': 'Delay hours',
+    'planning_conflicts': 'Planning conflicts',
+    'open_alerts': 'Open alerts',
+    'configured_berths': 'Configured berths',
+}
+for days in (7, 30, 90):
+    for direction in ('all', 'import', 'export'):
+        for metric, label in (('completed', 'Completed'), ('cargo_tonnes', 'Cargo tonnes'),
+                              ('waiting_hours', 'Waiting time'), ('turnaround_hours', 'Turnaround')):
+            VARIABLE_NAMES[f'{metric}_{direction}_{days}d'] = f'{label} · {direction} · {days}d'
+
+# Display type and unit for the platform variables table.
+VARIABLE_TYPES = {
+    'active_calls': 'Count', 'upcoming_arrivals': 'Count',
+    'berth_occupancy_pct': 'Percent', 'waiting_hours': 'Duration',
+    'turnaround_hours': 'Duration', 'adherence_pct': 'Percent',
+    'delay_hours': 'Duration', 'planning_conflicts': 'Count',
+    'open_alerts': 'Count', 'configured_berths': 'Count',
+}
+VARIABLE_UNITS = {
+    'active_calls': 'calls', 'upcoming_arrivals': 'calls',
+    'berth_occupancy_pct': '%', 'waiting_hours': 'h',
+    'turnaround_hours': 'h', 'adherence_pct': '%',
+    'delay_hours': 'h', 'planning_conflicts': 'calls',
+    'open_alerts': 'alerts', 'configured_berths': 'berths',
+}
+for days in (7, 30, 90):
+    for direction in ('all', 'import', 'export'):
+        suffix = f'{direction}_{days}d'
+        for metric in ('completed', 'cargo_tonnes', 'waiting_hours', 'turnaround_hours'):
+            key = f'{metric}_{suffix}'
+            VARIABLE_TYPES[key] = {'completed': 'Count', 'cargo_tonnes': 'Quantity'}.get(metric, 'Duration')
+            VARIABLE_UNITS[key] = {'completed': 'calls', 'cargo_tonnes': 't'}.get(metric, 'h')
 
 OPERATORS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, ast.Div: operator.truediv}
 
@@ -93,15 +136,76 @@ def definitions(config):
     }
 
 
+def normalize_variables(config, definition_keys=()):
+    """Validate port-specific variables and description edits on built-ins."""
+    custom = config.get('custom_variables', {})
+    overrides = config.get('variable_descriptions', {})
+    if not isinstance(custom, dict) or not isinstance(overrides, dict):
+        raise ValueError('Supply valid platform variables.')
+    if len(custom) > 50:
+        raise ValueError('Keep at most 50 custom variables.')
+    normalized = {}
+    for key, item in custom.items():
+        if (not re.fullmatch(r'[a-z][a-z0-9_]{0,39}', key) or keyword.iskeyword(key)
+                or key in VARIABLES or key in WIDGETS or key in definition_keys):
+            raise ValueError('Choose a unique variable ID using lowercase letters, digits and underscores.')
+        if not isinstance(item, dict):
+            raise ValueError('Supply the variable name, description, type and a value or formula.')
+        name, description, kind, unit = (item.get(field) for field in ('name', 'description', 'type', 'unit'))
+        if (not all(isinstance(text, str) for text in (name, description, kind, unit))
+                or not 1 <= len(name.strip()) <= 80 or not 1 <= len(description.strip()) <= 240
+                or kind not in CUSTOM_VARIABLE_TYPES or len(unit) > 12):
+            raise ValueError('Provide a name, description, type and unit of up to 12 characters.')
+        value, formula = item.get('value'), item.get('formula', '')
+        fixed = type(value) in (int, float) and abs(value) <= 1e15 and math.isfinite(value)
+        expression = formula.strip() if isinstance(formula, str) else ''
+        if fixed == bool(expression):
+            raise ValueError('Enter either a fixed numeric value or a formula.')
+        entry = dict(name=name.strip(), description=description.strip(), type=kind, unit=unit.strip())
+        if expression:
+            if len(expression) > 240:
+                raise ValueError('Keep formulas under 240 characters.')
+            formula_tree(expression)
+            entry['formula'] = expression
+        else:
+            entry['value'] = value
+        normalized[key] = entry
+    dependencies = {}
+    for key, item in normalized.items():
+        if 'formula' in item:
+            refs = {node.id for node in ast.walk(formula_tree(item['formula'])) if isinstance(node, ast.Name)}
+            unknown = refs - set(VARIABLES) - set(normalized)
+            if unknown:
+                raise ValueError(f'Unknown variable: {", ".join(sorted(unknown))}.')
+            dependencies[key] = refs & set(normalized)
+    visited = set()
+    def visit(key, ancestors):
+        if key in ancestors:
+            raise ValueError(f'Circular variable formula involving {key}.')
+        if key not in visited:
+            for dependency in dependencies.get(key, ()):
+                visit(dependency, ancestors | {key})
+            visited.add(key)
+    for key in dependencies:
+        visit(key, set())
+    descriptions = {}
+    for key, text in overrides.items():
+        if key not in VARIABLES or not isinstance(text, str) or not 1 <= len(text.strip()) <= 240:
+            raise ValueError('Edit descriptions only for platform variables.')
+        descriptions[key] = text.strip()
+    return normalized, descriptions
+
+
 def normalize_dashboard(config):
     if not isinstance(config, dict) or not isinstance(config.get('definitions'), dict) or not isinstance(config.get('layout'), list):
         raise ValueError('Supply KPI definitions and a dashboard layout.')
     saved = config['definitions']
+    custom, descriptions = normalize_variables(config, set(saved) | set(DEFAULTS))
     if len(set(saved) | set(DEFAULTS)) > 32:
         raise ValueError('Keep at most 32 KPI definitions.')
     normalized = {}
     dependencies = {}
-    known = set(saved) | set(DEFAULTS) | set(VARIABLES)
+    known = set(saved) | set(DEFAULTS) | set(VARIABLES) | set(custom)
     for key, item in saved.items():
         if not re.fullmatch(r'[a-z][a-z0-9_]{0,39}', key) or keyword.iskeyword(key) or key in VARIABLES or key in WIDGETS or not isinstance(item, dict):
             raise ValueError('Choose a unique KPI ID using lowercase letters, digits and underscores.')
@@ -139,11 +243,13 @@ def normalize_dashboard(config):
     for key in dependencies:
         visit(key, set())
     widgets = config.get('widgets') is True
-    layout = normalize_layout(config['layout'], set(saved) | set(DEFAULTS), widgets)
-    return dict(definitions=normalized, layout=layout, **({'widgets': True} if widgets else {}))
+    layout = normalize_layout(config['layout'], set(saved) | set(DEFAULTS), widgets, set(custom))
+    return dict(definitions=normalized, layout=layout, **({'widgets': True} if widgets else {}),
+                **({'custom_variables': custom} if custom else {}),
+                **({'variable_descriptions': descriptions} if descriptions else {}))
 
 
-def normalize_card_metric(metric, available):
+def normalize_card_metric(metric, available, variables=()):
     if not isinstance(metric, dict):
         raise ValueError('Supply a label and calculation for the KPI.')
     name, unit, formula = (metric.get(field) for field in ('name', 'unit', 'formula'))
@@ -151,7 +257,7 @@ def normalize_card_metric(metric, available):
             or not 1 <= len(name.strip()) <= 80 or len(unit) > 12 or not 1 <= len(formula.strip()) <= 240):
         raise ValueError('Enter a label, a calculation, and an optional unit up to 12 characters.')
     refs = {node.id for node in ast.walk(formula_tree(formula)) if isinstance(node, ast.Name)}
-    unknown = refs - (set(available) | set(VARIABLES))
+    unknown = refs - (set(available) | set(VARIABLES) | set(variables))
     if unknown:
         raise ValueError(f'Unknown KPI or variable: {", ".join(sorted(unknown))}.')
     icon = metric.get('icon', '')
@@ -160,7 +266,7 @@ def normalize_card_metric(metric, available):
     return dict(name=name.strip(), unit=unit.strip(), formula=formula.strip(), **({'icon': icon} if icon else {}))
 
 
-def normalize_layout(cards, available, widgets=False):
+def normalize_layout(cards, available, widgets=False, variables=()):
     available = set(available)
     widget_ids = set(WIDGETS) if widgets else set()
     if not isinstance(cards, list) or len(cards) > len(available | widget_ids) + (12 if widgets else 0):
@@ -208,7 +314,7 @@ def normalize_layout(cards, available, widgets=False):
         if group is not None:
             entry['kpis'] = group
             if metrics or 'metrics' in card:
-                entry['metrics'] = [normalize_card_metric(metric, available) for metric in metrics]
+                entry['metrics'] = [normalize_card_metric(metric, available, variables) for metric in metrics]
         position = card.get('position')
         if position is not None:
             if not widgets or not isinstance(position, dict):
@@ -249,6 +355,34 @@ def dashboard_kpis(config, stats, calls, berths, now, dt, personal_layout=(), pr
                 hours = [max(0, (dt(call[field]) - dt(call['actual_arrival'])).total_seconds()/3600)
                          for call in group if call.get(field) and call.get('actual_arrival')]
                 variables[f'{metric}_{suffix}'] = sum(hours)/len(hours) if hours else None
+    custom = config.get('custom_variables', {})
+    overrides = config.get('variable_descriptions', {})
+    custom_values = {}
+    visiting = set()
+    def resolve_custom(key):
+        if key in custom_values:
+            return custom_values[key]
+        item = custom.get(key)
+        if item is None or key in visiting:
+            return None
+        visiting.add(key)
+        try:
+            if 'formula' in item:
+                custom_values[key] = evaluate(formula_tree(item['formula']), lambda name: (
+                    resolve_custom(name) if name in custom else variables.get(name)))
+            else:
+                custom_values[key] = item.get('value')
+        finally:
+            visiting.discard(key)
+        return custom_values[key]
+    for key in custom:
+        resolve_custom(key)
+    variables.update(custom_values)
+    descriptions = {**VARIABLES, **{key: item['description'] for key, item in custom.items()}}
+    descriptions.update({key: text for key, text in overrides.items() if key in VARIABLES})
+    names = {**VARIABLE_NAMES, **{key: item['name'] for key, item in custom.items()}}
+    kinds = {**VARIABLE_TYPES, **{key: item['type'] for key, item in custom.items()}}
+    units = {**VARIABLE_UNITS, **{key: item['unit'] for key, item in custom.items()}}
     catalog = definitions(config)
     values = {}
     def resolve(key):
@@ -266,6 +400,9 @@ def dashboard_kpis(config, stats, calls, berths, now, dt, personal_layout=(), pr
     formulas = set(preview_formulas)
     for card in [*layout, *personal_layout]:
         formulas.update(metric['formula'] for metric in card.get('metrics', []))
-    return dict(definitions=catalog, values=values, variables=VARIABLES, widget_catalog=WIDGETS, card_icons=CARD_ICONS,
+    return dict(definitions=catalog, values=values, variables=descriptions, variable_names=names,
+                variable_types=kinds, variable_units=units, builtin_variables=list(VARIABLES),
+                custom_variables=custom, variable_descriptions=overrides,
+                variable_values=variables, widget_catalog=WIDGETS, card_icons=CARD_ICONS,
                 widgets=config.get('widgets', False), layout=layout,
                 card_values={formula: evaluate(formula_tree(formula), resolve) for formula in formulas})

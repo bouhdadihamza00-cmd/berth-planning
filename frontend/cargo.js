@@ -1,10 +1,11 @@
 import { confirmRemoval } from "./removal.js?v=6";
 const P = () => window.P;
-export function cargoFields(call = {}) {
-  const { select, field, esc } = P();
-  return `<div class="cargo-fields field full"><div class="form-grid">${select("Cargo flow", "direction", ["Export", "Import"], call.direction || "Export", "required")}${select("Product", "product", [], call.product || "", "required")}${select("Product grade", "grade", [], call.grade || "", "required")}${select("Product sub-grade", "subgrade", [], call.subgrade || "")}<input type="hidden" name="catalog_item_id"><p class="cargo-reference field full" id="cargo-reference">Select the cargo specification.</p></div></div>`;
+export function cargoFields(call = {}, blank = false) {
+  const { select } = P();
+  const flow = blank ? [["", "Select cargo flow"], "Export", "Import"] : ["Export", "Import"];
+  return `<div class="cargo-fields field full"><div class="form-grid">${select("Cargo flow", "direction", flow, blank ? "" : call.direction || "Export", "required")}${select("Product", "product", [], blank ? "" : call.product || "", "required")}${select("Product grade", "grade", [], blank ? "" : call.grade || "", "required")}${select("Product sub-grade", "subgrade", [], blank ? "" : call.subgrade || "")}<input type="hidden" name="catalog_item_id"><p class="cargo-reference field full" id="cargo-reference">Select the cargo specification.</p></div></div>`;
 }
-export function bindCargoFields(form, initial = {}) {
+export function bindCargoFields(form, initial = {}, blank = false) {
   const { S, esc } = P();
   const catalog = S.data.port.cargo_catalog || [];
   const fields = Object.fromEntries(
@@ -31,12 +32,20 @@ export function bindCargoFields(form, initial = {}) {
   };
   const distinct = (rows, key) => [...new Set(rows.map((r) => r[key] || ""))];
   function update(from) {
+    if (blank && !fields.direction.value) {
+      for (const key of ["product", "grade", "subgrade"])
+        set(fields[key], [], "", "Select…");
+      form.elements.catalog_item_id.value = "";
+      form.querySelector("#cargo-reference").textContent = "Select the cargo specification.";
+      return;
+    }
     let rows = catalog.filter((r) => r.direction === fields.direction.value);
     if (from <= 0)
       set(
         fields.product,
         distinct(rows, "product"),
         initial.product || fields.product.value,
+        blank ? "Select a product" : "",
       );
     rows = rows.filter((r) => r.product === fields.product.value);
     if (from <= 1)
@@ -44,9 +53,11 @@ export function bindCargoFields(form, initial = {}) {
         fields.grade,
         distinct(rows, "grade"),
         initial.grade || fields.grade.value,
-        initial.grade && !rows.some((r) => r.grade === initial.grade)
-          ? "Choose a catalogue grade"
-          : "",
+        blank
+          ? "Select a grade"
+          : initial.grade && !rows.some((r) => r.grade === initial.grade)
+            ? "Choose a catalogue grade"
+            : "",
       );
     rows = rows.filter((r) => r.grade === fields.grade.value);
     if (from <= 2)
@@ -54,6 +65,7 @@ export function bindCargoFields(form, initial = {}) {
         fields.subgrade,
         distinct(rows, "subgrade"),
         initial.subgrade ?? fields.subgrade.value,
+        blank ? "Select a sub-grade" : "",
       );
     const row = rows.find((r) => (r.subgrade || "") === fields.subgrade.value);
     form.elements.catalog_item_id.value = row?.id || "";
@@ -62,7 +74,7 @@ export function bindCargoFields(form, initial = {}) {
       : "Choose a valid cargo specification from the catalogue.";
   }
   if (catalog.length) {
-    fields.direction.value = initial.direction || "Export";
+    fields.direction.value = blank ? "" : initial.direction || "Export";
     update(0);
     initial = {};
     Object.entries(fields).forEach(([key, el], i) =>
@@ -77,16 +89,19 @@ export function bindCargoFields(form, initial = {}) {
           .filter((p) => p.direction === fields.direction.value)
           .map((p) => p.name),
         initial.product,
+        blank ? "Select a product" : "",
       );
-      set(fields.grade, ["Standard"], initial.grade);
-      set(fields.subgrade, [""], "");
+      set(fields.grade, ["Standard"], initial.grade, blank ? "Select a grade" : "");
+      set(fields.subgrade, [""], "", blank ? "Select a sub-grade" : "");
     }
     basic();
     fields.direction.addEventListener("change", basic);
   }
 }
-export function timingFields(call = {}) {
+export function timingFields(call = {}, blank = false) {
   const { field, inputDate } = P();
+  if (blank)
+    return `${field("Planned start", "start", "", "datetime-local", "required")}${field("Duration, hours", "duration_hours", "", "number", 'required min="0.25" max="720" step="any"')}${field("Planned completion", "end", "", "datetime-local", "required")}<p class="field full timing-help">Change duration to calculate completion, or change completion to calculate duration. Times use your browser timezone.</p>`;
   const start =
     call.start ||
     new Date(

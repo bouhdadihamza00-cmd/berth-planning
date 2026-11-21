@@ -13,6 +13,12 @@ export function notificationCategory(n) {
 }
 function remainingSteps(draft) {
   return (draft.workflow.steps || []).filter((step) => {
+    if (
+      draft.decisions.some(
+        (d) => d.action === "approve" && d.step_id === step.id && d.admin_override,
+      )
+    )
+      return false;
     const approved = new Set(
       draft.decisions
         .filter((d) => d.action === "approve" && d.step_id === step.id)
@@ -25,14 +31,14 @@ function remainingSteps(draft) {
 }
 function canReviewDraft(draft) {
   const { S, can, membership } = P();
-  if (
-    !can("approvals.approve") ||
-    (draft.workflow.segregation && draft.author_id === S.user.id)
-  )
+  const admin = !!S.user?.superadmin;
+  if (!can("approvals.approve")) return false;
+  if (!admin && draft.workflow.segregation && draft.author_id === S.user.id)
     return false;
   if (draft.workflow.steps?.length) {
     let steps = remainingSteps(draft);
     if (draft.workflow.mode === "sequential") steps = steps.slice(0, 1);
+    if (admin) return steps.length > 0;
     return steps.some(
       (step) =>
         step.user_ids.includes(S.user.id) &&
@@ -51,6 +57,7 @@ function canReviewDraft(draft) {
   const remaining = (draft.workflow.departments || []).filter(
     (d) => !approved.includes(d),
   );
+  if (admin) return remaining.length > 0;
   return (
     draft.workflow.mode === "sequential" ? remaining.slice(0, 1) : remaining
   ).includes(department);
@@ -164,7 +171,7 @@ export function renderCenter() {
               .toLowerCase()
               .includes(S.approvalSearch.toLowerCase())),
       );
-    content = `<div class="notice">${icon("shield-check")}Approval route: ${(S.data.port.workflow.steps?.map((x) => x.name) || S.data.port.workflow.departments).map(esc).join(" → ") || "No reviewers configured"} · ${esc(S.data.port.workflow.mode || "parallel")} review. ${S.data.port.workflow.segregation ? "Authors cannot approve their own changes." : ""}</div><section class="card approval-tickets">${cardHead("Approval tickets", "git-pull-request", "Newest first")}<div class="toolbar"><div class="search-box">${icon("search")}<input type="search" id="approval-search" placeholder="Search ticket, vessel, requester…" aria-label="Search approval tickets" value="${esc(S.approvalSearch || "")}"></div><select id="approval-status" aria-label="Approval ticket status"><option value="">All statuses</option>${["Draft", "Submitted", "Clarification requested", "Approved", "Published", "Rejected", "Cancelled"].map((value) => `<option ${S.approvalStatus === value ? "selected" : ""}>${value}</option>`).join("")}</select><span class="subtle">${tickets.length} tickets · Newest first</span></div><div class="table-scroll"><table><thead><tr><th scope=\"col\">Ticket / request</th><th scope=\"col\">Status</th><th scope=\"col\">Requester / created</th><th scope=\"col\">Schedule change</th><th scope=\"col\">Validation</th><th scope=\"col\">Actions</th></tr></thead><tbody>${tickets.map((d) => `<tr data-ticket="${esc(d.id)}"><td><button class="ticket-reference" data-draft-detail="${esc(d.id)}" title="${esc(d.id)}">#${esc(d.id.slice(0, 8).toUpperCase())}</button><strong class="ticket-vessel">${esc(d.proposed?.name || d.before?.name || "New nomination")}</strong><span class="ticket-reason">${esc(d.reason)}</span></td><td>${status(d.status)}${approvalProgress(d)}</td><td><strong>${esc(d.author)}</strong><small class="ticket-meta">${date(d.created_at)}</small></td><td><div class="ticket-schedule"><span class="ticket-meta">${d.operation === "create" ? "New nomination" : `Published · ${esc(P().berth(d.before.berth_id)?.code || "—")}`}</span><span>${date(d.before.start)} → ${date(d.before.end)}</span><span class="ticket-proposed">Proposed · ${esc(P().berth(d.proposed.berth_id)?.code || "—")}</span><span>${date(d.proposed.start)} → ${date(d.proposed.end)}</span></div></td><td>${d.validation.errors.length ? `<span class="ticket-validation-error">${d.validation.errors.length} issue${d.validation.errors.length === 1 ? "" : "s"}</span><small class="ticket-meta">${d.validation.errors.map(esc).join("<br>")}</small>` : `<span class="ticket-validation-clear">${icon("shield-check")}Clear</span>`}</td><td><div class="approval-actions">${["Draft", "Clarification requested"].includes(d.status) && P().can("planning.submit") ? `<button class="btn small primary" data-draft-action="submit" data-id="${d.id}">Submit for approval</button>` : ""}${d.status === "Submitted" && canReviewDraft(d) ? `<button class="btn small primary" data-draft-action="approve" data-id="${d.id}">Approve</button><button class="btn small danger" data-draft-action="reject" data-id="${d.id}">Reject</button><button class="btn small" data-draft-action="clarify" data-id="${d.id}">Request clarification</button>` : ""}${d.status === "Approved" && P().can("planning.publish") ? `<button class="btn small primary" data-draft-action="publish" data-id="${d.id}">${icon("upload")}Publish approved change</button>` : ""}<button class="btn small" data-draft-detail="${d.id}">Review details</button>${d.author_id === S.user.id || S.user.superadmin ? `${["Draft", "Submitted", "Clarification requested", "Approved"].includes(d.status) ? `<button class="btn small" data-draft-action="terminate" data-id="${d.id}">${icon("circle-stop")}Terminate</button>` : ""}<button class="btn small danger" data-draft-action="delete" data-id="${d.id}">${icon("trash-2")}Delete</button>` : ""}</div></td></tr>`).join("") || `<tr><td colspan="6">${empty("No approval tickets", "Adjust your filters or save a proposal from Berth planning.")}</td></tr>`}</tbody></table></div></section>`;
+    content = `<div class="notice">${icon("shield-check")}Approval route: ${(S.data.port.workflow.steps?.map((x) => x.name) || S.data.port.workflow.departments).map(esc).join(" → ") || "No reviewers configured"} · ${esc(S.data.port.workflow.mode || "parallel")} review. ${S.data.port.workflow.segregation ? `Authors cannot approve their own changes${S.user?.superadmin ? " (administrator override available)." : "."}` : ""}</div><section class="card approval-tickets">${cardHead("Approval tickets", "git-pull-request", "Newest first")}<div class="toolbar"><div class="search-box">${icon("search")}<input type="search" id="approval-search" placeholder="Search ticket, vessel, requester…" aria-label="Search approval tickets" value="${esc(S.approvalSearch || "")}"></div><select id="approval-status" aria-label="Approval ticket status"><option value="">All statuses</option>${["Draft", "Submitted", "Clarification requested", "Approved", "Published", "Rejected", "Cancelled"].map((value) => `<option ${S.approvalStatus === value ? "selected" : ""}>${value}</option>`).join("")}</select><span class="subtle">${tickets.length} tickets · Newest first</span></div><div class="table-scroll"><table><thead><tr><th scope=\"col\">Ticket / request</th><th scope=\"col\">Status</th><th scope=\"col\">Requester / created</th><th scope=\"col\">Schedule change</th><th scope=\"col\">Validation</th><th scope=\"col\">Actions</th></tr></thead><tbody>${tickets.map((d) => `<tr data-ticket="${esc(d.id)}"><td><button class="ticket-reference" data-draft-detail="${esc(d.id)}" title="${esc(d.id)}">#${esc(d.id.slice(0, 8).toUpperCase())}</button><strong class="ticket-vessel">${esc(d.proposed?.name || d.before?.name || "New nomination")}</strong><span class="ticket-reason">${esc(d.reason)}</span></td><td>${status(d.status)}${approvalProgress(d)}</td><td><strong>${esc(d.author)}</strong><small class="ticket-meta">${date(d.created_at)}</small></td><td><div class="ticket-schedule"><span class="ticket-meta">${d.operation === "create" ? "New nomination" : `Published · ${esc(P().berth(d.before.berth_id)?.code || "—")}`}</span><span>${date(d.before.start)} → ${date(d.before.end)}</span><span class="ticket-proposed">Proposed · ${esc(P().berth(d.proposed.berth_id)?.code || "—")}</span><span>${date(d.proposed.start)} → ${date(d.proposed.end)}</span></div></td><td>${d.validation.errors.length ? `<span class="ticket-validation-error">${d.validation.errors.length} issue${d.validation.errors.length === 1 ? "" : "s"}</span><small class="ticket-meta">${d.validation.errors.map(esc).join("<br>")}</small>` : `<span class="ticket-validation-clear">${icon("shield-check")}Clear</span>`}</td><td><div class="approval-actions">${["Draft", "Clarification requested"].includes(d.status) && P().can("planning.submit") ? `<button class="btn small primary" data-draft-action="submit" data-id="${d.id}">Submit for approval</button>` : ""}${d.status === "Submitted" && canReviewDraft(d) ? `<button class="btn small primary" data-draft-action="approve" data-id="${d.id}">Approve</button><button class="btn small danger" data-draft-action="reject" data-id="${d.id}">Reject</button><button class="btn small" data-draft-action="clarify" data-id="${d.id}">Request clarification</button>` : ""}${d.status === "Approved" && P().can("planning.publish") ? `<button class="btn small primary" data-draft-action="publish" data-id="${d.id}">${icon("upload")}Publish approved change</button>` : ""}<button class="btn small" data-draft-detail="${d.id}">Review details</button>${d.author_id === S.user.id || S.user.superadmin ? `${["Draft", "Submitted", "Clarification requested", "Approved"].includes(d.status) ? `<button class="btn small" data-draft-action="terminate" data-id="${d.id}">${icon("circle-stop")}Terminate</button>` : ""}<button class="btn small danger" data-draft-action="delete" data-id="${d.id}">${icon("trash-2")}Delete</button>` : ""}</div></td></tr>`).join("") || `<tr><td colspan="6">${empty("No approval tickets", "Adjust your filters or save a proposal from Berth planning.")}</td></tr>`}</tbody></table></div></section>`;
   }
   if (S.tab === "reports") content = renderReports();
   return (
@@ -308,13 +315,16 @@ export function bindCenter() {
             : !step.user_ids.some((id) => approvals.includes(id));
         });
         if (d.workflow.mode === "sequential") steps = steps.slice(0, 1);
-        steps = steps.filter((step) => step.user_ids.includes(S.user.id));
+        if (!S.user?.superadmin)
+          steps = steps.filter((step) => step.user_ids.includes(S.user.id));
         modal(
           action === "publish"
             ? "Publish approved change"
             : `${action[0].toUpperCase() + action.slice(1)} schedule proposal`,
           `<form id="decision-form"><div class="notice">${icon("git-pull-request")}${esc(d.before.name)} · ${esc(d.reason)}</div>${action === "publish" ? `<p class="config-description">The server will recheck all constraints and the vessel revision, then preserve a historical snapshot and publish the approved values.</p>` : ""}${
-            ["approve", "reject", "clarify"].includes(action) && steps.length
+            ["approve", "reject", "clarify"].includes(action) &&
+            steps.length &&
+            !S.user?.superadmin
               ? P().select(
                   "Approval step",
                   "step_id",

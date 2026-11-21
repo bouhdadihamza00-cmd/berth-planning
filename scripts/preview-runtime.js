@@ -18,7 +18,19 @@
     s.stats.utilization = s.berths.length ? Math.round(100*occupied.size/s.berths.length) : 0;
     s.stats.open_alerts = s.alerts.filter(a=>!['Resolved','Closed'].includes(a.status)).length;
     s.stats.delay_causes = {};
-    s.delays.forEach(d=>s.stats.delay_causes[d.cause]=(s.stats.delay_causes[d.cause]||0)+Number(d.hours||0));
+    s.stats.delay_cause_details = {};
+    s.delays.forEach(d=>{
+      const hours=Number(d.hours||0), department=d.department||'Unassigned';
+      s.stats.delay_causes[d.cause]=(s.stats.delay_causes[d.cause]||0)+hours;
+      const detail=s.stats.delay_cause_details[d.cause] ||= {department,count:0,hours:0,departments:{}};
+      detail.count++;
+      detail.hours=Number((detail.hours+hours).toFixed(2));
+      detail.departments[department]=(detail.departments[department]||0)+1;
+    });
+    Object.values(s.stats.delay_cause_details).forEach(d=>{
+      d.department=Object.keys(d.departments).sort((a,b)=>d.departments[b]-d.departments[a])[0];
+      delete d.departments;
+    });
     s.stats.delay_hours = Object.values(s.stats.delay_causes).reduce((a,b)=>a+b,0);
   }
   window.fetch = async (input, options={}) => {

@@ -1,4 +1,4 @@
-from .approval_workflow import normalize_workflow, reviewers, capture_workflow, decision_step, completed
+from .approval_workflow import normalize_workflow, reviewers, capture_workflow, decision_step, completed, active_draft_for_call
 import csv, hashlib, io, json, math, os, secrets, sqlite3, time
 import asyncio
 from contextlib import asynccontextmanager, suppress
@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from .store import *
-from .planning import dt, validate, optimize
+from .planning import dt, validate, optimize, align_forecast_for_earlier_start
 from .policies import normalize_rules, approval_eligibility
 from .ais import positions
 from .ais_marinetraffic_client import collector as marinetraffic_client_collector
@@ -269,7 +269,8 @@ async def save_personal_dashboard(port:str, request:Request):
             c.execute('DELETE FROM dashboard_layouts WHERE user_id=? AND port_id=?',(u['id'],port))
         else:
             widgets=data.get('widgets') is True
-            layout=normalize_layout(layout,kpi_definitions(p.get('dashboard',{})),widgets)
+            port_dashboard=p.get('dashboard',{})
+            layout=normalize_layout(layout,kpi_definitions(port_dashboard),widgets,set(port_dashboard.get('custom_variables',{})))
             stored=dict(layout=layout,widgets=True) if widgets else layout
             c.execute('INSERT INTO dashboard_layouts VALUES(?,?,?) ON CONFLICT(user_id,port_id) DO UPDATE SET layout=excluded.layout',(u['id'],port,json.dumps(stored)))
         return dict(layout=layout, widgets=layout is not None and data.get('widgets') is True)
@@ -280,7 +281,8 @@ async def preview_dashboard_kpi(port:str, request:Request):
     payload=await request.json()
     with connect() as c:
         _,p=access(c,request,port)
-        metric=normalize_card_metric(payload,kpi_definitions(p.get('dashboard',{})))
+        port_dashboard=p.get('dashboard',{})
+        metric=normalize_card_metric(payload,kpi_definitions(port_dashboard),set(port_dashboard.get('custom_variables',{})))
         formula=metric['formula']
         data=stats(c,port,preview_formulas=(formula,))['dashboard_kpis']
         return dict(metric=metric,value=data['card_values'][formula])
@@ -303,13 +305,23 @@ def stats(c,port,personal_layout=(),preview_formulas=()):
         q=sum(float(x['quantity']) for x in completed if x['product']==product['name']); old=sum(float(x['quantity']) for x in previous if x['product']==product['name'])
         products.append(dict(product,quantity=q,previous=old,change=round((q-old)/old*100,1) if old else None))
     causes={}
-    for d in delays: causes[d['cause']]=round(causes.get(d['cause'],0)+float(d['hours']),2)
+    cause_details={}
+    for d in delays:
+        cause=d['cause']; hours=float(d['hours']); department=d.get('department') or 'Unassigned'
+        causes[cause]=round(causes.get(cause,0)+hours,2)
+        detail=cause_details.setdefault(cause, dict(department=department, count=0, hours=0.0, departments={}))
+        detail['count']+=1
+        detail['hours']=round(detail['hours']+hours,2)
+        detail['departments'][department]=detail['departments'].get(department,0)+1
+    for detail in cause_details.values():
+        counts=detail.pop('departments')
+        detail['department']=max(counts,key=counts.get)
     conflicts=[]
     for x in calls:
         if x['status'] not in ['Completed','Cancelled']:
             v=validate(x,calls,berths,records(c,port,'equipment'),p.get('rules',{}))
             if v['errors']: conflicts.append({'call_id':x['id'],'name':x['name'],'errors':v['errors']})
-    summary=dict(active=len(active),upcoming=sum(x['status'] in ['Scheduled','Waiting'] and t<=dt(x['eta'])<=t+timedelta(hours=48) for x in calls),utilization=round(len(occupied)/len(berths)*100) if berths else 0,waiting=round(sum(wait)/len(wait),1) if wait else None,turnaround=round(sum(turn)/len(turn),1) if turn else None,adherence=round(sum(adherence)/len(adherence)*100) if adherence else None,delay_hours=round(sum(causes.values()),1),conflicts=conflicts,open_alerts=sum(a['status'] not in ['Resolved','Closed'] for a in alerts),products=products,delay_causes=causes,period='Last 30 days',completed=len(completed))
+    summary=dict(active=len(active),upcoming=sum(x['status'] in ['Scheduled','Waiting'] and t<=dt(x['eta'])<=t+timedelta(hours=48) for x in calls),utilization=round(len(occupied)/len(berths)*100) if berths else 0,waiting=round(sum(wait)/len(wait),1) if wait else None,turnaround=round(sum(turn)/len(turn),1) if turn else None,adherence=round(sum(adherence)/len(adherence)*100) if adherence else None,delay_hours=round(sum(causes.values()),1),conflicts=conflicts,open_alerts=sum(a['status'] not in ['Resolved','Closed'] for a in alerts),products=products,delay_causes=causes,delay_cause_details=cause_details,period='Last 30 days',completed=len(completed))
     summary["dashboard_kpis"]=dashboard_kpis(config.get("dashboard", {}), summary, calls, berths, t, dt, personal_layout, preview_formulas)
     return summary
 
@@ -514,8 +526,11 @@ async def draft_plan(port:str,request:Request):
     with connect() as c:
         u,p=access(c,request,port,'planning.draft'); call=record(c,port,'calls',d.get('call_id',''))
         if not call: raise HTTPException(404,'Vessel not found')
+        existing=active_draft_for_call(c,port,call['id'])
+        if existing: raise HTTPException(409,f'This vessel call already has an active workflow (#{existing["id"][:8].upper()} · {existing["status"]}). Approve, reject or delete it before creating another.')
         if d.get('base_revision')!=call['revision']: raise ValueError('The vessel record changed. Reload before proposing a change.')
-        proposed=dict(call,**{k:v for k,v in d.get('changes',{}).items() if k in ['berth_id','equipment_id','start','end','eta','quantity','priority','product','grade','subgrade','direction','catalog_item_id','duration_hours','rate']})
+        proposed=dict(call,**{k:v for k,v in d.get('changes',{}).items() if k in ['berth_id','equipment_id','start','end','eta','ready_at','quantity','priority','product','grade','subgrade','direction','catalog_item_id','duration_hours','rate']})
+        proposed=align_forecast_for_earlier_start(call,proposed)
         changes=d.get('changes',{})
         if 'start' in changes or 'end' in changes: proposed.pop('duration_hours',None)
         if 'duration_hours' in changes and 'end' not in changes: proposed.pop('end',None)
@@ -558,6 +573,7 @@ async def draft_action(port:str,id:str,action:str,request:Request):
             return result
         call=record(c,port,'calls',draft['call_id'])
         if not call and draft.get('operation')!='create':raise HTTPException(404,'Vessel call no longer exists')
+        draft['proposed']=align_forecast_for_earlier_start(draft.get('before'),draft['proposed'])
         checks=validate(draft['proposed'],records(c,port,'calls'),records(c,port,'berths'),records(c,port,'equipment'),p.get('rules',{}))
         draft['validation']=checks
         if draft.get('import_delay'):
@@ -583,22 +599,30 @@ async def draft_action(port:str,id:str,action:str,request:Request):
             if draft['status']!='Submitted': raise HTTPException(409,'Request is not awaiting a decision')
             workflow=draft.get('workflow',{}); required=workflow.get('departments',['Operations'])
             m=c.execute('SELECT department FROM memberships WHERE user_id=? AND port_id=?',(u['id'],port)).fetchone(); department=m['department'] if m else 'Administration'
-            if workflow.get('segregation',True) and u['id']==draft['author_id']: raise HTTPException(403,'The author cannot approve their own change')
+            override=bool(u['superadmin'])
+            if workflow.get('segregation',True) and u['id']==draft['author_id'] and not override: raise HTTPException(403,'The author cannot approve their own change')
             if workflow.get('steps'):
-                step=decision_step(workflow,draft['decisions'],u['id'],d.get('step_id'))
-                draft['decisions'].append(dict(action=action,author=u['name'],user_id=u['id'],department=department,step_id=step['id'],step_name=step['name'],comment=d.get('comment',''),created_at=now()))
+                if action=='approve' and override:
+                    # Testing override: one administrator decision clears every outstanding step.
+                    for _ in workflow['steps']:
+                        step=decision_step(workflow,draft['decisions'],u['id'],override=override)
+                        draft['decisions'].append(dict(action=action,author=u['name'],user_id=u['id'],department=department,step_id=step['id'],step_name=step['name'],comment=d.get('comment',''),admin_override=True,created_at=now()))
+                        if all(completed(item,draft['decisions']) for item in workflow['steps']):break
+                else:
+                    step=decision_step(workflow,draft['decisions'],u['id'],d.get('step_id'),override=override)
+                    draft['decisions'].append(dict(action=action,author=u['name'],user_id=u['id'],department=department,step_id=step['id'],step_name=step['name'],comment=d.get('comment',''),admin_override=override,created_at=now()))
                 if action=='reject':draft['status']='Rejected'
                 elif action=='clarify':draft['status']='Clarification requested';draft['decisions']=[]
                 elif all(completed(item,draft['decisions']) for item in workflow['steps']):draft['status']='Approved'
             else:
                 approved=[x['department'] for x in draft['decisions'] if x['action']=='approve']
-                if department not in required: raise HTTPException(403,'Your department is not assigned to this approval route')
-                if department in approved: raise HTTPException(409,'Your department has already approved')
-                if workflow.get('mode')=='sequential' and department!=next((x for x in required if x not in approved),None): raise HTTPException(403,'Another department must review first')
-                draft['decisions'].append(dict(action=action,author=u['name'],user_id=u['id'],department=department,comment=d.get('comment',''),created_at=now()))
+                if department not in required and not override: raise HTTPException(403,'Your department is not assigned to this approval route')
+                if department in approved and not override: raise HTTPException(409,'Your department has already approved')
+                if workflow.get('mode')=='sequential' and not override and department!=next((x for x in required if x not in approved),None): raise HTTPException(403,'Another department must review first')
+                draft['decisions'].append(dict(action=action,author=u['name'],user_id=u['id'],department=department,comment=d.get('comment',''),admin_override=override,created_at=now()))
                 if action=='reject': draft['status']='Rejected'
                 elif action=='clarify': draft['status']='Clarification requested'; draft['decisions']=[]
-                elif all(dep in approved+[department] for dep in required): draft['status']='Approved'
+                elif override or all(dep in approved+[department] for dep in required): draft['status']='Approved'
         if action=='publish' or auto_publish:
             if draft['status']!='Approved': raise HTTPException(409,'Required approvals must be completed before publication')
             if draft.get('operation')=='create':

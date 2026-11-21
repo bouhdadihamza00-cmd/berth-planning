@@ -45,7 +45,7 @@
   .topbar .port-switch { flex: 1; max-width: none; }
   .topbar .port-switch .port-symbol { display: none; }
   .topbar .port-switch select { min-width: 0; font-size: calc(10px * var(--ui-font-scale, 1)); }
-  .topbar .eyebrow { font-size: calc(7px * var(--ui-font-scale, 1)); }
+  .topbar .eyebrow { font-size: max(var(--ui-type-min), calc(7px * var(--ui-font-scale, 1))); }
   .topbar .top-spacer, .topbar .divider { display: none; }
   .topbar .user-button { padding: 0; min-width: 26px; }
   .topbar .user-meta, .topbar .user-button > svg { display: none; }

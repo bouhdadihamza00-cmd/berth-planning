@@ -38,7 +38,7 @@
 .planning-help svg { width: 14px; height: 14px; }
 .planning-plan-state { font-size: calc(10px * var(--ui-font-scale, 1)); color: #5e7b8d; background: #eaf0f5; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
 .planning-plan-state.has-changes { color: #7856a8; background: #f1eaf9; }
-.hmi-main[data-page="planning"] .planning-editbar .icon-btn { width: 26px; height: 26px; }
+.hmi-main[data-page="planning"] .planning-editbar .icon-btn { width: 32px; height: 32px; }
 .hmi-main[data-page="planning"] .planning-editbar .icon-btn:disabled { opacity: .35; }
 .hmi-main[data-page="planning"] .gantt-wrap { background: #fff; scrollbar-color: #acbdc8 #f0f4f7; }
 .hmi-main[data-page="planning"] .gantt-label { border-color: #e0e8ee; background: #f8fafc; padding: 10px 12px; }

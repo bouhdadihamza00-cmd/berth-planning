@@ -6,14 +6,32 @@ import {
   bindCargoFields,
   timingFields,
   bindTiming,
-} from "./cargo.js?v=12";
+} from "./cargo.js?v=13";
 const P = () => window.P;
+const activeDraftFor = (callId) =>
+  (P().S.data.drafts || []).find(
+    (d) =>
+      d.call_id === callId &&
+      ["Draft", "Submitted", "Clarification requested"].includes(d.status),
+  );
 export function planningProposals(data, pending = {}) {
   const active = new Set(["Draft", "Submitted", "Approved", "Clarification requested"]);
   return [
     ...data.drafts.filter(d => active.has(d.status) && d.proposed && d.operation !== "create").map(d => ({ ...d.proposed, id: d.call_id, proposalKey: d.id, proposalStatus: d.status })),
     ...Object.entries(pending).map(([id, c]) => ({ ...c, id, proposalKey: `pending-${id}`, proposalStatus: "Unsaved change" })),
   ];
+}
+export function shiftForecastForEarlierStart(current, next) {
+  if (!current?.start || !next?.start || current.actual_arrival) return next;
+  const shift = new Date(next.start).getTime() - new Date(current.start).getTime();
+  if (!Number.isFinite(shift) || shift >= 0) return next;
+  const startsBefore = (value) => Boolean(value) && new Date(next.start).getTime() < new Date(value).getTime();
+  if (!startsBefore(current.eta) && !startsBefore(current.ready_at)) return next;
+  const shifted = { ...next };
+  const moved = (value) => new Date(new Date(value).getTime() + shift).toISOString();
+  if (startsBefore(current.eta)) shifted.eta = moved(current.eta);
+  if (startsBefore(current.ready_at)) shifted.ready_at = moved(current.ready_at);
+  return shifted;
 }
 export function overlapsScheduleComparison(card, cards) {
   return cards.some(other =>
@@ -252,12 +270,17 @@ function gantt() {
       vesselModal(el.dataset.call);
     });
     el.addEventListener("keydown", (e) => {
+      if (e.altKey && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+        keyboardAdjustSchedule(e, el);
+        return;
+      }
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         vesselModal(el.dataset.call);
       }
     });
-    if (can("planning.draft") && !el.dataset.proposal)
+    const pendingCard = el.dataset.proposal?.startsWith("pending-");
+    if (can("planning.draft") && (!el.dataset.proposal || pendingCard))
       el.addEventListener("pointerdown", (e) => drag(e, el));
   });
   $$("[data-berth-row]").forEach(
@@ -409,7 +432,7 @@ function blocks(b, start, width) {
         : "package";
     const compact =
       w < 40 ? " schedule-marker" : w < 270 ? " schedule-compact" : "";
-    output += `<div class="gantt-block ${cls}${compact}${comparison ? " schedule-comparison" : ""}" data-call="${esc(c.id)}" ${c.proposalKey ? `data-proposal="${esc(c.proposalKey)}"` : 'data-published="true"'} role="button" tabindex="0" aria-label="${esc(c.name)} schedule" style="left:${left}px;width:${Math.max(1, w)}px;height:${height}px;top:${top}px" title="${esc(c.name)}\n${esc(c.product)} · ${fmt(c.quantity)} t · ${esc(c.direction)}\nBerth ${esc(b.code)} · ${esc(state)}\n${P().date(c.start)} → ${P().date(c.end)}\nDuration ${fmt(duration, 1)} h${S.data.port.source_feed ? "" : ` · Progress ${c.progress}%`}"><div class="schedule-content"><div class="schedule-heading"><span class="schedule-vessel-icon">${icon("ship")}</span><strong>${esc(c.name)}</strong><span class="schedule-state">${esc(state)}</span></div><div class="schedule-cargo"><span>${icon(cargoIcon)}${esc(c.product)}</span><span class="schedule-quantity">${fmt(c.quantity / 1000, 1)} kt</span><span class="schedule-direction">${icon(c.direction === "Import" ? "arrow-down-left" : "arrow-up-right")}${esc(c.direction)}</span></div><div class="schedule-timing"><span class="schedule-window">${icon("clock-3")}${P().date(c.start)}<span class="schedule-arrow">→</span>${P().date(c.end)}</span><span class="schedule-duration">${icon("hourglass")}${fmt(duration, duration % 1 ? 1 : 0)} h</span><span class="schedule-progress" ${S.data.port.source_feed ? "hidden" : ""}><span class="schedule-progress-track"><i style="width:${c.progress}%"></i></span><b>${c.progress}%</b></span></div></div><span class="resize-handle resize-start" data-resize="start" aria-label="Drag to resize start">⋮</span><span class="resize-handle resize-end" data-resize="end" aria-label="Drag to resize completion">⋮</span></div>`;
+    output += `<div class="gantt-block ${cls}${compact}${comparison ? " schedule-comparison" : ""}" data-call="${esc(c.id)}" ${c.proposalKey ? `data-proposal="${esc(c.proposalKey)}"` : 'data-published="true"'} role="button" tabindex="0" aria-label="${esc(c.name)} schedule" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight Alt+ArrowUp Alt+ArrowDown Alt+Shift+ArrowLeft Alt+Shift+ArrowRight Alt+Control+ArrowLeft Alt+Control+ArrowRight" style="left:${left}px;width:${Math.max(1, w)}px;height:${height}px;top:${top}px" title="${esc(c.name)}\n${esc(c.product)} · ${fmt(c.quantity)} t · ${esc(c.direction)}\nBerth ${esc(b.code)} · ${esc(state)}\n${P().date(c.start)} → ${P().date(c.end)}\nDuration ${fmt(duration, 1)} h${S.data.port.source_feed ? "" : ` · Progress ${c.progress}%`}"><div class="schedule-content"><div class="schedule-heading"><span class="schedule-vessel-icon">${icon("ship")}</span><strong>${esc(c.name)}</strong><span class="schedule-state">${esc(state)}</span></div><div class="schedule-cargo"><span>${icon(cargoIcon)}${esc(c.product)}</span><span class="schedule-quantity">${fmt(c.quantity / 1000, 1)} kt</span><span class="schedule-direction">${icon(c.direction === "Import" ? "arrow-down-left" : "arrow-up-right")}${esc(c.direction)}</span></div><div class="schedule-timing"><span class="schedule-window">${icon("clock-3")}${P().date(c.start)}<span class="schedule-arrow">→</span>${P().date(c.end)}</span><span class="schedule-duration">${icon("hourglass")}${fmt(duration, duration % 1 ? 1 : 0)} h</span><span class="schedule-progress" ${S.data.port.source_feed ? "hidden" : ""}><span class="schedule-progress-track"><i style="width:${c.progress}%"></i></span><b>${c.progress}%</b></span></div></div><span class="resize-handle resize-start" data-resize="start" aria-label="Drag to resize start">⋮</span><span class="resize-handle resize-end" data-resize="end" aria-label="Drag to resize completion">⋮</span></div>`;
   }
   return output;
 }
@@ -463,11 +486,97 @@ function drawProposalConnections(host) {
   if (!paths.length) return;
   host.insertAdjacentHTML("beforeend", `<svg class="proposal-connections" width="${host.offsetWidth}" height="${host.offsetHeight}" aria-hidden="true"><defs><marker id="proposal-arrowhead" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8655d1" stroke="none"/></marker></defs><g fill="none" stroke="#8655d1" stroke-width="2" stroke-dasharray="5 4">${paths.join("")}</g></svg>`);
 }
+function ganttAnnounce(message) {
+  let region = document.getElementById("gantt-live-region");
+  if (!region) {
+    region = document.createElement("div");
+    region.id = "gantt-live-region";
+    region.className = "sr-only";
+    region.setAttribute("role", "status");
+    region.setAttribute("aria-live", "polite");
+    document.body.append(region);
+  }
+  region.textContent = "";
+  requestAnimationFrame(() => { if (region.isConnected) region.textContent = message; });
+}
+// Keyboard parity for pointer drag/resize. Alt+arrows move; add Shift to resize
+// the start, or Control to resize the completion. Enter/Space still opens details.
+function keyboardAdjustSchedule(e, el) {
+  const { S, $$, toast } = P();
+  const id = el.dataset.call;
+  const isPending = el.dataset.proposal?.startsWith("pending-");
+  const current = structuredClone(
+    isPending
+      ? S.pending?.[id] || S.data.calls.find((x) => x.id === id)
+      : S.data.calls.find((x) => x.id === id),
+  );
+  if (!current) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const snapMs = ((S.data.port.rules.snap_minutes || 15) / 60) * 3600000;
+  const next = { ...current };
+  const resizeStart = e.shiftKey;
+  const resizeEnd = e.ctrlKey || e.metaKey;
+  let message = "";
+  if (resizeStart || resizeEnd) {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    const dir = e.key === "ArrowLeft" ? -1 : 1;
+    if (resizeStart) {
+      const proposed = new Date(new Date(current.start).getTime() + dir * snapMs);
+      if (proposed >= new Date(current.end))
+        return ganttAnnounce("Start cannot reach or pass the completion time.");
+      next.start = proposed.toISOString();
+      message = `Start moved ${dir < 0 ? "earlier" : "later"} to ${P().date(next.start)}.`;
+    } else {
+      const proposed = new Date(new Date(current.end).getTime() + dir * snapMs);
+      if (proposed <= new Date(current.start))
+        return ganttAnnounce("Completion cannot reach or pass the start time.");
+      next.end = proposed.toISOString();
+      message = `Completion moved ${dir < 0 ? "earlier" : "later"} to ${P().date(next.end)}.`;
+    }
+  } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+    const rows = [...$$(".gantt-row")];
+    const index = rows.findIndex((r) => r.dataset.row === current.berth_id);
+    const target = rows[index + (e.key === "ArrowUp" ? -1 : 1)];
+    if (!target) return ganttAnnounce("No adjacent berth in that direction.");
+    next.berth_id = target.dataset.row;
+    const eq = S.data.equipment.find(
+      (eq) => eq.berths.includes(next.berth_id) && eq.status === "Available",
+    );
+    next.equipment_id = eq?.id || "";
+    message = `Moved to berth ${target.dataset.row}.`;
+  } else {
+    const dir = e.key === "ArrowLeft" ? -1 : 1;
+    next.start = new Date(new Date(current.start).getTime() + dir * snapMs).toISOString();
+    next.end = new Date(new Date(current.end).getTime() + dir * snapMs).toISOString();
+    message = `Schedule moved ${dir < 0 ? "earlier" : "later"} to ${P().date(next.start)}.`;
+  }
+  next.duration_hours = (new Date(next.end) - new Date(next.start)) / 3600000;
+  Object.assign(next, shiftForecastForEarlierStart(current, next));
+  S.undo.push(structuredClone(S.pending || {}));
+  S.redo = [];
+  S.pending = { ...S.pending, [id]: next };
+  toast("Change staged locally. Save a draft to validate and request approval.");
+  P().renderApp();
+  ganttAnnounce(message);
+  requestAnimationFrame(() => {
+    const focused = P().$$(".gantt-block").find((b) => b.dataset.call === id);
+    if (focused) {
+      focused.focus({ preventScroll: true });
+      focused.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+  });
+}
 function drag(e, el) {
   if (e.button !== 0) return;
   const { S, $, $$, toast } = P();
   const id = el.dataset.call;
-  const current = S.pending?.[id] || S.data.calls.find((x) => x.id === id);
+  const isPendingCard = el.dataset.proposal?.startsWith("pending-");
+  const current = structuredClone(
+    isPendingCard
+      ? S.pending?.[id] || S.data.calls.find((x) => x.id === id)
+      : S.data.calls.find((x) => x.id === id),
+  );
   const startX = e.clientX,
     startY = e.clientY,
     originalLeft = parseFloat(el.style.left),
@@ -539,6 +648,7 @@ function drag(e, el) {
       }
     }
     next.duration_hours = (new Date(next.end) - new Date(next.start)) / 3600000;
+    Object.assign(next, shiftForecastForEarlierStart(current, next));
     S.undo.push(structuredClone(S.pending || {}));
     S.redo = [];
     S.pending = { ...S.pending, [id]: next };
@@ -704,6 +814,15 @@ export function bindPlanning() {
     };
   if ($("#save-pending"))
     $("#save-pending").onclick = () => {
+      const blocked = Object.keys(S.pending).find((id) => activeDraftFor(id));
+      if (blocked) {
+        const existing = activeDraftFor(blocked);
+        P().toast(
+          `This vessel call already has an active workflow (#${existing.id.slice(0, 8).toUpperCase()} · ${existing.status}). Approve, reject or delete it first.`,
+          true,
+        );
+        return;
+      }
       modal(
         "Save staged schedule drafts",
         `<form id="pending-form"><div class="notice">${P().icon("git-pull-request")}Each staged change is validated and saved as an isolated draft. The published plan remains in effect.</div>${P().textArea("Reason for the changes", "reason", "", 'required minlength="5" placeholder="Explain the operational reason…"')}<div class="form-actions"><button type="submit" class="btn primary">Save drafts</button></div></form>`,
@@ -748,24 +867,24 @@ export function vesselForm() {
     closeModal,
     refresh,
     toast,
-    inputDate,
     iso,
   } = P();
-  const now = new Date(S.data.port.demo_clock || Date.now()).getTime();
   modal(
     "Nominate a vessel call",
-    `<form id="vessel-form"><p class="config-description">Create a port call for coordination and berth allocation. Times are entered in your browser's local timezone.</p><div class="form-grid">${field("Vessel name", "name", "", "text", 'required placeholder="MV Atlantic Spirit"')}${field("IMO number", "imo", "", "text", 'pattern="[0-9]{7}" placeholder="7 digits"')}${field("MMSI", "mmsi", "", "text", 'pattern="[0-9]{9}" placeholder="9 digits"')}${cargoFields()}${field("Cargo quantity, t", "quantity", 24000, "number", 'min="1" required')}${field("Length overall, m", "loa", 200, "number", 'min="1" required step="0.1"')}${field("Vessel draft, m", "draft", 11.5, "number", 'min="0.1" step="0.1" required')}${select("Assigned berth", "berth_id", [["", "Select a berth"], ...S.data.berths.map((b) => [b.id, b.code + " · " + b.name])], "", "required")}${select("Required equipment", "equipment_id", [["", "Select equipment"], ...S.data.equipment.map((e) => [e.id, e.name])])}${field("ETA", "eta", inputDate(now + 86400000), "datetime-local", "required")}${timingFields()}${select(
+    `<form id="vessel-form"><p class="config-description">Create a port call for coordination and berth allocation. Times are entered in your browser's local timezone.</p><div class="form-grid">${field("Vessel name", "name", "", "text", 'required placeholder="MV Atlantic Spirit"')}${field("IMO number", "imo", "", "text", 'pattern="[0-9]{7}" placeholder="7 digits"')}${field("MMSI", "mmsi", "", "text", 'pattern="[0-9]{9}" placeholder="9 digits"')}${cargoFields({}, true)}${field("Cargo quantity, t", "quantity", "", "number", 'min="1" required')}${field("Length overall, m", "loa", "", "number", 'min="1" required step="0.1"')}${field("Vessel draft, m", "draft", "", "number", 'min="0.1" step="0.1" required')}${select("Assigned berth", "berth_id", [["", "Select a berth"], ...S.data.berths.map((b) => [b.id, b.code + " · " + b.name])], "", "required")}${select("Required equipment", "equipment_id", [["", "Select equipment"], ...S.data.equipment.map((e) => [e.id, e.name])])}${field("ETA", "eta", "", "datetime-local", "required")}${timingFields({}, true)}${select(
       "Priority",
       "priority",
       [
+        ["", "Select priority"],
         [1, "Routine"],
         [2, "Standard"],
         [3, "High"],
       ],
-      2,
+      "",
+      "required",
     )}<div class="field full"><label class="check-row"><input type="checkbox" name="ready"> Cargo availability confirmed</label><small>An unconfirmed nomination can be saved. Cargo readiness is required before a schedule proposal can be published.</small></div></div><div class="form-actions"><button class="btn primary" type="submit">${icon("plus")}Create vessel call</button></div></form>`,
   );
-  bindCargoFields(P().$("#vessel-form"));
+  bindCargoFields(P().$("#vessel-form"), {}, true);
   bindTiming(P().$("#vessel-form"));
   handleForm("#vessel-form", async (d) => {
     d.duration_hours = Number(d.duration_hours);
@@ -812,16 +931,32 @@ export function proposalForm(call, initial = {}) {
       "equipment_id",
       S.data.equipment.map((e) => [e.id, e.name]),
       c.equipment_id,
-    )}${cargoFields(c)}${timingFields(c)}${field("Arrival forecast, ETA", "eta", inputDate(c.eta), "datetime-local", "required")}${field("Cargo quantity, t", "quantity", c.quantity, "number", 'min="1" required')}${textArea("Modification reason", "reason", "", 'required minlength="5" placeholder="Why does this allocation need to change?"')}</div><div id="proposal-validation"></div><div class="form-actions"><button type="button" id="validate-proposal" class="btn">${icon("shield-check")}Check constraints</button><button type="submit" class="btn primary">${icon("save")}Save isolated draft</button></div></form>`,
+    )}${cargoFields(c)}${timingFields(c)}${field("Arrival forecast, ETA", "eta", inputDate(c.eta), "datetime-local", "required")}${c.ready_at ? `<input type="hidden" name="ready_at" value="${P().esc(c.ready_at)}">` : ""}${field("Cargo quantity, t", "quantity", c.quantity, "number", 'min="1" required')}${textArea("Modification reason", "reason", "", 'required minlength="5" placeholder="Why does this allocation need to change?"')}</div><div id="proposal-validation"></div><div class="form-actions"><button type="button" id="validate-proposal" class="btn">${icon("shield-check")}Check constraints</button><button type="submit" class="btn primary">${icon("save")}Save isolated draft</button></div></form>`,
   );
-  bindCargoFields(P().$("#proposal-form"), c);
-  bindTiming(P().$("#proposal-form"));
+  const form = P().$("#proposal-form");
+  bindCargoFields(form, c);
+  bindTiming(form);
+  const leadHours = (from, to) =>
+    from && to ? (new Date(to).getTime() - new Date(from).getTime()) / 3600000 : 0;
+  const etaLead = leadHours(c.eta, c.start);
+  const readyLead = leadHours(c.ready_at, c.start);
+  form.elements.start.addEventListener("change", () => {
+    if (!form.elements.start.value || call.actual_arrival) return;
+    const start = new Date(form.elements.start.value).getTime();
+    const eta = form.elements.eta;
+    if (eta.value && Number.isFinite(etaLead) && start < new Date(eta.value).getTime())
+      eta.value = inputDate(start - etaLead * 3600000);
+    const ready = form.elements.ready_at;
+    if (ready?.value && Number.isFinite(readyLead) && start < new Date(ready.value).getTime())
+      ready.value = inputDate(start - readyLead * 3600000);
+  });
   const convert = (d) => ({
     ...d,
     duration_hours: Number(d.duration_hours),
     start: iso(d.start),
     end: iso(d.end),
     eta: iso(d.eta),
+    ...(d.ready_at ? { ready_at: iso(d.ready_at) } : {}),
     quantity: Number(d.quantity),
   });
   P().$("#validate-proposal").onclick = async () => {
@@ -839,6 +974,14 @@ export function proposalForm(call, initial = {}) {
     }
   };
   handleForm("#proposal-form", async (d) => {
+    const existing = activeDraftFor(call.id);
+    if (existing) {
+      toast(
+        `This vessel call already has an active workflow (#${existing.id.slice(0, 8).toUpperCase()} · ${existing.status}). Approve, reject or delete it first.`,
+        true,
+      );
+      return;
+    }
     const draft = await api(path("/planning/drafts"), "POST", {
       call_id: call.id,
       base_revision: call.revision,

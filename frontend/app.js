@@ -1,11 +1,11 @@
-import { DEFAULT_KPI_IDS, currentKpiLayout, kpiTone, bindDashboardEditor } from "./dashboard-kpis.js?v=31";
+import { DEFAULT_KPI_IDS, currentKpiLayout, kpiTone, bindDashboardEditor } from "./dashboard-kpis.js?v=43";
 import { confirmRemoval } from "./removal.js?v=6";
-import { mountWeather } from "./weather.js?v=15";
+import { mountWeather, weatherClockMarkup } from "./weather.js?v=17";
 import { portMapView, portMapBoundaryKey } from "./port-map-view.js?v=6";
-import { renderProductIcon, activeThroughputProducts } from "./cargo.js?v=12";
+import { renderProductIcon, activeThroughputProducts } from "./cargo.js?v=13";
 import { mountAssistantChat } from "./assistant-chat.js?v=12";
-import { renderAssistant, bindAssistant } from "./documents.js?v=15";
-import { applyPreferences, translateUI, getLocale } from "./preferences.js?v=8";
+import { renderAssistant, bindAssistant } from "./documents.js?v=16";
+import { applyPreferences, translateUI, getLocale } from "./preferences.js?v=13";
 import {
   sourceFeedModal,
   sourcePlanModal,
@@ -17,7 +17,7 @@ import {
   prepareScreen,
   activateScreen,
   activateModalLists,
-} from "./hmi.js?v=15";
+} from "./hmi.js?v=17";
 import {
   renderPlanning,
   fitTimeline,
@@ -26,13 +26,13 @@ import {
   proposalForm,
   scenarioForm,
   historyModal,
-} from "./planning.js?v=35";
+} from "./planning.js?v=41";
 import {
   renderCenter,
   bindCenter,
   delayForm,
   alertModal,
-} from "./workflows.js?v=30";
+} from "./workflows.js?v=32";
 import { renderConfig, bindConfig } from "./configuration.js?v=71";
 const S = {
   user: null,
@@ -158,6 +158,21 @@ const btn = (label, ic, action, cls = "") =>
   `<button class="btn ${cls}" data-action="${action}">${ic ? icon(ic) : ""}${label}</button>`;
 const empty = (title, desc = "", ic = "inbox") =>
   `<div class="empty">${icon(ic)}<h3>${esc(title)}</h3><p>${esc(desc)}</p></div>`;
+const asyncState = ({
+  loaded = true,
+  error = "",
+  title = "",
+  desc = "",
+  loadingTitle = "Loading…",
+  loadingDesc = "",
+  retry = "",
+} = {}) => {
+  if (error)
+    return `<div class="async-state error" role="alert">${icon("triangle-alert")}<h3>${esc(error)}</h3>${retry ? `<button type="button" class="btn small" data-retry="${esc(retry)}">Retry</button>` : ""}</div>`;
+  if (!loaded)
+    return `<div class="async-state loading" role="status" aria-live="polite">${icon("loader-circle")}<h3>${esc(loadingTitle)}</h3>${loadingDesc ? `<p>${esc(loadingDesc)}</p>` : ""}</div>`;
+  return `<div class="async-state empty">${icon("inbox")}<h3>${esc(title)}</h3>${desc ? `<p>${esc(desc)}</p>` : ""}</div>`;
+};
 const field = (label, name, value = "", type = "text", attrs = "") =>
   `<div class="field"><label for="f-${name}">${label}</label><input id="f-${name}" name="${name}" type="${type}" value="${esc(value)}" ${attrs}></div>`;
 const select = (label, name, options, value = "", attrs = "") =>
@@ -340,22 +355,21 @@ function updateClock() {
       Date.now(),
   );
   c.innerHTML = `<strong>${new Intl.DateTimeFormat(getLocale(), { timeZone: S.data.port.timezone, day: "2-digit", month: "short", year: "numeric" }).format(d)}</strong><br>${time(d)} <span style="color:#a2afb7">${esc(S.data.port.timezone)}</span>`;
-  const portClock = $("[data-port-clock]");
+  const clock = $("[data-weather-clock]");
+  if (!clock) return;
   const now = new Date();
   const minute = String(Math.floor(+now / 60000));
-  if (portClock && portClock.dataset.minute !== minute) {
-    portClock.dataset.minute = minute;
-    const timeZone = S.data.port.timezone;
-    const locale = getLocale();
-    const currentTime = new Intl.DateTimeFormat(locale, {timeZone, hour: "numeric", minute: "2-digit"}).format(now);
-    const currentDate = new Intl.DateTimeFormat(locale, {timeZone, weekday: "long", month: "short", day: "numeric"}).format(now);
-    const reading = portClock.querySelector("time");
-    reading.dateTime = now.toISOString();
-    reading.textContent = currentTime;
-    const dateLabel = portClock.querySelector(".metric-foot");
-    dateLabel.textContent = currentDate;
-    dateLabel.title = timeZone;
-  }
+  if (clock.dataset.minute === minute) return;
+  clock.dataset.minute = minute;
+  const timeZone = S.data.port.timezone;
+  const locale = getLocale();
+  const reading = clock.querySelector("time");
+  reading.dateTime = now.toISOString();
+  reading.textContent = new Intl.DateTimeFormat(locale, {timeZone, hour: "numeric", minute: "2-digit"}).format(now);
+  const dateLabel = clock.querySelector(".weather-clock-date");
+  dateLabel.textContent = new Intl.DateTimeFormat(locale, {timeZone, weekday: "long", month: "short", day: "numeric"}).format(now);
+  dateLabel.title = timeZone;
+  clock.querySelector(".weather-clock-zone").textContent = timeZone;
 }
 function pageHeading(title, subtitle, actions = "", pill = true) {
   return `<div class="page-heading"><div><div class="title-line"><h1 id="workspace-heading" tabindex="-1">${title}</h1>${pill ? `<span class="demo-pill ${S.data.ais.mode === "live" ? "live" : ""}"><span class="dot" style="width:5px;height:5px"></span>${aisStateLabel()}</span>` : ""}</div><p>${subtitle}</p></div><div class="heading-actions">${actions}</div></div>`;
@@ -364,6 +378,7 @@ function cardHead(title, ic, meta = "", action = "", count = "") {
   return `<div class="card-head"><div class="card-title">${icon(ic)}<h2>${title}</h2>${count !== "" ? `<span class="count-pill">${count}</span>` : ""}</div>${action ? `<button class="card-link" data-action="${action}">${meta}${icon("arrow-up-right")}</button>` : `<span class="card-meta">${meta}</span>`}</div>`;
 }
 function delayChart(k) {
+  const details = k.delay_cause_details || {};
   const entries = Object.entries(k.delay_causes).filter(([, hours]) => Number.isFinite(hours) && hours > 0).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((sum, [, hours]) => sum + hours, 0);
   const palette = [
@@ -374,21 +389,26 @@ function delayChart(k) {
   const parts = entries.map(([name, hours], i) => {
     const share = hours / total * 100;
     const part = {name, hours, share, offset, color: palette[i % palette.length],
-      angle: (offset + share / 2) * Math.PI / 50 - Math.PI / 2};
+      angle: (offset + share / 2) * Math.PI / 50 - Math.PI / 2,
+      department: details[name]?.department || name};
     offset += share;
     return part;
   });
-  const slices = parts.map(({share, offset, color}) =>
-    `<circle cx="60" cy="60" r="48" pathLength="100" fill="none" stroke="${color}" stroke-width="19" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-offset}" transform="rotate(-90 60 60)"/>`
-  ).join("");
-  const percentages = parts.filter(({share}) => share >= 8).map(({share, angle}) =>
-    `<text class="delay-slice-label" x="${60 + 48 * Math.cos(angle)}" y="${60 + 48 * Math.sin(angle)}" text-anchor="middle" dominant-baseline="central">${fmt(share)}%</text>`
-  ).join("");
-  const legend = parts.map(({name, hours, share, color}) =>
-    `<li><span class="delay-key-dot" style="--delay-color:${color}" aria-hidden="true"></span><span dir="auto">${esc(name)}</span> <b dir="ltr">${fmt(hours, 1)} h</b><span class="delay-share"> · ${fmt(share, 1)}%</span></li>`
+  const slices = parts.map(({name, hours, share, offset, color, angle, department}, i) => {
+    const label = share >= 8
+      ? `<text class="delay-slice-label" x="${60 + 48 * Math.cos(angle)}" y="${60 + 48 * Math.sin(angle)}" text-anchor="middle" dominant-baseline="central">${fmt(share)}%</text>`
+      : "";
+    return `<g class="delay-slice" data-delay-index="${i}" tabindex="0" role="img"
+      aria-label="${esc(`${name}: ${fmt(share, 1)}%, ${fmt(hours, 1)} h, ${department}`)}"
+      data-cause="${esc(name)}" data-share="${share}" data-hours="${hours}" data-color="${color}"
+      data-department="${esc(department)}" style="--delay-color:${color}">
+      <circle cx="60" cy="60" r="48" pathLength="100" fill="none" stroke="${color}" stroke-width="19" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-offset}" transform="rotate(-90 60 60)"/>${label}</g>`;
+  }).join("");
+  const legend = parts.map(({name, hours, share, color}, i) =>
+    `<li data-delay-index="${i}" data-cause="${esc(name)}" data-share="${share}" data-hours="${hours}" data-color="${color}" data-department="${esc(details[name]?.department || name)}"><span class="delay-key-dot" style="--delay-color:${color}" aria-hidden="true"></span><span dir="auto">${esc(name)}</span> <b dir="ltr">${fmt(hours, 1)} h</b><span class="delay-share"> · ${fmt(share, 1)}%</span></li>`
   ).join("");
   const unavailable = !entries.length && S.data.port.source_feed;
-  return `<div class="delay-summary"><div class="delay-chart-layout"><div class="delay-donut"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="48" fill="none" stroke="var(--ui-border, var(--line))" stroke-width="19"/>${slices}${percentages}</svg><div class="delay-donut-center"><span>Total delay</span><strong dir="ltr">${unavailable ? "—" : `${fmt(k.delay_hours, 1)} <small>h</small>`}</strong></div></div>${entries.length ? `<ul class="delay-key" aria-label="Delay by department">${legend}</ul>` : `<span class="subtle">${unavailable ? "Delay durations are not supplied by the report." : "No delays recorded"}</span>`}</div></div>`;
+  return `<div class="delay-summary"><div class="delay-chart-layout"><div class="delay-donut"><svg viewBox="0 0 120 120" role="group" aria-label="Delay hours by responsible department"><circle cx="60" cy="60" r="48" fill="none" stroke="var(--ui-border, var(--line))" stroke-width="19" aria-hidden="true"/>${slices}</svg><div class="delay-donut-center"><span>Total delay</span><strong dir="ltr">${unavailable ? "—" : `${fmt(k.delay_hours, 1)} <small>h</small>`}</strong></div></div>${entries.length ? `<ul class="delay-key" aria-label="Delay by department">${legend}</ul>` : `<span class="subtle">${unavailable ? "Delay durations are not supplied by the report." : "No delays recorded"}</span>`}</div></div>`;
 }
 function overviewKpiCards(layout, editing = false) {
   const k = S.data.stats;
@@ -520,7 +540,7 @@ function overview() {
   const cards = overviewKpiCards(layout.filter(card => !card.kpis && !Object.hasOwn(configured?.widget_catalog || {}, card.id)));
 
   const recent = [...calls].sort((a, b) => new Date(b.start) - new Date(a.start)).slice(0, 12);
-  const extraWidgets = `<div hidden><section class="card" data-overview-widget="widget_calls">${cardHead("Vessel calls", "ship", "View all", "vessels")}<div class="table-scroll"><table><thead><tr><th scope="col">Vessel</th><th scope="col">Berth</th><th scope="col">Status</th><th scope="col">Planned start</th></tr></thead><tbody>${recent.map(call => `<tr class="clickable" data-vessel="${esc(call.id)}"><td>${esc(call.name)}</td><td>${esc(berth(call.berth_id)?.code || "—")}</td><td>${status(call.status)}</td><td>${date(call.start)}</td></tr>`).join("") || `<tr><td colspan="4">${empty("No vessel calls")}</td></tr>`}</tbody></table></div></section><section class="card" data-overview-widget="widget_weather" aria-label="Weather">${cardHead("Weather", "cloud-sun")}<div class="weather-widget" data-weather-widget aria-live="polite">Loading port weather…</div></section><section class="metric port-clock-card" data-overview-widget="widget_clock"><div data-port-clock><div class="metric-top"><span class="metric-label">Port clock</span><span class="metric-icon" aria-hidden="true">${icon("clock-3")}</span></div><time class="metric-value" dir="auto"></time><div class="metric-foot"></div></div></section></div>`;
+  const extraWidgets = `<div hidden><section class="card" data-overview-widget="widget_calls">${cardHead("Vessel calls", "ship", "View all", "vessels")}<div class="table-scroll"><table><thead><tr><th scope="col">Vessel</th><th scope="col">Berth</th><th scope="col">Status</th><th scope="col">Planned start</th></tr></thead><tbody>${recent.map(call => `<tr class="clickable" data-vessel="${esc(call.id)}"><td>${esc(call.name)}</td><td>${esc(berth(call.berth_id)?.code || "—")}</td><td>${status(call.status)}</td><td>${date(call.start)}</td></tr>`).join("") || `<tr><td colspan="4">${empty("No vessel calls")}</td></tr>`}</tbody></table></div></section><section class="card" data-overview-widget="widget_weather" aria-label="Weather and port clock">${cardHead("Weather &amp; clock", "cloud-sun")}<div class="weather-widget" data-weather-widget aria-live="polite">${weatherClockMarkup()}<p class="weather-widget-source">Loading port weather…</p></div></section></div>`;
   return (
     pageHeading(
       "Port overview",
@@ -745,12 +765,63 @@ async function action(a) {
     toast(err.message, true);
   }
 }
+function bindDelayHover() {
+  const summary = $(".delay-summary");
+  if (!summary) return;
+  let card = document.querySelector("#delay-hover-card");
+  if (!card) {
+    card = document.createElement("div");
+    card.id = "delay-hover-card";
+    card.className = "delay-hover-card";
+    card.hidden = true;
+    document.body.append(card);
+  }
+  let active = null;
+  const hide = () => { active = null; card.hidden = true; };
+  const show = (source, event) => {
+    const d = source.dataset;
+    if (!d.cause) return;
+    if (active !== source) {
+      active = source;
+      card.innerHTML = `<div class="delay-hover-title"><span class="delay-hover-dot" style="--delay-color:${esc(d.color)}" aria-hidden="true"></span><strong dir="auto">${esc(d.cause)}</strong></div><dl class="delay-hover-stats"><div><dt data-i18n>Share</dt><dd dir="ltr">${fmt(Number(d.share), 1)}%</dd></div><div><dt data-i18n>Delay hours</dt><dd dir="ltr">${fmt(Number(d.hours), 1)} h</dd></div><div><dt data-i18n>Responsible department</dt><dd dir="auto">${esc(d.department)}</dd></div></dl>`;
+      translateUI(card);
+    }
+    card.hidden = false;
+    const rect = card.getBoundingClientRect();
+    const anchor = source.getBoundingClientRect();
+    const x = Number.isFinite(event?.clientX) ? event.clientX + 14 : anchor.right + 10;
+    const y = Number.isFinite(event?.clientY) ? event.clientY + 14 : anchor.top;
+    card.style.left = `${Math.max(8, Math.min(x, innerWidth - rect.width - 8))}px`;
+    card.style.top = `${Math.max(8, Math.min(y, innerHeight - rect.height - 8))}px`;
+  };
+  const sourceOf = node => node instanceof Element ? node.closest("[data-delay-index]") : null;
+  summary.addEventListener("pointerover", event => {
+    const source = sourceOf(event.target);
+    if (source && summary.contains(source)) show(source, event);
+  });
+  summary.addEventListener("pointermove", event => {
+    const source = sourceOf(event.target);
+    if (source && summary.contains(source)) show(source, event);
+  });
+  summary.addEventListener("pointerout", event => {
+    if (!sourceOf(event.relatedTarget)) hide();
+  });
+  summary.addEventListener("focusin", event => {
+    const source = sourceOf(event.target);
+    if (source) show(source);
+  });
+  summary.addEventListener("focusout", hide);
+}
+
 function bindOverview() {
   if ($("#ais-open-settings"))
     $("#ais-open-settings").onclick = () => {
       S.configTab = "integrations";
       nav("configuration");
     };
+  const previousCard = document.querySelector("#delay-hover-card");
+  if (previousCard) previousCard.hidden = true;
+  bindDelayHover();
   mountWeather();
   const openKpi = button => {
     const item = S.data.stats.dashboard_kpis?.definitions[button.dataset.kpiId];
@@ -1417,6 +1488,7 @@ window.P = {
   status,
   btn,
   empty,
+  asyncState,
   field,
   select,
   textArea,

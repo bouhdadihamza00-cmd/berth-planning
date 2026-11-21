@@ -15,7 +15,7 @@ from .store import connect, records, record, put, audit, notification, uid, now
 from .planning import dt, validate
 from .catalog import normalize_timing
 from .policies import approval_eligibility
-from .approval_workflow import capture_workflow
+from .approval_workflow import capture_workflow, active_draft_for_call
 from . import document_setup
 from .document_extract import extract_document
 from .planning_ai import ai_status, interpret_document, analyze_operations, explain_operations
@@ -647,6 +647,8 @@ def commit_batch(c,port,p,u,batch,mode,save_record):
         batch['draft_ids']=[]
         for item in selected:
             proposed=copy.deepcopy(item['proposed']);before=item.get('before') or dict(proposed,revision=0)
+            existing=active_draft_for_call(c,port,proposed['id'])
+            if existing:raise ValueError(f'{proposed.get("name","This vessel call")} already has an active workflow (#{existing["id"][:8].upper()} · {existing["status"]}). Approve, reject or delete it before importing another draft.')
             draft=put(c,port,'drafts',dict(call_id=proposed['id'],before=before,proposed=proposed,operation='create' if item['action']=='create' else 'update',reason='Document import: '+batch['filename'],author_id=u['id'],author=u['name'],status='Draft',created_at=now(),validation={'errors':item['errors'],'warnings':item['warnings']},decisions=[],workflow=capture_workflow(c,port,p.get('workflow',{}),u['id']),import_id=batch['id'],import_item_id=item['id'],import_delay=item.get('delay'),import_evidence=item.get('evidence',[]),import_permissions=item.get('required_permissions',[])))
             batch['draft_ids'].append(draft['id'])
         batch['status']='Drafted'

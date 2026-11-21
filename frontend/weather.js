@@ -3,6 +3,10 @@ function compactReading(glyph, label, value, detail = "") {
   const {esc, icon} = window.P;
   return `<div title="${esc([label, detail].filter(Boolean).join(" · "))}"><dt><span class="weather-reading-label">${esc(label)}</span><span aria-hidden="true">${icon(glyph)}</span></dt><dd>${esc(value)}</dd></div>`;
 }
+export function weatherClockMarkup() {
+  const {icon} = window.P;
+  return `<div class="weather-widget-clock" data-weather-clock role="group" aria-label="Port clock" aria-live="off"><span class="weather-clock-icon" aria-hidden="true">${icon("clock-3")}</span><time></time><span class="weather-clock-date"></span><span class="weather-clock-zone"></span></div>`;
+}
 export async function mountWeather() {
   const { S, api, path, esc, icon } = window.P;
   const container = document.querySelector('#port-weather');
@@ -39,13 +43,13 @@ export async function mountWeather() {
       const readings = [
         fields[2], fields[3], ['droplets', 'Humidity', number(weather.humidity_percent, '%')], fields[4],
       ];
-      widget.innerHTML = `<div class="weather-widget-hero"><div class="weather-widget-current"><span class="weather-widget-condition-icon" aria-hidden="true">${icon(symbol)}</span><span><strong>${weather.temperature_c == null ? "—" : `${esc(number(weather.temperature_c, "°C"))}`}</strong><span>${esc(condition)}</span></span></div><div class="weather-widget-wind"><div class="weather-compass" aria-hidden="true"><span>N</span><span>E</span><span>S</span><span>W</span><i style="--wind-angle:${bearing ?? 0}deg">${icon(bearing === null ? "wind" : "arrow-up")}</i></div><div><strong>${esc(number(weather.wind_knots, "kn"))}</strong><span>${bearing === null ? "Wind direction unavailable" : `From ${direction} · ${Math.round(bearing)}°`}</span></div></div></div><dl class="weather-widget-readings">${readings.map(([glyph, label, value]) => `<div><dt>${icon(glyph)} ${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join("")}</dl><dl class="weather-widget-compact" aria-label="Weather and marine readings">${[fields[1], ...readings].map(([glyph, label, value]) => compactReading(glyph, label, value, state)).join("")}</dl><p class="weather-widget-source">${esc(state)}${weather.valid_at ? " · " + date(weather.valid_at) : ""} · <a href="https://www.met.no/en" target="_blank" rel="noopener noreferrer">MET Norway</a></p>`;
+      widget.innerHTML = `<div class="weather-widget-hero"><div class="weather-widget-current"><span class="weather-widget-condition-icon" aria-hidden="true">${icon(symbol)}</span><span><strong>${weather.temperature_c == null ? "—" : `${esc(number(weather.temperature_c, "°C"))}`}</strong><span>${esc(condition)}</span></span></div><div class="weather-widget-wind"><div class="weather-compass" aria-hidden="true"><span>N</span><span>E</span><span>S</span><span>W</span><i style="--wind-angle:${bearing ?? 0}deg">${icon(bearing === null ? "wind" : "arrow-up")}</i></div><div><strong>${esc(number(weather.wind_knots, "kn"))}</strong><span>${bearing === null ? "Wind direction unavailable" : `From ${direction} · ${Math.round(bearing)}°`}</span></div></div>${weatherClockMarkup()}</div><dl class="weather-widget-readings">${readings.map(([glyph, label, value]) => `<div><dt>${icon(glyph)} ${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join("")}</dl><dl class="weather-widget-compact" aria-label="Weather and marine readings">${[fields[1], ...readings].map(([glyph, label, value]) => compactReading(glyph, label, value, state)).join("")}</dl><p class="weather-widget-source">${esc(state)}${weather.valid_at ? " · " + date(weather.valid_at) : ""} · <a href="https://www.met.no/en" target="_blank" rel="noopener noreferrer">MET Norway</a></p>`;
     }
     window.P.icons();
   } catch {
     if (container.isConnected && S.portId === port) {
       container.textContent = 'Weather unavailable. Retrying on the next dashboard refresh.';
-      if (widget) widget.textContent = 'Weather unavailable.';
+      if (widget) widget.innerHTML = '<p class="weather-widget-source">Weather unavailable.</p>' + weatherClockMarkup();
     }
   } finally {
     if (container.isConnected && S.portId === port) mountMarine(container, port, widget);

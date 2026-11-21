@@ -119,8 +119,8 @@ body {
 }
 .hmi-main .metric-foot {
   margin-top: 4px;
-  color: #64748b;
-  font-size: calc(8px * var(--ui-font-scale, 1));
+  color: var(--muted);
+  font-size: max(var(--ui-type-min), calc(8px * var(--ui-font-scale, 1)));
 }
 .hmi-main .metric-foot.positive {
   color: #15803d;
@@ -209,7 +209,7 @@ body {
   margin-left: 1px;
 }
 .hmi-main .donut-center span {
-  font-size: calc(8px * var(--ui-font-scale, 1));
+  font-size: max(var(--ui-type-min), calc(8px * var(--ui-font-scale, 1)));
   line-height: 1.2;
   margin: 0;
   color: #64748b;
@@ -576,7 +576,7 @@ body {
     height: 16px;
   }
   .hmi-main .metric-label {
-    font-size: calc(7px * var(--ui-font-scale, 1));
+    font-size: max(var(--ui-type-min), calc(7px * var(--ui-font-scale, 1)));
     line-height: calc(8px * var(--ui-font-scale, 1));
     max-width: calc(100% - 18px);
   }
@@ -597,7 +597,7 @@ body {
     padding: 5px 7px;
   }
   .hmi-main .metric-foot {
-    font-size: calc(6px * var(--ui-font-scale, 1));
+    font-size: max(var(--ui-type-min), calc(6px * var(--ui-font-scale, 1)));
     margin-top: 1px;
   }
   .rule-defaults {
@@ -657,7 +657,7 @@ body {
   font-size: clamp(17px, 23cqw, 28px);
 }
 .hmi-main .donut-center span {
-  font-size: clamp(7px, 8cqw, 9px);
+  font-size: max(var(--ui-type-min), clamp(7px, 8cqw, 9px));
 }
 
 .rules-form table {

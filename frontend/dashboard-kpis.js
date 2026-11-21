@@ -30,7 +30,8 @@ function knownCards(data, layout) {
         ? fitCardPreset(group, card.width > 1 || card.height > 1 ? 2 : 1, 1)
         : group];
     }
-    if (card.id === "widget_clock" || Object.hasOwn(data.definitions, card.id))
+    if (card.id === "widget_clock") return []; // merged into the weather card
+    if (Object.hasOwn(data.definitions, card.id))
       return [fitCardPreset(card, card.width > 1 || card.height > 1 ? 2 : 1, 1)];
     return Object.hasOwn(data.widget_catalog || {}, card.id) ? [card] : [];
   });
@@ -56,19 +57,40 @@ async function saveCatalog(definitions, layout) {
   toast("Dashboard settings saved.");
 }
 
+async function saveVariables(custom, descriptions) {
+  const { S, api, path, closeModal, refresh, toast } = P();
+  const data = catalog();
+  await api(path("/dashboard"), "PUT", {
+    revision: S.data.port.revision,
+    definitions: data.definitions,
+    layout: knownCards(data, data.layout),
+    widgets: data.widgets,
+    custom_variables: custom,
+    variable_descriptions: descriptions,
+  });
+  closeModal();
+  await refresh();
+  toast("Platform variables saved.");
+}
+
 export function renderKpiConfig() {
-  const { esc, can, cardHead } = P();
+  const { esc, can, cardHead, fmt } = P();
   if (!can("config.view")) return "";
   const data = catalog();
   if (!data) return '<div class="notice">Dashboard configuration requires the updated server.</div>';
   const editable = can("config.edit") && !window.PORTSIDE_PREVIEW_DATA;
-  const actions = editable
-    ? '<div class="toolbar"><button class="btn primary" data-kpi-edit="">Add KPI</button><button class="btn" id="kpi-default-layout">Edit port layout</button></div>'
-    : "";
-  const rows = Object.entries(data.definitions).map(([id, definition]) =>
-    `<tr><td><strong>${esc(definition.name)}</strong><br><code>${esc(id)}</code></td><td>${esc(definition.formula || definition.source || "Built-in calculation")}</td><td>${esc(definition.unit || "—")}</td><td>${definition.thresholds ? esc(`${definition.thresholds.direction === "higher" ? "Higher is better" : "Lower is better"} · Amber ${definition.thresholds.warning} · Red ${definition.thresholds.danger}`) : definition.thresholds_enabled === false ? "Informational" : "Automatic"}</td>${editable ? `<td><button class="btn small" data-kpi-edit="${esc(id)}" aria-label="Edit ${esc(definition.name)}">Edit</button></td>` : ""}</tr>`
-  ).join("");
-  return `<section class="card">${cardHead("Dashboard KPIs", "chart-column")}${actions}<div class="table-scroll"><table><thead><tr><th scope="col">KPI / formula name</th><th scope="col">Calculation</th><th scope="col">Unit</th><th scope="col">Colors</th>${editable ? '<th scope="col">Actions</th>' : ""}</tr></thead><tbody>${rows}</tbody></table></div><div class="form-body">${variableReference(data)}</div></section>`;
+  const builtin = new Set(data.builtin_variables || []);
+  const toolbar = editable ? '<div class="toolbar variable-toolbar"><button class="btn primary" data-variable-add="">Add variable</button></div>' : "";
+  const variableRows = Object.entries(data.variables || {}).map(([id, description]) => {
+    const raw = data.variable_values?.[id];
+    const value = Number.isFinite(raw) ? fmt(raw, raw % 1 ? 2 : 0) : "—";
+    const controls = editable
+      ? `<button class="btn small" data-variable-edit="${esc(id)}" aria-label="Edit ${esc(id)}">Edit</button>${builtin.has(id) ? "" : `<button class="btn small danger" data-variable-delete="${esc(id)}" aria-label="Delete ${esc(id)}">Delete</button>`}`
+      : "";
+    const mark = data.custom_variables?.[id]?.formula ? '<span class="formula-mark" title="Calculated from a formula">fx</span>' : "";
+    return `<tr><td><span class="variable-tag">${esc(id)}</span></td><td><strong>${esc(data.variable_names?.[id] || id)}</strong></td><td>${esc(description)}</td><td>${esc(data.variable_types?.[id] || "—")}</td><td>${esc(data.variable_units?.[id] || "—")}</td><td class="variable-value">${mark}${value}</td>${editable ? `<td class="variable-actions">${controls}</td>` : ""}</tr>`;
+  }).join("");
+  return `<section class="card">${cardHead("Platform variables", "table")}${toolbar}<div class="table-scroll"><table class="platform-variables-table"><thead><tr><th scope="col">Tag</th><th scope="col">Variable name</th><th scope="col">Description</th><th scope="col">Type</th><th scope="col">Unit</th><th scope="col">Value</th>${editable ? '<th scope="col">Actions</th>' : ""}</tr></thead><tbody>${variableRows}</tbody></table></div></section>`;
 }
 
 function variableReference(data) {
@@ -124,9 +146,174 @@ function editKpi(id) {
   };
 }
 
+function editVariable(id) {
+  const { $, esc, modal, handleForm, field, select, toast } = P();
+  const data = catalog();
+  const builtin = new Set(data.builtin_variables || []);
+  const locked = builtin.has(id);
+  const custom = {...(data.custom_variables || {})};
+  const descriptions = {...(data.variable_descriptions || {})};
+  const item = id ? (locked ? {} : custom[id] || {}) : {};
+  const staticField = (label, value) => `<div class="field"><label>${label}</label><div class="static-field">${esc(value ?? "—")}</div></div>`;
+  const identity = id
+    ? staticField("Tag", id) + (locked
+      ? staticField("Variable name", data.variable_names?.[id])
+      : field("Variable name", "name", item.name || "", "text", 'required maxlength="80"'))
+    : `${field("Tag", "id", "", "text", 'required maxlength="40" pattern="[a-z][a-z0-9_]{0,39}" placeholder="e.g. target_berths"')}
+       ${field("Variable name", "name", "", "text", 'required maxlength="80"')}`;
+  const source = locked
+    ? staticField("Value", data.variable_values?.[id])
+    : `${select("Value source", "mode", [["value", "Fixed value"], ["formula", "Formula"]], item.formula ? "formula" : "value")}
+       <div class="field" data-mode="value"><label for="f-value">Value</label><input id="f-value" name="value" type="number" step="any" value="${esc(item.value ?? "")}"></div>
+       <div class="field formula-field" data-mode="formula" hidden><label for="f-formula">Formula</label>
+         <div class="formula-input"><input id="f-formula" name="formula" type="text" maxlength="240" autocomplete="off"
+           value="${esc(item.formula || "")}" placeholder="Type @ to insert a variable tag">
+           <div class="formula-mentions" id="formula-mentions" role="listbox" aria-label="Variable tags" hidden></div>
+         </div>
+         <p class="subtle">Type @ then pick a tag. Use + - * / and parentheses, e.g. @active_calls / @configured_berths.</p>
+       </div>`;
+  const metadata = locked
+    ? staticField("Type", data.variable_types?.[id]) + staticField("Unit", data.variable_units?.[id]) + source
+    : `${select("Type", "type", ["Count", "Percent", "Duration", "Quantity"], item.type || "Count")}
+       ${field("Unit", "unit", item.unit || "", "text", 'maxlength="12" placeholder="e.g. calls"')}
+       ${source}`;
+  modal(id ? "Edit variable" : "Add variable", `<form id="variable-form" aria-labelledby="modal-title"><div class="form-grid">
+    ${identity}
+    ${field("Description", "description", item.description || (locked ? data.variables?.[id] || "" : ""), "text", 'required maxlength="240"')}
+    ${metadata}
+    </div><p class="subtle">Variables can be referenced by KPI formulas. Platform variables cannot be removed; only their description can change.</p>
+    <div class="form-actions">${id && !locked ? '<button type="button" class="btn danger" id="delete-variable">Delete variable</button>' : ""}<button type="submit" class="btn primary">Save variable</button></div></form>`);
+  const form = $("#variable-form");
+  const formula = $("#f-formula");
+  const menu = $("#formula-mentions");
+  const tags = Object.keys(data.variables || {});
+  const dialog = form?.closest("dialog");
+  let matches = [], active = -1, start = -1;
+  const close = () => {
+    if (menu) { menu.hidden = true; menu.innerHTML = ""; }
+    matches = []; active = -1; start = -1;
+  };
+  const place = () => {
+    if (!menu || menu.hidden) return;
+    const rect = formula.getBoundingClientRect();
+    const width = Math.min(Math.max(rect.width, 360), window.innerWidth - 24);
+    const below = window.innerHeight - rect.bottom - 10;
+    const above = rect.top - 10;
+    menu.style.maxHeight = `${Math.max(120, Math.min(180, Math.max(below, above) - 8))}px`;
+    const height = menu.offsetHeight;
+    const top = below >= height || above < below ? rect.bottom + 6 : above - height;
+    menu.style.width = `${width}px`;
+    menu.style.left = `${Math.max(12, Math.min(rect.left, window.innerWidth - width - 12))}px`;
+    menu.style.top = `${Math.max(8, top)}px`;
+  };
+  const highlight = () => menu.querySelectorAll(".formula-mention").forEach((node, index) => node.classList.toggle("active", index === active));
+  const offer = query => {
+    const needle = query.toLowerCase();
+    matches = tags.filter(tag => tag.toLowerCase().includes(needle)
+      || (data.variable_names?.[tag] || "").toLowerCase().includes(needle)).slice(0, 6);
+    if (!matches.length) { close(); return; }
+    active = 0;
+    menu.innerHTML = `<div class="formula-mention-head"><span>Variables</span><span>↑↓ · Enter · Esc</span></div>`
+      + matches.map((tag, index) =>
+        `<button type="button" role="option" class="formula-mention${index === 0 ? " active" : ""}" data-tag="${esc(tag)}"><code>@${esc(tag)}</code><small>${esc(data.variable_names?.[tag] || "")}</small></button>`).join("");
+    menu.hidden = false;
+    place();
+  };
+  const update = () => {
+    const isFormula = form.elements.mode?.value === "formula";
+    for (const node of form.querySelectorAll("[data-mode]")) node.hidden = node.dataset.mode !== (isFormula ? "formula" : "value");
+    if (form.elements.value) { form.elements.value.disabled = isFormula; form.elements.value.required = !isFormula; }
+    if (formula) { formula.disabled = !isFormula; formula.required = isFormula; if (!isFormula) close(); }
+  };
+  if (form.elements.mode) { form.elements.mode.onchange = update; update(); }
+  if (formula && menu) {
+    const scan = () => {
+      const caret = formula.selectionStart ?? formula.value.length;
+      const before = formula.value.slice(0, caret);
+      const at = before.lastIndexOf("@");
+      if (at < 0) { close(); return; }
+      const query = before.slice(at + 1);
+      if (/[\s@()+\-*/]/.test(query)) { close(); return; }
+      start = at;
+      offer(query);
+    };
+    const choose = tag => {
+      const caret = formula.selectionStart ?? formula.value.length;
+      const head = formula.value.slice(0, start);
+      const tail = formula.value.slice(caret);
+      formula.value = `${head}${tag}${tail}`;
+      const position = head.length + tag.length;
+      formula.focus();
+      formula.setSelectionRange(position, position);
+      close();
+    };
+    formula.addEventListener("input", scan);
+    formula.addEventListener("click", scan);
+    formula.addEventListener("blur", close);
+    formula.addEventListener("keydown", event => {
+      if (menu.hidden) return;
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        active = (active + (event.key === "ArrowDown" ? 1 : -1) + matches.length) % matches.length;
+        highlight();
+      } else if (event.key === "Enter" || event.key === "Tab") {
+        event.preventDefault();
+        choose(matches[active]);
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        close();
+      }
+    });
+    menu.addEventListener("mousedown", event => event.preventDefault());
+    menu.addEventListener("click", event => {
+      const button = event.target.closest("[data-tag]");
+      if (button) choose(button.dataset.tag);
+    });
+    dialog?.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    dialog?.addEventListener("close", () => {
+      dialog.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+    }, { once: true });
+  }
+  handleForm("#variable-form", async input => {
+    const base = {name: input.name, description: input.description, type: input.type, unit: input.unit};
+    const value = input.mode === "formula" ? {formula: input.formula} : {value: Number(input.value)};
+    if (!id) {
+      const key = input.id;
+      if (builtin.has(key) || Object.hasOwn(custom, key)) throw Error("That tag is already in use.");
+      custom[key] = {...base, ...value};
+    } else if (locked) {
+      descriptions[id] = input.description;
+    } else {
+      custom[id] = {...base, ...value};
+    }
+    await saveVariables(custom, descriptions);
+  });
+  const remove = $("#delete-variable");
+  if (remove) remove.onclick = async () => {
+    if (!window.confirm(`Delete ${item.name || id}?`)) return;
+    const {[id]: removed, ...remaining} = custom;
+    try {
+      await saveVariables(remaining, descriptions);
+    } catch (error) {
+      toast(error.message, true);
+    }
+  };
+}
+
 export function bindKpiConfig() {
-  const { $, $$, can } = P();
+  const { $, $$, can, toast } = P();
   if (!can("config.edit")) return;
+  const deleteVariable = id => {
+    const data = catalog();
+    if (!window.confirm(`Delete ${data.variable_names?.[id] || id}?`)) return;
+    const {[id]: removed, ...remaining} = data.custom_variables || {};
+    saveVariables(remaining, {...(data.variable_descriptions || {})}).catch(error => toast(error.message, true));
+  };
+  $$("[data-variable-add]").forEach(button => { button.onclick = () => editVariable(""); });
+  $$("[data-variable-edit]").forEach(button => { button.onclick = () => editVariable(button.dataset.variableEdit); });
+  $$("[data-variable-delete]").forEach(button => { button.onclick = () => deleteVariable(button.dataset.variableDelete); });
   $$("[data-kpi-edit]").forEach(button => {
     button.onclick = () => editKpi(button.dataset.kpiEdit);
   });
@@ -230,7 +417,7 @@ export function bindDashboardEditor(renderCards, openKpi) {
         const hasValue = Number.isFinite(value);
         const glyph = data.card_icons?.includes(item.icon) ? item.icon : "";
         const tone = toneFor(item);
-        return `${compact ? "" : `<div class="metric kpi-formula-metric" data-tone="${tone}">`}<div class="metric-top"><span class="metric-label">${esc(item.name)}</span>${glyph ? `<span class="metric-icon" aria-hidden="true">${icon(glyph)}</span>` : ""}</div><strong class="metric-value">${hasValue ? fmt(value, value % 1 ? 2 : 0) : "—"}<span class="metric-unit">${hasValue ? esc(item.unit) : ""}</span></strong>${hasValue ? "" : '<span class="metric-foot">Unavailable</span>'}${draft ? `<button class="btn small" type="button" data-configure-card-kpi="${i}" aria-label="Edit ${esc(item.name)}">Edit</button>` : ""}${compact ? "" : "</div>"}`;
+        return `${compact ? "" : `<div class="metric kpi-formula-metric" data-tone="${tone}">`}<div class="metric-top"><span class="metric-label">${esc(item.name)}</span>${glyph ? `<span class="metric-icon" aria-hidden="true">${icon(glyph)}</span>` : ""}</div><strong class="metric-value">${hasValue ? fmt(value, value % 1 ? 2 : 0) : "—"}<span class="metric-unit">${hasValue ? esc(item.unit) : ""}</span></strong>${hasValue ? "" : '<span class="metric-foot">Unavailable</span>'}${draft ? `<button class="${compact ? "icon-btn kpi-corner kpi-corner-edit" : "btn small"}" type="button" data-configure-card-kpi="${i}" aria-label="Edit ${esc(item.name)}" title="Edit ${esc(item.name)}">${compact ? icon("pencil") : "Edit"}</button>` : ""}${compact ? "" : "</div>"}`;
       }).join("");
       const canAdd = compact ? !metrics.length && trigger : draft;
       const config = esc(JSON.stringify({kpis: card.kpis, metrics}));
@@ -248,15 +435,31 @@ export function bindDashboardEditor(renderCards, openKpi) {
   let layoutTracks, legacyTracks;
   const compatibleTracks = positions => Math.max(0, ...positions
     .filter(position => position?.tracks <= layoutTracks).map(position => position.tracks));
-  function sizeGrid() {
+  function sizeGrid(layout = [...grid.children].map(card => ({
+    position: card.dataset.widgetPosition ? JSON.parse(card.dataset.widgetPosition) : null,
+    height: Number(card.dataset.kpiHeight || 1),
+  }))) {
     const style = getComputedStyle(grid);
     const scale = Number(style.getPropertyValue("--ui-font-scale")) || 1;
     const width = grid.getBoundingClientRect().width;
-    const columns = Math.max(2, Math.min(64, Math.floor((width - 34) / (Math.max(112, 108 * scale) + 18))));
+    const boardTracks = Math.max(0, ...layout.map(card => card.position?.tracks ?? 0));
+    const columns = boardTracks
+      ? Math.max(2, Math.min(64, Math.round(boardTracks / 2)))
+      : Math.max(2, Math.min(64, Math.floor((width - 34) / (Math.max(112, 108 * scale) + 18))));
     grid.style.setProperty("--widget-grid-columns", columns);
     const tracks = columns * 2;
     const trackWidth = parseFloat(getComputedStyle(grid).gridTemplateColumns);
-    if (trackWidth > 0) grid.style.setProperty("--widget-row-size", `${trackWidth * 2 + parseFloat(style.columnGap)}px`);
+    const widthBased = trackWidth > 0 ? trackWidth * 2 + (parseFloat(style.columnGap) || 0) : 112;
+    const rows = Math.max(1, ...layout.map(card => (card.position?.row ?? 1) + (card.height ?? 1) - 1));
+    const gap = parseFloat(style.rowGap) || 0;
+    const padding = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+    const fitted = (grid.clientHeight - padding - (rows - 1) * gap) / rows;
+    // Editing needs breathing room for the per-card controls; viewing fits the window.
+    const minimum = grid.classList.contains("metrics-editing") ? Math.max(112, 108 * scale) : 72;
+    const rowSize = layout.some(card => card.position) && Number.isFinite(fitted) && fitted > 0
+      ? Math.max(minimum, fitted)
+      : widthBased;
+    grid.style.setProperty("--widget-row-size", `${rowSize}px`);
     return tracks;
   }
   const paint = () => {
@@ -265,7 +468,7 @@ export function bindDashboardEditor(renderCards, openKpi) {
     for (const panel of panels.values()) restore(panel);
     grid.replaceChildren();
     const layout = draft ? draft.layout : withWidgets(data, currentKpiLayout(), personalized());
-    layoutTracks = sizeGrid();
+    layoutTracks = sizeGrid(layout);
     legacyTracks = compatibleTracks(layout.map(card => card.position));
     for (const card of layout) addCard(card);
     grid.scrollTop = scrollTop;
@@ -282,6 +485,45 @@ export function bindDashboardEditor(renderCards, openKpi) {
     added.focus();
     announce(`${cardName(added)} added to the layout.`);
   }
+  function iconPicker(label, name, keys, value = "") {
+    const options = [{key: "", label: "None", glyph: "circle-slash"},
+      ...keys.map(key => ({key, label: key.replaceAll("-", " "), glyph: key}))];
+    return `<div class="field full icon-picker-field">
+      <label id="f-${name}-label" for="f-${name}">${esc(label)}</label>
+      <input type="hidden" id="f-${name}" name="${name}" value="${esc(value)}">
+      <div class="icon-picker" role="radiogroup" aria-labelledby="f-${name}-label">
+        ${options.map(o => `<button type="button" class="icon-option${o.key === value ? " selected" : ""}" data-icon-value="${esc(o.key)}" role="radio" aria-checked="${o.key === value}" aria-label="${esc(o.label)}" title="${esc(o.label)}" tabindex="${o.key === value ? 0 : -1}">${icon(o.glyph)}</button>`).join("")}
+      </div>
+    </div>`;
+  }
+  function bindIconPicker(form, name) {
+    const input = form.elements.namedItem(name);
+    const group = input.closest(".icon-picker-field").querySelector(".icon-picker");
+    const options = [...group.querySelectorAll(".icon-option")];
+    const choose = option => {
+      input.value = option.dataset.iconValue;
+      for (const o of options) {
+        const active = o === option;
+        o.classList.toggle("selected", active);
+        o.setAttribute("aria-checked", String(active));
+        o.tabIndex = active ? 0 : -1;
+      }
+    };
+    group.addEventListener("click", e => {
+      const option = e.target.closest(".icon-option");
+      if (option) choose(option);
+    });
+    group.addEventListener("keydown", e => {
+      const index = options.indexOf(document.activeElement);
+      if (index < 0) return;
+      const step = {ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1}[e.key];
+      if (!step) return;
+      e.preventDefault();
+      const next = options[(index + step + options.length) % options.length];
+      choose(next);
+      next.focus();
+    });
+  }
   function configureCardKpi(cardId, index) {
     const card = draft.layout.find(item => item.id === cardId);
     const metrics = card?.metrics || [];
@@ -297,12 +539,13 @@ export function bindDashboardEditor(renderCards, openKpi) {
         ${field("Formula", "formula", mode === "formula" ? existing.formula : "", "text", 'maxlength="240" placeholder="e.g. active_calls + upcoming_arrivals"')}
         ${field("Label", "name", existing?.name ?? "", "text", 'required maxlength="80"')}
         ${field("Unit", "unit", existing?.unit ?? "", "text", 'maxlength="12"')}
-        ${select("Icon", "glyph", [["", "None"], ...(data.card_icons || []).map(key => [key, key.replaceAll("-", " ")])], existing?.icon ?? "")}
+        ${iconPicker("Icon", "glyph", data.card_icons || [], existing?.icon ?? "")}
       </div><div id="widget-kpi-reference"><p class="subtle">Use numbers, +, -, *, /, parentheses, and named KPIs or variables.</p>${variableReference(data)}</div>
       <div class="form-actions">${existing ? '<button type="button" class="btn danger" id="widget-kpi-delete">Remove KPI</button>' : ""}<button type="submit" class="btn primary">Apply KPI</button></div>
     </form>`);
     const form = $("#widget-kpi-form");
     const inputs = form.elements;
+    bindIconPicker(form, "glyph");
     function setMode() {
       for (const name of ["existing", "variable", "formula"]) {
         const input = inputs.namedItem(name);

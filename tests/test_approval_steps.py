@@ -42,6 +42,9 @@ class ApprovalStepsAPI(unittest.TestCase):
         response=self.client.post(self.root+'/planning/drafts',json={'call_id':call['id'],'base_revision':call['revision'],'reason':'Testing explicit approval stages','changes':{}})
         self.assertEqual(response.status_code,200,response.text);draft=response.json()
         response=self.client.post(self.root+'/planning/drafts/'+draft['id']+'/submit',json={'revision':draft['revision']});self.assertEqual(response.status_code,200,response.text);draft=response.json()
+        # A reviewer assigned only to the final step cannot approve ahead of sequence.
         self.login('approver');response=self.client.post(self.root+'/planning/drafts/'+draft['id']+'/approve',json={'revision':draft['revision']});self.assertEqual(response.status_code,403,response.text)
-        self.login('admin');response=self.client.post(self.root+'/planning/drafts/'+draft['id']+'/approve',json={'revision':draft['revision']});self.assertEqual(response.status_code,200,response.text);draft=response.json();self.assertEqual(draft['status'],'Submitted')
-        self.login('approver');response=self.client.post(self.root+'/planning/drafts/'+draft['id']+'/approve',json={'revision':draft['revision']});self.assertEqual(response.status_code,200,response.text);self.assertEqual(response.json()['status'],'Approved')
+        # A superadmin override is a testing convenience that clears every outstanding step at once.
+        self.login('admin');response=self.client.post(self.root+'/planning/drafts/'+draft['id']+'/approve',json={'revision':draft['revision']});self.assertEqual(response.status_code,200,response.text);draft=response.json();self.assertEqual(draft['status'],'Approved')
+        self.assertEqual([d['step_id'] for d in draft['decisions']],['first','last'])
+        self.assertTrue(all(d['admin_override'] for d in draft['decisions']))
