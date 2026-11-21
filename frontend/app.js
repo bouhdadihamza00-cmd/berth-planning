@@ -1,5 +1,6 @@
+import { DEFAULT_KPI_IDS, currentKpiLayout, kpiTone, bindDashboardEditor } from "./dashboard-kpis.js?v=10";
 import { confirmRemoval } from "./removal.js?v=6";
-import { mountWeather } from "./weather.js?v=12";
+import { mountWeather } from "./weather.js?v=14";
 import { portMapView, portMapBoundaryKey } from "./port-map-view.js?v=6";
 import { renderProductIcon, activeThroughputProducts } from "./cargo.js?v=12";
 import { mountAssistantChat } from "./assistant-chat.js?v=12";
@@ -25,14 +26,14 @@ import {
   proposalForm,
   scenarioForm,
   historyModal,
-} from "./planning.js?v=32";
+} from "./planning.js?v=35";
 import {
   renderCenter,
   bindCenter,
   delayForm,
   alertModal,
 } from "./workflows.js?v=30";
-import { renderConfig, bindConfig } from "./configuration.js?v=41";
+import { renderConfig, bindConfig } from "./configuration.js?v=50";
 const S = {
   user: null,
   ports: [],
@@ -349,25 +350,62 @@ function cardHead(title, ic, meta = "", action = "", count = "") {
 function delayChart(k) {
   const entries = Object.entries(k.delay_causes).filter(([, hours]) => Number.isFinite(hours) && hours > 0).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((sum, [, hours]) => sum + hours, 0);
-  const palette = ["#f59a08", "#0785d1", "#00a68c", "#8655d1", "#ef6351", "#13b5d0"];
+  const palette = ["#168ac5", "#f78e16", "#21a66d", "#ee6458", "#4267ad", "#32a8ac"];
+  const sides = { left: [], right: [] };
   let offset = 0;
-  const segments = entries.map(([name, hours], i) => {
+  const turn = Math.PI * 2;
+  const parts = entries.map(([name, hours], i) => {
     const share = hours / total * 100;
-    const segment = `<circle cx="60" cy="60" r="50" pathLength="100" fill="none" stroke="${palette[i % palette.length]}" stroke-width="12" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-offset}" transform="rotate(-90 60 60)"><title>${esc(name)}: ${fmt(hours, 1)} h (${fmt(share)}%)</title></circle>`;
+    const part = {name, hours, share, offset, color: palette[i % palette.length],
+      angle: (offset + share / 2) * turn / 100 - Math.PI / 2};
     offset += share;
+    return part;
+  });
+  // Rotate at the midpoint between adjacent side changes to balance the labels.
+  const cuts = parts.flatMap(({angle}) => [Math.PI / 2 - angle, -Math.PI / 2 - angle])
+    .map(angle => (angle + turn * 2) % turn).sort((a, b) => a - b);
+  let rotation = 0;
+  let bestBalance = Infinity;
+  let bestGap = 0;
+  cuts.forEach((start, i) => {
+    const gap = (cuts[i + 1] ?? cuts[0] + turn) - start;
+    const candidate = start + gap / 2;
+    const left = parts.filter(part => Math.cos(part.angle + candidate) < 0).length;
+    const balance = Math.abs(parts.length - left * 2);
+    if (balance < bestBalance || (balance === bestBalance && gap > bestGap)) {
+      rotation = candidate;
+      bestBalance = balance;
+      bestGap = gap;
+    }
+  });
+  const segments = parts.map(({name, hours, share, offset, color, angle}, i) => {
+    const x = Math.cos(angle + rotation);
+    const y = Math.sin(angle + rotation);
+    const radius = i === 0 ? 47 : 45;
+    const width = i === 0 ? 26 : 22;
+    sides[x < 0 ? "left" : "right"].push({ name, hours, color, x, y, edge: radius + width / 2 });
+    const segment = `<circle cx="60" cy="60" r="${radius}" pathLength="100" fill="none" stroke="${color}" stroke-width="${width}" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-offset}" transform="rotate(${rotation * 180 / Math.PI - 90} 60 60)"><title>${esc(name)}: ${fmt(hours, 1)} h (${fmt(share)}%)</title></circle>`;
     return segment;
   }).join("");
-  return `<div class="delay-summary"><div class="delay-donut"><svg viewBox="0 0 120 120" role="img" aria-label="Delay duration by responsible department"><circle cx="60" cy="60" r="50" fill="none" stroke="var(--line)" stroke-width="12" opacity="0.3"/>${segments}</svg><div class="delay-donut-center"><strong>${fmt(k.delay_hours, 1)}<small> h</small></strong><span>Total delay</span></div></div><div class="delay-chart-legend">${entries.map(([name, hours], i) => `<div class="delay-chart-row"><span class="delay-chart-dot" style="background:${palette[i % palette.length]}"></span><span>${esc(name)}</span><b>${fmt(hours, 1)} h</b></div>`).join("") || `<span class="subtle">${S.data.port.source_feed ? "Delay durations are not supplied by the report." : "No delays recorded"}</span>`}</div></div>`;
+  const callouts = Object.entries(sides).map(([side, items]) => {
+    items.sort((a, b) => a.y - b.y);
+    const edgeX = side === "left" ? 0 : 120;
+    return {
+      labels: `<div class="delay-callouts delay-callouts-${side}">${items.map(({ name, hours, color }) => `<div class="delay-chart-row"><span class="delay-chart-dot" style="background:${color}"></span><span dir="auto">${esc(name)}</span><b dir="ltr">${fmt(hours, 1)} h</b></div>`).join("")}</div>`,
+      lines: items.map(({ color, x, y, edge }, i) => {
+        const labelY = 120 * (i + 0.5) / items.length;
+        const elbowX = edgeX + (side === "left" ? 8 : -8);
+        return `<path d="M ${60 + x * edge} ${60 + y * edge} L ${elbowX} ${labelY} H ${edgeX}" stroke="${color}"/>`;
+      }).join(""),
+    };
+  });
+  const wide = entries.length && Math.max(sides.left.length, sides.right.length) <= 3;
+  return `<div class="delay-summary"><div class="delay-chart-layout${wide ? " delay-chart-layout-callouts" : ""}"><div class="delay-donut"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="45" fill="none" stroke="var(--line)" stroke-width="22"/><g class="delay-leaders" fill="none" stroke-width="1">${callouts.map(({ lines }) => lines).join("")}</g>${segments}<circle cx="60" cy="60" r="34" fill="#123e58"/></svg><div class="delay-donut-center"><strong>${fmt(k.delay_hours, 1)}</strong><span>Total delay · h</span></div></div><div class="delay-labels">${callouts.map(({ labels }) => labels).join("")}${entries.length ? "" : `<span class="delay-empty subtle">${S.data.port.source_feed ? "Delay durations are not supplied by the report." : "No delays recorded"}</span>`}</div></div></div>`;
 }
-function overview() {
-  const { stats: k, calls, berths, alerts } = S.data;
-  const ops = calls.filter((c) =>
-    ["Loading", "Unloading", "Delayed"].includes(c.status),
-  );
-  const products = activeThroughputProducts(k.products);
-  const total = products.reduce((n, p) => n + Number(p.quantity), 0);
+function overviewKpiCards(layout, editing = false) {
+  const k = S.data.stats;
   const metrics = [
-    ["Active vessel calls", k.active, "", "In port & at anchorage", "ship", ""],
+    ["Active vessel calls", k.active, "", "In port & at anchorage", "ship", k.active > 0 ? "info" : "neutral"],
     [
       "Upcoming arrivals",
       k.upcoming,
@@ -376,7 +414,7 @@ function overview() {
         ? "Exact ETAs within the next 48 hours"
         : "Within the next 48 hours",
       "calendar-clock",
-      "",
+      k.upcoming > 0 ? "info" : "neutral",
     ],
     [
       "Berth utilization",
@@ -386,7 +424,7 @@ function overview() {
         ? `${k.alongside} reported alongside · capacity unverified`
         : "Current berth occupancy",
       "container",
-      "meter",
+      k.utilization >= 100 ? "warning" : k.utilization > 0 ? "info" : "neutral",
     ],
     [
       "Avg. waiting time",
@@ -396,7 +434,7 @@ function overview() {
         ? `${k.waiting_samples} reported arrival-to-docking intervals`
         : `${k.completed} completed calls · 30 days`,
       "hourglass",
-      "",
+      k.waiting === 0 ? "positive" : k.waiting > 0 ? "warning" : "neutral",
     ],
     [
       "Avg. turnaround",
@@ -406,7 +444,7 @@ function overview() {
         ? `${k.turnaround_samples} reported arrival-to-departure intervals`
         : "Arrival to departure · 30 days",
       "timer",
-      "",
+      k.turnaround != null ? "info" : "neutral",
     ],
     [
       "Schedule adherence",
@@ -416,7 +454,7 @@ function overview() {
         ? "Approved baseline not supplied"
         : "Within 1 hour of planned start",
       "clipboard-check",
-      "positive",
+      k.adherence === 100 ? "positive" : k.adherence === 0 ? "danger" : k.adherence > 0 ? "warning" : "neutral",
     ],
     [
       "Operational delays",
@@ -426,30 +464,57 @@ function overview() {
         ? "Delay durations not reported"
         : `${Object.keys(k.delay_causes).length} delay categories`,
       "clock-alert",
-      "warning",
+      k.delay_hours === 0 ? "positive" : k.delay_hours > 0 ? "warning" : "neutral",
     ],
     [
       S.data.port.source_feed ? "Source review items" : "Planning conflicts",
       S.data.port.source_feed ? k.source_issues : k.conflicts.length,
       "",
-      k.conflicts.length
-        ? "Require your attention"
-        : S.data.port.source_feed
-          ? "Review source differences and missing data"
-          : "No hard constraint violations",
+      S.data.port.source_feed
+        ? "Review source differences and missing data"
+        : k.conflicts.length ? "Require your attention" : "No hard constraint violations",
       "triangle-alert",
-      k.conflicts.length ? "danger" : "positive",
+      S.data.port.source_feed
+        ? k.source_issues > 0 ? "warning" : k.source_issues === 0 ? "positive" : "neutral"
+        : k.conflicts.length ? "danger" : "positive",
     ],
   ];
+  const configured = k.dashboard_kpis;
+  return layout.map(({id, width, height = 1}) => {
+    const i = DEFAULT_KPI_IDS.indexOf(id);
+    const [label, baseValue, unit, foot, glyph, defaultTone] = metrics[i] || ["", null, "", "", "chart-column", "info"];
+    const definition = configured?.definitions[id];
+    const formula = definition?.formula;
+    const value = formula ? configured.values[id] : baseValue;
+    const name = definition && (!S.data.port.source_feed || i !== 7 || formula) ? definition.name : label;
+    const tone = kpiTone(definition || {}, value, defaultTone);
+    const detail = definition?.thresholds && Number.isFinite(value)
+      ? {positive: "Within target", warning: "Amber threshold reached", danger: "Red threshold reached"}[tone]
+      : formula ? "Calculated KPI" : foot;
+    const tag = editing ? "article" : "button";
+    return `<${tag} class="metric" ${editing ? `tabindex="0" aria-label="${esc(name)}" aria-describedby="kpi-editor-help"` : 'type="button"'} data-metric="${i}" data-kpi-id="${esc(id)}" data-tone="${tone}" ${i === 0 && !definition?.thresholds ? "data-kpi-brand" : ""} data-kpi-width="${width}" data-kpi-height="${height}" style="--widget-columns:${width};--widget-rows:${height}" title="${esc(detail)}"><div class="metric-top"><span class="metric-label">${esc(name)}</span><span class="metric-icon" aria-hidden="true">${icon(glyph)}</span></div><div class="metric-value">${fmt(value, formula ? 2 : value % 1 ? 1 : 0)}<span class="metric-unit">${Number.isFinite(value) ? esc(definition?.unit ?? unit) : ""}</span></div>${i === 2 && !formula && Number.isFinite(value) ? `<div class="mini-meter"><span style="width:${Math.min(value, 100)}%"></span></div>` : ""}<div class="metric-foot">${esc(detail)}</div></${tag}>`;
+  }).join("");
+}
+function overview() {
+  const { stats: k, calls, berths, alerts } = S.data;
+  const ops = calls.filter((c) => ["Loading", "Unloading", "Delayed"].includes(c.status));
+  const products = activeThroughputProducts(k.products);
+  const total = products.reduce((n, p) => n + Number(p.quantity), 0);
+  const configured = k.dashboard_kpis;
+  const layout = configured ? currentKpiLayout() : DEFAULT_KPI_IDS.map(id => ({id, width: 1}));
+  const cards = overviewKpiCards(layout.filter(card => !card.kpis && !Object.hasOwn(configured?.widget_catalog || {}, card.id)));
+
+  const recent = [...calls].sort((a, b) => new Date(b.start) - new Date(a.start)).slice(0, 12);
+  const extraWidgets = `<div hidden><section class="card" data-overview-widget="widget_calls">${cardHead("Vessel calls", "ship", "View all", "vessels")}<div class="table-scroll"><table><thead><tr><th scope="col">Vessel</th><th scope="col">Berth</th><th scope="col">Status</th><th scope="col">Planned start</th></tr></thead><tbody>${recent.map(call => `<tr class="clickable" data-vessel="${esc(call.id)}"><td>${esc(call.name)}</td><td>${esc(berth(call.berth_id)?.code || "—")}</td><td>${status(call.status)}</td><td>${date(call.start)}</td></tr>`).join("") || `<tr><td colspan="4">${empty("No vessel calls")}</td></tr>`}</tbody></table></div></section><section class="card" data-overview-widget="widget_weather">${cardHead("Weather", "cloud-sun")}<div class="weather-widget" data-weather-widget aria-live="polite">Loading port weather…</div></section></div>`;
   return (
     pageHeading(
       "Port overview",
       S.data.port.source_feed
         ? "Historical report · 28 Nov 2023 · Daily volumes by 07:00 · Open source data to review records."
         : `Current vessel calls, berth occupancy and operational exceptions.`,
-      `${btn(S.data.port.source_feed ? "Source data" : "Last 30 days", S.data.port.source_feed ? "file-spreadsheet" : "calendar-days", S.data.port.source_feed ? "source-feed" : "period", "hide-mobile")}${btn("Export report", "download", "export-overview")}`,
+      `${btn(S.data.port.source_feed ? "Source data" : "Last 30 days", S.data.port.source_feed ? "file-spreadsheet" : "calendar-days", S.data.port.source_feed ? "source-feed" : "period", "hide-mobile")}${btn("Export report", "download", "export-overview")}${configured && !window.PORTSIDE_PREVIEW_DATA ? btn("Edit dashboard", "layout-dashboard", "edit-dashboard") : ""}`,
     ) +
-    `<div class="metrics">${metrics.map(([label, value, unit, foot, ic, cls], i) => `<button class="metric" data-metric="${i}" title="${esc(foot)}"><div class="metric-top"><span class="metric-label">${label}</span><span class="metric-icon">${icon(ic)}</span></div><div class="metric-value" style="${i === 7 && value ? "color:#be3030" : ""}">${fmt(value, value % 1 ? 1 : 0)}<span class="metric-unit">${unit}</span></div>${cls === "meter" ? `<div class="mini-meter"><span style="width:${Math.min(value, 100)}%"></span></div>` : ""}<div class="metric-foot ${cls}">${i === 5 ? icon("check") : i === 7 ? icon("circle-dot") : ""}${foot}</div></button>`).join("")}</div><div class="dashboard-middle"><section class="card map-card">${cardHead("Port view", "map", aisMapSummary(), "", "")}<div class="port-map-wrap" id="map-container"><div id="port-map" class="port-map" aria-label="Interactive port map"></div><div class="map-top-left"><button class="map-control active" data-action="basemap">${icon("layers-2")}<span id="basemap-label">Satellite</span>${icon("chevron-down")}</button><button class="map-control" data-action="layers">${icon("list-filter")}Layers</button><div class="map-search"><input id="map-vessel-search" placeholder="Find a vessel…" aria-label="Find a vessel on the map"><div class="map-search-results" id="map-search-results"></div></div></div><aside id="port-weather" class="map-weather" aria-label="Port weather" aria-live="polite">Loading port weather…</aside><div class="map-right-controls"><button class="map-control" data-action="map-fullscreen" aria-label="Fullscreen map">${icon("expand")}</button><button class="map-control" data-action="map-recenter" aria-label="Recenter port">${icon("locate-fixed")}</button><button class="map-control" data-action="refresh" aria-label="Refresh positions">${icon("refresh-cw")}</button></div><div class="map-legend"><h4>VESSEL STATUS</h4>${(S.data.ais.provider === "marinetraffic-client") ? `<div class="legend-row"><span class="legend-color" style="background:#bfdae9"></span><span id="ais-observed-legend">${S.data.ais.historical_test ? "Historical/test AIS vessel" : "Observed AIS vessel"}</span></div>` : ""}${["Loading", "Unloading", "Waiting", "Delayed", "Berthed"].map((n) => `<div class="legend-row"><span class="legend-color" style="background:${colors[n]}"></span>${n === "Waiting" ? "Waiting / anchorage" : n}</div>`).join("")}<div class="legend-row" style="border-top:1px solid #8aa5af33;padding-top:8px;margin-top:10px"><span style="width:12px;border-top:3px solid #eb8d24"></span>Configured berths</div></div><div id="ais-empty-state" class="port-map-empty-state" ${aisHasNoPositions() || S.data.port.source_feed ? "" : "hidden"}><span class="ais-empty-icon">${icon("radio")}</span><div><strong>${S.data.port.source_feed ? "Vessel positions are not in these workbooks" : "No vessel positions received"}</strong><p>${S.data.port.source_feed ? "Use the berth plan and vessel lineup to explore the historical operation." : (S.data.ais.provider === "marinetraffic-client") ? esc(S.data.ais.message) : "No vessel positions have been received for this port area."}</p>${S.data.port.source_feed ? '<button type="button" class="btn small" data-action="source-feed">Open source data</button>' : '<button type="button" class="btn small" id="ais-open-settings">Tracking settings</button>'}</div></div></div><div class="map-footer"><span>${icon("map-pin")}${esc(S.data.port.name)} · ${S.data.berths.length} berths</span><span>${icon("refresh-cw")}${S.data.port.source_feed ? "Source date 28 Nov 2023" : "Updated " + time(new Date())}</span></div></section><div class="right-stack"><section class="card operations-card">${cardHead("Ongoing operations", "ship", "View all", "vessels", ops.length)}<div class="table-scroll"><table><thead><tr><th scope=\"col\">Vessel / product</th><th scope=\"col\">Berth</th><th scope=\"col\">Progress</th><th scope=\"col\">Est. finish</th></tr></thead><tbody>${
+    `${extraWidgets}<div class="dashboard-kpi-area"><div id="dashboard-editor" hidden></div><div class="metrics">${cards || '<p class="kpi-empty subtle">No KPIs selected. Use Edit dashboard to add cards.</p>'}</div></div><div class="dashboard-middle"><section class="card map-card" data-overview-widget="widget_map">${cardHead("Port view", "map", aisMapSummary(), "", "")}<div class="port-map-wrap" id="map-container"><div id="port-map" class="port-map" aria-label="Interactive port map"></div><div class="map-top-left"><button class="map-control active" data-action="basemap">${icon("layers-2")}<span id="basemap-label">Satellite</span>${icon("chevron-down")}</button><button class="map-control" data-action="layers">${icon("list-filter")}Layers</button><div class="map-search"><input id="map-vessel-search" placeholder="Find a vessel…" aria-label="Find a vessel on the map"><div class="map-search-results" id="map-search-results"></div></div></div><aside id="port-weather" class="map-weather" aria-label="Port weather" aria-live="polite">Loading port weather…</aside><div class="map-right-controls"><button class="map-control" data-action="map-fullscreen" aria-label="Fullscreen map">${icon("expand")}</button><button class="map-control" data-action="map-recenter" aria-label="Recenter port">${icon("locate-fixed")}</button><button class="map-control" data-action="refresh" aria-label="Refresh positions">${icon("refresh-cw")}</button></div><div class="map-legend"><h4>VESSEL STATUS</h4>${(S.data.ais.provider === "marinetraffic-client") ? `<div class="legend-row"><span class="legend-color" style="background:#bfdae9"></span><span id="ais-observed-legend">${S.data.ais.historical_test ? "Historical/test AIS vessel" : "Observed AIS vessel"}</span></div>` : ""}${["Loading", "Unloading", "Waiting", "Delayed", "Berthed"].map((n) => `<div class="legend-row"><span class="legend-color" style="background:${colors[n]}"></span>${n === "Waiting" ? "Waiting / anchorage" : n}</div>`).join("")}<div class="legend-row" style="border-top:1px solid #8aa5af33;padding-top:8px;margin-top:10px"><span style="width:12px;border-top:3px solid #eb8d24"></span>Configured berths</div></div><div id="ais-empty-state" class="port-map-empty-state" ${aisHasNoPositions() || S.data.port.source_feed ? "" : "hidden"}><span class="ais-empty-icon">${icon("radio")}</span><div><strong>${S.data.port.source_feed ? "Vessel positions are not in these workbooks" : "No vessel positions received"}</strong><p>${S.data.port.source_feed ? "Use the berth plan and vessel lineup to explore the historical operation." : (S.data.ais.provider === "marinetraffic-client") ? esc(S.data.ais.message) : "No vessel positions have been received for this port area."}</p>${S.data.port.source_feed ? '<button type="button" class="btn small" data-action="source-feed">Open source data</button>' : '<button type="button" class="btn small" id="ais-open-settings">Tracking settings</button>'}</div></div></div><div class="map-footer"><span>${icon("map-pin")}${esc(S.data.port.name)} · ${S.data.berths.length} berths</span><span>${icon("refresh-cw")}${S.data.port.source_feed ? "Source date 28 Nov 2023" : "Updated " + time(new Date())}</span></div></section><div class="right-stack"><section class="card operations-card" data-overview-widget="widget_operations">${cardHead("Ongoing operations", "ship", "View all", "vessels", ops.length)}<div class="table-scroll"><table><thead><tr><th scope=\"col\">Vessel / product</th><th scope=\"col\">Berth</th><th scope=\"col\">Progress</th><th scope=\"col\">Est. finish</th></tr></thead><tbody>${
       ops
         .map(
           (c) =>
@@ -457,7 +522,7 @@ function overview() {
         )
         .join("") ||
       `<tr><td colspan="4">${empty("No ongoing operations")}</td></tr>`
-    }</tbody></table></div></section><section class="card berths-card">${cardHead("Berth status", "anchor", "Open planning", "planning")}<div class="table-scroll"><table><thead><tr><th scope=\"col\">Berth</th><th scope=\"col\">Status</th><th scope=\"col\">Vessel</th><th scope=\"col\">Progress</th></tr></thead><tbody>${
+    }</tbody></table></div></section><section class="card berths-card" data-overview-widget="widget_berths">${cardHead("Berth status", "anchor", "Open planning", "planning")}<div class="table-scroll"><table><thead><tr><th scope=\"col\">Berth</th><th scope=\"col\">Status</th><th scope=\"col\">Vessel</th><th scope=\"col\">Progress</th></tr></thead><tbody>${
       berths
         .map((b) => {
           const c = calls.find(
@@ -474,12 +539,12 @@ function overview() {
         })
         .join("") ||
       `<tr><td colspan="4">${empty("No berths configured", "Draw your first berth in Configuration.")}</td></tr>`
-    }</tbody></table></div></section></div></div><div class="dashboard-bottom"><section class="card">${cardHead(S.data.port.source_feed ? "Cargo handled by 07:00" : "Cargo throughput", "chart-no-axes-combined", `<span class="throughput-total">${fmt(total / 1000, 1)} <span>kt total</span></span>`)}<div class="products throughput-products">${products.map((p) => {
+    }</tbody></table></div></section></div></div><div class="dashboard-bottom"><section class="card" data-overview-widget="widget_cargo">${cardHead(S.data.port.source_feed ? "Cargo handled by 07:00" : "Cargo throughput", "chart-no-axes-combined", `<span class="throughput-total">${fmt(total / 1000, 1)} <span>kt total</span></span>`)}<div class="products throughput-products">${products.map((p) => {
       const share = total ? Number(p.quantity) / total * 100 : 0;
       const configured = S.data.port.product_icons?.[p.name]?.color;
       const color = /^#[0-9a-f]{6}$/i.test(configured || "") ? configured : "#087db3";
       return `<div class="product throughput-product" role="button" tabindex="0" data-product="${esc(p.name)}" style="--cargo-color:${color}" aria-label="${esc(p.name)} · ${fmt(p.quantity / 1000, 1)} kt · ${fmt(share, 1)}% of total"><div class="throughput-product-top"><span class="product-symbol">${renderProductIcon(p.name)}</span><span class="throughput-flow" title="${esc(p.direction)}">${icon(p.direction === "Import" ? "arrow-down-left" : "arrow-up-right")}<span>${esc(p.direction)}</span></span></div><div class="product-label" title="${esc(p.name)}">${esc(p.name)}</div><div class="product-value">${fmt(p.quantity / 1000, 1)}<small>kt</small></div><div class="throughput-share-track" aria-hidden="true"><span style="width:${share}%"></span></div><div class="throughput-product-meta"><span>${fmt(share, 1)}% of total</span>${p.change == null ? "" : `<span class="throughput-trend" title="Compared with prior 30 days">${p.change > 0 ? "+" : ""}${fmt(p.change)}%</span>`}</div></div>`;
-    }).join("") || empty("No cargo handled in this period", "Products appear when import or export throughput is recorded.")}</div></section><section class="card">${cardHead("Operational delays", "timer", "By responsible department")}${delayChart(k)}</section><section class="card alerts-card">${cardHead(S.data.port.source_feed ? "Source review" : "Alerts & planning risks", "bell-ring", "View all", "alerts", S.data.port.source_feed ? k.source_issues : k.open_alerts)}<div class="alerts-list">${
+    }).join("") || empty("No cargo handled in this period", "Products appear when import or export throughput is recorded.")}</div></section><section class="card" data-overview-widget="widget_delays">${cardHead("Operational delays", "timer", "By responsible department")}${delayChart(k)}</section><section class="card alerts-card" data-overview-widget="widget_alerts">${cardHead(S.data.port.source_feed ? "Source review" : "Alerts & planning risks", "bell-ring", "View all", "alerts", S.data.port.source_feed ? k.source_issues : k.open_alerts)}<div class="alerts-list">${
       alerts
         .filter((a) => !["Resolved", "Closed"].includes(a.status))
         .map((a) => alertRow(a))
@@ -677,9 +742,13 @@ function bindOverview() {
       nav("configuration");
     };
   mountWeather();
-  $$("[data-metric]").forEach(
-    (b) => (b.onclick = () => metricModal(Number(b.dataset.metric))),
-  );
+  const openKpi = button => {
+    const item = S.data.stats.dashboard_kpis?.definitions[button.dataset.kpiId];
+    if (!item?.formula) return metricModal(Number(button.dataset.metric));
+    const value = S.data.stats.dashboard_kpis.values[button.dataset.kpiId];
+    modal(item.name, `<dl class="form-body"><dt>Formula</dt><dd><code>${esc(item.formula)}</code></dd><dt>Value</dt><dd>${value == null ? "Unavailable" : `${fmt(value, 2)} ${esc(item.unit)}`}</dd></dl>`);
+  };
+  bindDashboardEditor(overviewKpiCards, openKpi);
   $("#map-vessel-search").oninput = (e) => {
     const q = e.target.value.toLowerCase();
     $("#map-search-results").innerHTML = q

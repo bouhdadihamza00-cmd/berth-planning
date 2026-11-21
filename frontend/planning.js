@@ -15,6 +15,13 @@ export function planningProposals(data, pending = {}) {
     ...Object.entries(pending).map(([id, c]) => ({ ...c, id, proposalKey: `pending-${id}`, proposalStatus: "Unsaved change" })),
   ];
 }
+export function overlapsScheduleComparison(card, cards) {
+  return cards.some(other =>
+    Boolean(card.call.proposalKey) !== Boolean(other.call.proposalKey) &&
+    card.left < other.right &&
+    other.left < card.right
+  );
+}
 export function renderPlanning() {
   const {
     S,
@@ -347,9 +354,8 @@ function blocks(b, start, width) {
     : S.data.calls.filter(
         (c) => !["Completed", "Cancelled"].includes(c.status),
       );
-  let output = "";
+  const cards = [];
   const proposals = planningProposals(S.data, S.pending);
-  const comparisonRow = proposals.some(c => c.berth_id === b.id || base.some(original => original.id === c.id && original.berth_id === b.id));
   for (const c of [...base, ...proposals]) {
     if (
       c.berth_id !== b.id ||
@@ -361,21 +367,24 @@ function blocks(b, start, width) {
       (S.planCargo && c.product !== S.planCargo)
     )
       continue;
-    let left = ((new Date(c.start) - start) / 3600000) * S.timeline.scale;
-    let w =
-      ((new Date(c.end) - new Date(c.start)) / 3600000) * S.timeline.scale;
+    const left = Math.max(0, ((new Date(c.start) - start) / 3600000) * S.timeline.scale);
+    const right = Math.min(width, ((new Date(c.end) - start) / 3600000) * S.timeline.scale);
     if (
       !Number.isFinite(left) ||
-      !Number.isFinite(w) ||
-      left + w <= 0 ||
-      left >= width
+      !Number.isFinite(right) ||
+      right <= left
     )
       continue;
-    if (left < 0) {
-      w += left;
-      left = 0;
-    }
-    w = Math.min(w, width - left);
+    cards.push({ call: c, left, right });
+  }
+  const fullHeight = S.timeline.rowPixels - 14;
+  let output = "";
+  for (const card of cards) {
+    const { call: c, left, right } = card;
+    const w = right - left;
+    const comparison = overlapsScheduleComparison(card, cards);
+    const height = comparison ? fullHeight * 32 / 72 : fullHeight;
+    const top = 7 + (comparison && c.proposalKey ? fullHeight - height : 0);
     const cls = c.proposalKey
       ? "draft"
       : c.status === "Unloading"
@@ -400,24 +409,59 @@ function blocks(b, start, width) {
         : "package";
     const compact =
       w < 40 ? " schedule-marker" : w < 270 ? " schedule-compact" : "";
-    output += `<div class="gantt-block ${cls}${compact}${comparisonRow ? " schedule-comparison" : ""}" data-call="${esc(c.id)}" ${c.proposalKey ? `data-proposal="${esc(c.proposalKey)}"` : 'data-published="true"'} role="button" tabindex="0" aria-label="${esc(c.name)} schedule" style="left:${left}px;width:${Math.max(1, w)}px;height:${comparisonRow ? (S.timeline.rowPixels - 14) * 32 / 72 : S.timeline.rowPixels - 14}px;top:${c.proposalKey ? 7 + (S.timeline.rowPixels - 14) * 40 / 72 : 7}px" title="${esc(c.name)}\n${esc(c.product)} · ${fmt(c.quantity)} t · ${esc(c.direction)}\nBerth ${esc(b.code)} · ${esc(state)}\n${P().date(c.start)} → ${P().date(c.end)}\nDuration ${fmt(duration, 1)} h${S.data.port.source_feed ? "" : ` · Progress ${c.progress}%`}"><div class="schedule-content"><div class="schedule-heading"><span class="schedule-vessel-icon">${icon("ship")}</span><strong>${esc(c.name)}</strong><span class="schedule-state">${esc(state)}</span></div><div class="schedule-cargo"><span>${icon(cargoIcon)}${esc(c.product)}</span><span class="schedule-quantity">${fmt(c.quantity / 1000, 1)} kt</span><span class="schedule-direction">${icon(c.direction === "Import" ? "arrow-down-left" : "arrow-up-right")}${esc(c.direction)}</span></div><div class="schedule-timing"><span class="schedule-window">${icon("clock-3")}${P().date(c.start)}<span class="schedule-arrow">→</span>${P().date(c.end)}</span><span class="schedule-duration">${icon("hourglass")}${fmt(duration, duration % 1 ? 1 : 0)} h</span><span class="schedule-progress" ${S.data.port.source_feed ? "hidden" : ""}><span class="schedule-progress-track"><i style="width:${c.progress}%"></i></span><b>${c.progress}%</b></span></div></div><span class="resize-handle resize-start" data-resize="start" aria-label="Drag to resize start">⋮</span><span class="resize-handle resize-end" data-resize="end" aria-label="Drag to resize completion">⋮</span></div>`;
+    output += `<div class="gantt-block ${cls}${compact}${comparison ? " schedule-comparison" : ""}" data-call="${esc(c.id)}" ${c.proposalKey ? `data-proposal="${esc(c.proposalKey)}"` : 'data-published="true"'} role="button" tabindex="0" aria-label="${esc(c.name)} schedule" style="left:${left}px;width:${Math.max(1, w)}px;height:${height}px;top:${top}px" title="${esc(c.name)}\n${esc(c.product)} · ${fmt(c.quantity)} t · ${esc(c.direction)}\nBerth ${esc(b.code)} · ${esc(state)}\n${P().date(c.start)} → ${P().date(c.end)}\nDuration ${fmt(duration, 1)} h${S.data.port.source_feed ? "" : ` · Progress ${c.progress}%`}"><div class="schedule-content"><div class="schedule-heading"><span class="schedule-vessel-icon">${icon("ship")}</span><strong>${esc(c.name)}</strong><span class="schedule-state">${esc(state)}</span></div><div class="schedule-cargo"><span>${icon(cargoIcon)}${esc(c.product)}</span><span class="schedule-quantity">${fmt(c.quantity / 1000, 1)} kt</span><span class="schedule-direction">${icon(c.direction === "Import" ? "arrow-down-left" : "arrow-up-right")}${esc(c.direction)}</span></div><div class="schedule-timing"><span class="schedule-window">${icon("clock-3")}${P().date(c.start)}<span class="schedule-arrow">→</span>${P().date(c.end)}</span><span class="schedule-duration">${icon("hourglass")}${fmt(duration, duration % 1 ? 1 : 0)} h</span><span class="schedule-progress" ${S.data.port.source_feed ? "hidden" : ""}><span class="schedule-progress-track"><i style="width:${c.progress}%"></i></span><b>${c.progress}%</b></span></div></div><span class="resize-handle resize-start" data-resize="start" aria-label="Drag to resize start">⋮</span><span class="resize-handle resize-end" data-resize="end" aria-label="Drag to resize completion">⋮</span></div>`;
   }
   return output;
 }
+export function proposalConnectorPath(a, b, origin) {
+  const rightward = a.right <= b.left;
+  const downward = a.bottom <= b.top;
+  const horizontalGap = Math.max(b.left - a.right, a.left - b.right);
+  const verticalGap = Math.max(b.top - a.bottom, a.top - b.bottom);
+  const point = (x, y) => `${x - origin.left} ${y - origin.top}`;
+  const meet = (aStart, aEnd, bStart, bEnd) => {
+    const middle = (Math.max(aStart, bStart) + Math.min(aEnd, bEnd)) / 2;
+    const inset = Math.min(12, (aEnd - aStart) / 2);
+    return Math.max(aStart + inset, Math.min(middle, aEnd - inset));
+  };
+  if (horizontalGap >= 8 && horizontalGap >= verticalGap) {
+    const x1 = rightward ? a.right : a.left;
+    const x2 = rightward ? b.left : b.right;
+    const y1 = meet(a.top, a.bottom, b.top, b.bottom);
+    const y2 = meet(b.top, b.bottom, a.top, a.bottom);
+    const middle = (x1 + x2) / 2;
+    return `M ${point(x1, y1)} C ${point(middle, y1)} ${point(middle, y2)} ${point(x2, y2)}`;
+  }
+  if (verticalGap > 0) {
+    const x1 = (a.left + a.right) / 2;
+    const x2 = (b.left + b.right) / 2;
+    const y1 = downward ? a.bottom : a.top;
+    const y2 = downward ? b.top : b.bottom;
+    if (x1 === x2) return `M ${point(x1, y1)} L ${point(x2, y2)}`;
+    const middle = (y1 + y2) / 2;
+    const radius = Math.min(5, verticalGap / 4, Math.abs(x2 - x1) / 2);
+    const dx = Math.sign(x2 - x1) * radius;
+    const dy = Math.sign(y2 - y1) * radius;
+    return `M ${point(x1, y1)} L ${point(x1, middle - dy)} Q ${point(x1, middle)} ${point(x1 + dx, middle)} L ${point(x2 - dx, middle)} Q ${point(x2, middle)} ${point(x2, middle + dy)} L ${point(x2, y2)}`;
+  }
+  // Leave room for the arrowhead when two cards nearly touch side to side.
+  const x1 = meet(a.left, a.right, b.left, b.right);
+  const x2 = meet(b.left, b.right, a.left, a.right);
+  const above = Math.min(a.top, b.top) - 12;
+  return `M ${point(x1, a.top)} C ${point(x1, above)} ${point(x2, above)} ${point(x2, b.top)}`;
+}
 function drawProposalConnections(host) {
   const origin = host.getBoundingClientRect();
+  const publishedCards = new Map([...host.querySelectorAll("[data-published]")].map(el => [el.dataset.call, el]));
   const paths = [];
   for (const proposed of host.querySelectorAll("[data-proposal]")) {
-    const published = [...host.querySelectorAll("[data-published]")].find(el => el.dataset.call === proposed.dataset.call);
+    const published = publishedCards.get(proposed.dataset.call);
     if (!published) continue;
-    const a = published.getBoundingClientRect(), b = proposed.getBoundingClientRect();
-    const x1 = a.left + a.width / 2 - origin.left, y1 = a.bottom - origin.top;
-    const x2 = b.left + b.width / 2 - origin.left, y2 = b.top - origin.top;
-    const bend = Math.max(20, Math.abs(y2 - y1) / 2);
-    paths.push(`<path d="M ${x1} ${y1} C ${x1} ${y1 + bend}, ${x2} ${y2 - bend}, ${x2} ${y2}" marker-end="url(#proposal-arrowhead)"/>`);
+    const path = proposalConnectorPath(published.getBoundingClientRect(), proposed.getBoundingClientRect(), origin);
+    paths.push(`<path d="${path}" marker-end="url(#proposal-arrowhead)"/>`);
   }
   if (!paths.length) return;
-  host.insertAdjacentHTML("beforeend", `<svg class="proposal-connections" width="${host.offsetWidth}" height="${host.offsetHeight}" aria-hidden="true"><defs><marker id="proposal-arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8655d1" stroke="none"/></marker></defs><g fill="none" stroke="#8655d1" stroke-width="2" stroke-dasharray="5 4">${paths.join("")}</g></svg>`);
+  host.insertAdjacentHTML("beforeend", `<svg class="proposal-connections" width="${host.offsetWidth}" height="${host.offsetHeight}" aria-hidden="true"><defs><marker id="proposal-arrowhead" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8655d1" stroke="none"/></marker></defs><g fill="none" stroke="#8655d1" stroke-width="2" stroke-dasharray="5 4">${paths.join("")}</g></svg>`);
 }
 function drag(e, el) {
   if (e.button !== 0) return;

@@ -1,3 +1,4 @@
+import { renderKpiConfig, bindKpiConfig } from "./dashboard-kpis.js?v=10";
 import { confirmRemoval } from "./removal.js?v=6";
 import {
   renderPortDirectory,
@@ -60,6 +61,7 @@ const sections = [
       ["workflows", "Approval workflow"],
     ],
   ],
+  ["dashboard-kpis", "chart-column", "Dashboard KPIs", [["dashboard-kpis", "Dashboard KPIs"]]],
   ["imports", "files", "Document Imports", [["imports", "Document Imports"]]],
   [
     "integrations",
@@ -145,6 +147,7 @@ function configContent() {
       "marinetraffic-client",
     )}${field("Port tracking radius, km", "radius_km", p.integration.radius_km || 25, "number", 'min="1" max="5000" required')}${field("Position freshness, minutes", "freshness_minutes", p.integration.freshness_minutes || 30, "number", 'min="1" max="1440" required')}<div class="field full"><label class="check-row"><input type="checkbox" name="enabled" ${p.integration.enabled ? "checked" : ""}>Enable AIS vessel tracking for this port</label></div><div class="field full"><label>Connection status</label><p id="ais-connection-detail">${esc(P().aisStateLabel())}${S.data.ais.connected ? " · Connection active" : ""} · ${S.data.ais.positions.length} positions${S.data.ais.last_message_at ? " · Last report " + esc(P().date(S.data.ais.last_message_at)) : ""}</p></div></div><div class="form-actions"><button type="button" class="btn" id="test-integration">${icon("refresh-cw")}Check saved connection</button><button type="submit" class="btn primary" ${!can("config.edit") ? "disabled" : ""}>${icon("save")}Save tracking settings</button></div></form></section>`);
   if (S.configTab === "general") return renderPreferences();
+  if (S.configTab === "dashboard-kpis") return renderKpiConfig();
   return empty("Select a configuration section");
 }
 async function savePort(changes) {
@@ -290,6 +293,7 @@ export function bindConfig() {
     return;
   }
   if (S.configTab === "general") bindPreferences();
+  if (S.configTab === "dashboard-kpis") bindKpiConfig();
   if (S.configTab === "integrations") {
     bindConnectors();
 

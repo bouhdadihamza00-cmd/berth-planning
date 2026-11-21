@@ -10,3 +10,4 @@ CREATE TABLE IF NOT EXISTS records(id TEXT PRIMARY KEY, port_id TEXT NOT NULL RE
 CREATE INDEX IF NOT EXISTS records_port_kind ON records(port_id,kind);
 CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY AUTOINCREMENT, port_id TEXT, user_id TEXT NOT NULL, action TEXT NOT NULL, entity_id TEXT, detail TEXT NOT NULL, created_at TEXT NOT NULL);
 INSERT OR IGNORE INTO migrations VALUES(1,datetime('now'));
+CREATE TABLE IF NOT EXISTS dashboard_layouts(user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, port_id TEXT NOT NULL REFERENCES ports(id) ON DELETE CASCADE, layout TEXT NOT NULL, PRIMARY KEY(user_id,port_id));

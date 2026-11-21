@@ -15,6 +15,7 @@ from .policies import normalize_rules, approval_eligibility
 from .ais import positions
 from .ais_marinetraffic_client import collector as marinetraffic_client_collector
 from .catalog import normalize_timing,match_cargo,check_catalog,product_types
+from .dashboard_kpis import dashboard_kpis, definitions as kpi_definitions, normalize_card_metric, normalize_dashboard, normalize_layout
 
 @asynccontextmanager
 async def lifespan(app):
@@ -236,7 +237,56 @@ async def save_port(port:str,request:Request):
         notification(c,port,'Configuration updated','The dashboard and planning constraints use the saved configuration.')
         return dict(p,id=port,revision=revision+1)
 
-def stats(c,port):
+@app.put('/api/ports/{port}/dashboard')
+async def save_dashboard(port:str, request:Request):
+    data=await request.json()
+    with connect() as c:
+        u,p=access(c,request,port,'config.edit')
+        if not isinstance(data,dict):
+            raise ValueError('Supply dashboard configuration.')
+        revision=p.pop('revision')
+        if data.get('revision')!=revision:
+            raise ValueError('Port configuration changed. Reload before saving.')
+        p['dashboard']=normalize_dashboard(data)
+        p.pop('id')
+        p.pop('org_id')
+        result=c.execute('UPDATE ports SET data=?,revision=revision+1 WHERE id=? AND revision=?',(json.dumps(p),port,revision))
+        if result.rowcount!=1:
+            raise ValueError('Port configuration changed. Reload before saving.')
+        audit(c,port,u['id'],'dashboard.updated',port,p['dashboard'])
+        return p['dashboard']
+
+
+@app.put('/api/ports/{port}/dashboard/layout')
+async def save_personal_dashboard(port:str, request:Request):
+    data=await request.json()
+    with connect() as c:
+        u,p=access(c,request,port)
+        if not isinstance(data,dict) or 'layout' not in data:
+            raise ValueError('Supply a personal dashboard layout.')
+        layout=data['layout']
+        if layout is None:
+            c.execute('DELETE FROM dashboard_layouts WHERE user_id=? AND port_id=?',(u['id'],port))
+        else:
+            widgets=data.get('widgets') is True
+            layout=normalize_layout(layout,kpi_definitions(p.get('dashboard',{})),widgets)
+            stored=dict(layout=layout,widgets=True) if widgets else layout
+            c.execute('INSERT INTO dashboard_layouts VALUES(?,?,?) ON CONFLICT(user_id,port_id) DO UPDATE SET layout=excluded.layout',(u['id'],port,json.dumps(stored)))
+        return dict(layout=layout, widgets=layout is not None and data.get('widgets') is True)
+
+
+@app.post('/api/ports/{port}/dashboard/kpi-preview')
+async def preview_dashboard_kpi(port:str, request:Request):
+    payload=await request.json()
+    with connect() as c:
+        _,p=access(c,request,port)
+        metric=normalize_card_metric(payload,kpi_definitions(p.get('dashboard',{})))
+        formula=metric['formula']
+        data=stats(c,port,preview_formulas=(formula,))['dashboard_kpis']
+        return dict(metric=metric,value=data['card_values'][formula])
+
+
+def stats(c,port,personal_layout=(),preview_formulas=()):
     config=json.loads(c.execute('SELECT data FROM ports WHERE id=?',(port,)).fetchone()['data'])
     calls=records(c,port,'calls'); berths=records(c,port,'berths'); delays=records(c,port,'delays'); alerts=records(c,port,'alerts')
     active=[x for x in calls if x['status'] in ['Loading','Unloading','Delayed','Waiting','Berthed']]
@@ -259,7 +309,9 @@ def stats(c,port):
         if x['status'] not in ['Completed','Cancelled']:
             v=validate(x,calls,berths,records(c,port,'equipment'),p.get('rules',{}))
             if v['errors']: conflicts.append({'call_id':x['id'],'name':x['name'],'errors':v['errors']})
-    return dict(active=len(active),upcoming=sum(x['status'] in ['Scheduled','Waiting'] and t<=dt(x['eta'])<=t+timedelta(hours=48) for x in calls),utilization=round(len(occupied)/len(berths)*100) if berths else 0,waiting=round(sum(wait)/len(wait),1) if wait else None,turnaround=round(sum(turn)/len(turn),1) if turn else None,adherence=round(sum(adherence)/len(adherence)*100) if adherence else None,delay_hours=round(sum(causes.values()),1),conflicts=conflicts,open_alerts=sum(a['status'] not in ['Resolved','Closed'] for a in alerts),products=products,delay_causes=causes,period='Last 30 days',completed=len(completed))
+    summary=dict(active=len(active),upcoming=sum(x['status'] in ['Scheduled','Waiting'] and t<=dt(x['eta'])<=t+timedelta(hours=48) for x in calls),utilization=round(len(occupied)/len(berths)*100) if berths else 0,waiting=round(sum(wait)/len(wait),1) if wait else None,turnaround=round(sum(turn)/len(turn),1) if turn else None,adherence=round(sum(adherence)/len(adherence)*100) if adherence else None,delay_hours=round(sum(causes.values()),1),conflicts=conflicts,open_alerts=sum(a['status'] not in ['Resolved','Closed'] for a in alerts),products=products,delay_causes=causes,period='Last 30 days',completed=len(completed))
+    summary["dashboard_kpis"]=dashboard_kpis(config.get("dashboard", {}), summary, calls, berths, t, dt, personal_layout, preview_formulas)
+    return summary
 
 @app.get('/api/ports/{port}/ais')
 def ais_positions(port:str,request:Request):
@@ -290,7 +342,15 @@ def snapshot(port:str,request:Request):
         member=c.execute('SELECT permissions FROM memberships WHERE user_id=? AND port_id=?',(u['id'],port)).fetchone()
         permissions=PERMISSIONS if u['superadmin'] else json.loads(member['permissions'])
         restricted={'drafts':'approvals.view','versions':'planning.view','scenarios':'scenarios.view'}
-        return dict(port=p,stats=stats(c,port),**{k:([x for x in records(c,port,k) if k!='notifications' or u['id'] not in x.get('hidden_by',[])] if k not in restricted or restricted[k] in permissions else []) for k in kinds},ais=positions(p,records(c,port,'calls')))
+        personal=c.execute('SELECT layout FROM dashboard_layouts WHERE user_id=? AND port_id=?',(u['id'],port)).fetchone()
+        saved=json.loads(personal['layout']) if personal else None
+        personal_layout=saved['layout'] if isinstance(saved,dict) else saved
+        metrics=stats(c,port,personal_layout=personal_layout or ())
+        if personal_layout is not None:
+            metrics['dashboard_kpis']['personal_layout']=personal_layout
+            if isinstance(saved,dict):
+                metrics['dashboard_kpis']['personal_widgets']=saved.get('widgets',False)
+        return dict(port=p,stats=metrics,**{k:([x for x in records(c,port,k) if k!='notifications' or u['id'] not in x.get('hidden_by',[])] if k not in restricted or restricted[k] in permissions else []) for k in kinds},ais=positions(p,records(c,port,'calls')))
 
 KINDS={'berths':('config.view','config.edit'),'equipment':('equipment.view','config.edit'),'zones':('config.view','config.edit'),'calls':('calls.view','calls.create'),'delays':('delays.view','delays.create'),'alerts':('alerts.view','alerts.edit')}
 
