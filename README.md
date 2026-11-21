@@ -6,18 +6,18 @@ Port operations, berth planning and approval workflows in one application.
 
 These screenshots were captured from the public Portside demo on Railway. The demo shows synthetic operational records alongside map imagery, weather and live AIS observations. A fresh installation starts with an empty workspace.
 
-![Portside sign-in over a blue-hour harbor](docs/screenshots/platform-login.jpg)
+![Portside sign-in over a blue-hour harbor](docs/screenshots/platform-login-wide.jpg)
 ![Port overview with synthetic vessels](docs/screenshots/platform-overview-wide.jpg)
-![Berth planning with synthetic calls](docs/screenshots/platform-planning.jpg)
+![Berth planning with synthetic calls](docs/screenshots/platform-planning-wide.jpg)
 
 <details>
 <summary>Workflows, reports, assistant and configuration</summary>
 
-![Workflow center](docs/screenshots/platform-workflows.jpg)
-![Report preview with synthetic records](docs/screenshots/platform-reports.jpg)
-![Operational assistant with synthetic records](docs/screenshots/platform-assistant.jpg)
-![Application configuration](docs/screenshots/platform-configuration.jpg)
-![External integrations](docs/screenshots/platform-integrations.jpg)
+![Workflow center](docs/screenshots/platform-workflows-wide.jpg)
+![Report preview with synthetic records](docs/screenshots/platform-reports-wide.jpg)
+![Operational assistant with synthetic records](docs/screenshots/platform-assistant-wide.jpg)
+![Application configuration](docs/screenshots/platform-configuration-wide.jpg)
+![External integrations](docs/screenshots/platform-integrations-wide.jpg)
 
 </details>
 
