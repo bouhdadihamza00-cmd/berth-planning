@@ -3468,36 +3468,9 @@ html[data-theme="dark"] .catalogue-product-icon { background: #244b65; color: #7
 .catalogue-spec-row:focus-visible { outline: 2px solid #087db3; outline-offset: -2px; }
 .catalog-delete-confirm { padding: 12px; margin-top: 12px; background: #fff2ed; border: 1px solid #e8b9a9; border-radius: 5px; }
 .catalog-delete-confirm[hidden] { display: none; }
-.hmi-main .products.throughput-products { grid-template-columns: repeat(auto-fit,minmax(105px,1fr)); overflow: auto; align-items: stretch; }
-.throughput-products .product { min-height: 105px; }
 html[data-theme="dark"] .catalogue-product-settings { background: #244b65; color: #b3dcf5; }
 html[data-theme="dark"] .catalogue-spec-row.selected > td { background: #244b65 !important; }
 html[data-theme="dark"] .catalog-delete-confirm { background: #49372f; }
-/* Throughput: compact product tiles with a clear volume and share hierarchy. */
-.hmi-main .products.throughput-products { padding: 8px; gap: 8px; align-content: start; }
-.hmi-main .throughput-products .throughput-product { display: flex; flex-direction: column; gap: 4px; min-width: 0; min-height: 118px; border: 1px solid #d6e5f0; border-radius: 6px; padding: 8px 9px; background: #fff; transition: border-color .15s, background .15s; }
-.hmi-main .throughput-products .throughput-product:hover { background: #f5faff; border-color: var(--cargo-color); }
-.hmi-main .throughput-products .throughput-product:focus-visible { outline: 2px solid var(--cargo-color); outline-offset: -2px; }
-.throughput-product-top { display: flex; align-items: center; justify-content: space-between; gap: 5px; }
-.hmi-main .throughput-products .throughput-product .product-symbol { display: grid; place-items: center; width: 25px; height: 25px; margin: 0; border-radius: 5px; background: color-mix(in srgb,var(--cargo-color) 9%,white); flex: none; }
-.hmi-main .throughput-products .product-symbol :is(svg,img,.product-custom-icon-mask) { width: 18px; height: 18px; }
-.throughput-flow { display: inline-flex; align-items: center; gap: 2px; color: #53748c; font-size: calc(8px * var(--ui-font-scale, 1)); line-height: calc(12px * var(--ui-font-scale, 1)); white-space: nowrap; }
-.throughput-flow svg { width: 10px; height: 10px; }
-.hmi-main .throughput-products .product-label { font-size: calc(10px * var(--ui-font-scale, 1)); line-height: calc(12px * var(--ui-font-scale, 1)); min-height: 24px; white-space: normal; overflow-wrap: anywhere; font-weight: 600; color: var(--ink); }
-.hmi-main .throughput-products .product-value { display: flex; align-items: baseline; gap: 4px; font-size: calc(25px * var(--ui-font-scale, 1)); line-height: calc(27px * var(--ui-font-scale, 1)); margin: auto 0 2px; font-variant-numeric: tabular-nums; letter-spacing: -.6px; }
-.hmi-main .throughput-products .product-value small { color: var(--muted); font-size: calc(10px * var(--ui-font-scale, 1)); font-weight: 400; letter-spacing: 0; }
-.throughput-share-track { height: 3px; width: 100%; border-radius: 3px; background: #e8f0f6; overflow: hidden; }
-.throughput-share-track > span { display: block; height: 100%; border-radius: inherit; background: var(--cargo-color); }
-.throughput-product-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 5px; font-size: calc(8px * var(--ui-font-scale, 1)); line-height: calc(11px * var(--ui-font-scale, 1)); color: var(--muted); font-variant-numeric: tabular-nums; }
-.throughput-trend { color: #365e77; }
-html[data-theme="dark"] .hmi-main .throughput-products .throughput-product { background: #16364d; border-color: #35576f; }
-html[data-theme="dark"] .hmi-main .throughput-products .throughput-product:hover { background: #20465f; border-color: var(--cargo-color); }
-html[data-theme="dark"] .hmi-main .throughput-products .throughput-product .product-symbol { background: color-mix(in srgb,var(--cargo-color) 18%,#16364d); }
-html[data-theme="dark"] :is(.throughput-flow,.throughput-product-meta,.throughput-trend) { color: #a8c2d5; }
-html[data-theme="dark"] .throughput-share-track { background: #2d4c62; }
-.throughput-flow { min-width: 0; }
-.throughput-flow > svg { flex: none; }
-.throughput-flow > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #assistant-chat { right: 18px; bottom: 6px; }
 .assistant-chat-launcher { width: 40px; height: 40px; box-shadow: 0 2px 8px #062e4b24; }
 .assistant-chat-launcher svg { width: 21px; height: 21px; }
@@ -3602,23 +3575,6 @@ html[data-theme="dark"] .geo-placement-banner { background: #443722; color: #f0c
   .port-map-wrap #ais-empty-state:not([hidden]) { top: 108px; left: 8px; }
 }
 
-/* Fit the dashboard summaries without internal scrolling. */
-.hmi-main .products.throughput-products {
-  overflow: visible;
-  padding: 6px;
-  gap: 6px;
-  align-content: stretch;
-}
-.hmi-main .throughput-products .throughput-product {
-  min-height: 0;
-  padding: 5px 7px;
-  gap: 2px;
-}
-.hmi-main .throughput-products .throughput-product .product-symbol { width: 20px; height: 20px; }
-.hmi-main .throughput-products .product-symbol :is(svg,img,.product-custom-icon-mask) { width: 15px; height: 15px; }
-.hmi-main .throughput-products .product-label { min-height: 12px; font-size: calc(9px * var(--ui-font-scale, 1)); line-height: calc(11px * var(--ui-font-scale, 1)); }
-.hmi-main .throughput-products .product-value { font-size: calc(22px * var(--ui-font-scale, 1)); line-height: calc(24px * var(--ui-font-scale, 1)); margin: auto 0 1px; }
-.hmi-main .throughput-product-meta { font-size: calc(8px * var(--ui-font-scale, 1)); line-height: calc(10px * var(--ui-font-scale, 1)); }
 .hmi-main .delay-summary { padding: 6px 10px; gap: 10px; overflow: visible; }
 .hmi-main .delay-donut { width: 88px; flex-basis: 88px; }
 .hmi-main .delay-donut-center strong { font-size: calc(22px * var(--ui-font-scale, 1)); }

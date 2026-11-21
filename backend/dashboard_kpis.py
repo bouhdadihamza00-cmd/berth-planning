@@ -17,15 +17,18 @@ DEFAULTS = {
     'conflicts': ('Planning conflicts', '', 'planning_conflicts'),
 }
 WIDGETS = {
-    'widget_map': dict(name='Map', width=5, height=4, min_width=1.5, min_height=3, width_step=0.5),
+    'widget_map': dict(name='Map', width=5, height=4, min_width=1.5, min_height=3, max_height=8, width_step=0.5),
     'widget_operations': dict(name='Ongoing operations', width=3, height=2, min_width=2, min_height=2),
     'widget_berths': dict(name='Berth status', width=3, height=2, min_width=2, min_height=2),
     'widget_cargo': dict(name='Cargo throughput', width=3, height=2, min_width=2, min_height=2),
     'widget_delays': dict(name='Operational delays', width=3, height=2, min_width=2, min_height=2),
     'widget_alerts': dict(name='Alerts & planning risks', width=2, height=2, min_width=2, min_height=2),
     'widget_calls': dict(name='Vessel calls', width=3, height=2, min_width=2, min_height=2, optional=True),
-    'widget_weather': dict(name='Weather', width=2, height=2, min_width=2, min_height=2, optional=True),
+    'widget_clock': dict(name='Port clock', width=1, height=1, min_width=1, min_height=1, max_width=4, max_height=2, optional=True),
+    'widget_weather': dict(name='Weather', width=5, height=2, min_width=3, max_width=5, min_height=1, max_height=2, optional=True),
 }
+CARD_ICONS = ("activity", "anchor", "calendar-clock", "chart-column", "clipboard-check",
+              "clock-alert", "container", "gauge", "hourglass", "package", "ship", "timer", "triangle-alert")
 VARIABLES = {
     'active_calls': 'Vessels in port or at anchorage',
     'upcoming_arrivals': 'Arrivals in the next 48 hours',
@@ -151,7 +154,10 @@ def normalize_card_metric(metric, available):
     unknown = refs - (set(available) | set(VARIABLES))
     if unknown:
         raise ValueError(f'Unknown KPI or variable: {", ".join(sorted(unknown))}.')
-    return dict(name=name.strip(), unit=unit.strip(), formula=formula.strip())
+    icon = metric.get('icon', '')
+    if icon != '' and icon not in CARD_ICONS:
+        raise ValueError('Choose an available KPI icon.')
+    return dict(name=name.strip(), unit=unit.strip(), formula=formula.strip(), **({'icon': icon} if icon else {}))
 
 
 def normalize_layout(cards, available, widgets=False):
@@ -162,6 +168,7 @@ def normalize_layout(cards, available, widgets=False):
     layout = []
     seen = set()
     used_kpis = set()
+    occupied = set()
     for card in cards:
         if not isinstance(card, dict) or not isinstance(card.get('id'), str):
             raise ValueError('Choose a valid widget.')
@@ -179,13 +186,14 @@ def normalize_layout(cards, available, widgets=False):
                     or len(group) != len(set(group)) or used_kpis.intersection(group)):
                 raise ValueError('Choose existing KPIs once each for the KPI card.')
             used_kpis.update(group)
-            widget = dict(min_width=2, min_height=2)
+            minimum = 1 if not group and len(metrics) <= 1 else 2
+            widget = dict(min_width=minimum, min_height=minimum) if minimum == 2 else None
         elif key in available and key not in used_kpis:
             used_kpis.add(key)
         elif key not in widget_ids:
             raise ValueError('Choose existing widgets and KPIs once each.')
         min_width, min_height = (widget['min_width'], widget['min_height']) if widget else (1, 1)
-        max_width, max_height = (8, 4) if widget else (4, 2)
+        max_width, max_height = (widget.get('max_width', 8), widget.get('max_height', 4)) if widget else (4, 2)
         width_step = widget.get('width_step', 1) if widget else 1
         if (key in seen or type(width) not in (int, float)
                 or not min_width <= width <= max_width or width % width_step != 0):
@@ -193,12 +201,29 @@ def normalize_layout(cards, available, widgets=False):
         height = card.get('height', 1)
         if type(height) is not int or not min_height <= height <= max_height:
             raise ValueError('Choose a supported height for each widget.')
+        if key == 'widget_weather' and (height, width) not in ((1, 3), (2, 5)):
+            raise ValueError('Choose a 1 × 3 or 2 × 5 Weather widget.')
         seen.add(key)
         entry = dict(id=key, width=width, **({'height': height} if height != 1 else {}))
         if group is not None:
             entry['kpis'] = group
             if metrics or 'metrics' in card:
                 entry['metrics'] = [normalize_card_metric(metric, available) for metric in metrics]
+        position = card.get('position')
+        if position is not None:
+            if not widgets or not isinstance(position, dict):
+                raise ValueError('Choose a valid widget position.')
+            column, row, tracks = (position.get(field) for field in ('column', 'row', 'tracks'))
+            if (any(type(value) is not int for value in (column, row, tracks))
+                    or not 4 <= tracks <= 128 or tracks % 2 or not 1 <= row <= 256
+                    or not 1 <= column <= tracks - min(tracks, width * 2) + 1):
+                raise ValueError('Choose a widget position inside the dashboard.')
+            cells = {(tracks, x, y) for x in range(column, column + int(min(tracks, width * 2)))
+                     for y in range(row, row + height)}
+            if cells & occupied:
+                raise ValueError('Widgets cannot overlap.')
+            occupied.update(cells)
+            entry['position'] = dict(column=column, row=row, tracks=tracks)
         layout.append(entry)
     return layout
 
@@ -241,6 +266,6 @@ def dashboard_kpis(config, stats, calls, berths, now, dt, personal_layout=(), pr
     formulas = set(preview_formulas)
     for card in [*layout, *personal_layout]:
         formulas.update(metric['formula'] for metric in card.get('metrics', []))
-    return dict(definitions=catalog, values=values, variables=VARIABLES, widget_catalog=WIDGETS,
+    return dict(definitions=catalog, values=values, variables=VARIABLES, widget_catalog=WIDGETS, card_icons=CARD_ICONS,
                 widgets=config.get('widgets', False), layout=layout,
                 card_values={formula: evaluate(formula_tree(formula), resolve) for formula in formulas})

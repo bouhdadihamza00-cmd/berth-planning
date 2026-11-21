@@ -1,3 +1,5 @@
+import { insertWidget, MAX_WIDGET_ROW, rowMajor, snapWidgetTrack, occupiedWidgetColumns } from "./dashboard-grid.js";
+
 const P = () => window.P;
 export const DEFAULT_KPI_IDS = ["active", "upcoming", "utilization", "waiting", "turnaround", "adherence", "delays", "conflicts"];
 
@@ -10,13 +12,27 @@ export function currentKpiLayout() {
   return knownCards(data, data.personal_layout ?? data.layout);
 }
 
+function fitCardPreset(card, width, height) {
+  const expanded = width > card.width || height > (card.height ?? 1);
+  return {...card, width, height, position: expanded ? undefined : card.position};
+}
+
 function knownCards(data, layout) {
   return layout.flatMap(card => {
+    if (card.id === "widget_weather") {
+      const full = card.width > 3 || (card.width === 2 && card.height > 1);
+      return [fitCardPreset(card, full ? 5 : 3, full ? 2 : 1)];
+    }
     if (card.kpis) {
       const kpis = card.kpis.filter(id => Object.hasOwn(data.definitions, id));
-      return [{...card, kpis}];
+      const group = {...card, kpis};
+      return [!kpis.length && (card.metrics?.length ?? 0) <= 1
+        ? fitCardPreset(group, card.width > 1 || card.height > 1 ? 2 : 1, 1)
+        : group];
     }
-    return Object.hasOwn(data.definitions, card.id) || Object.hasOwn(data.widget_catalog || {}, card.id) ? [card] : [];
+    if (card.id === "widget_clock" || Object.hasOwn(data.definitions, card.id))
+      return [fitCardPreset(card, card.width > 1 || card.height > 1 ? 2 : 1, 1)];
+    return Object.hasOwn(data.widget_catalog || {}, card.id) ? [card] : [];
   });
 }
 
@@ -133,6 +149,12 @@ function withWidgets(data, layout, configured) {
     .map(([id, {width, height}]) => ({id, width, height}))];
 }
 
+function sameLayout(left, right) {
+  const signature = cards => JSON.stringify(cards.map(({id, width, height = 1, kpis = [], metrics = [], position = null}) =>
+    [id, width, height, kpis, metrics, position]));
+  return signature(left) === signature(right);
+}
+
 export function bindDashboardEditor(renderCards, openKpi) {
   const { $, $$, S, esc, fmt, api, path, icons, icon, modal, closeModal, toast, field, select, handleForm } = P();
   const grid = $(".dashboard-kpi-area .metrics");
@@ -161,7 +183,8 @@ export function bindDashboardEditor(renderCards, openKpi) {
   const readLayout = () => [...grid.children].filter(card => card.dataset.kpiId)
     .map(card => ({id: card.dataset.kpiId, width: Number(card.dataset.kpiWidth),
       ...(card.dataset.kpiHeight !== "1" ? {height: Number(card.dataset.kpiHeight)} : {}),
-      ...(card.dataset.kpiConfig ? JSON.parse(card.dataset.kpiConfig) : {})}));
+      ...(card.dataset.kpiConfig ? JSON.parse(card.dataset.kpiConfig) : {}),
+      ...(card.dataset.widgetPosition ? {position: JSON.parse(card.dataset.widgetPosition)} : {})}));
   const cardName = card => card.dataset.kpiConfig ? "KPI card" :
     available[card.dataset.kpiId]?.name ?? card.querySelector(".metric-label")?.textContent;
   const announce = message => { editor.querySelector("[role=status]").textContent = message; };
@@ -181,7 +204,9 @@ export function bindDashboardEditor(renderCards, openKpi) {
       node.removeAttribute(attr);
     node.style.removeProperty("--widget-columns");
     node.style.removeProperty("--widget-rows");
+    setPosition(node, null);
   };
+  const addKpiButton = () => `<button type="button" class="btn kpi-group-add" data-configure-card-kpi="">${icon("plus")}Add KPI</button>`;
   function addCard(card) {
     const panel = panels.get(card.id);
     if (panel) {
@@ -196,28 +221,54 @@ export function bindDashboardEditor(renderCards, openKpi) {
       place(panel.node, grid);
     } else if (card.kpis) {
       const metrics = card.metrics || [];
+      const height = card.height ?? 1;
+      const compact = !card.kpis.length && metrics.length <= 1;
       const members = renderCards(card.kpis.map(id => ({id, width: 1})));
+      const toneFor = item => kpiTone(data.definitions[item.formula] || {}, data.card_values?.[item.formula], "info");
       const calculated = metrics.map((item, i) => {
         const value = data.card_values?.[item.formula];
-        return `<div class="metric kpi-formula-metric"><span class="metric-label">${esc(item.name)}</span><strong class="metric-value">${fmt(value, 2)}<span class="metric-unit">${Number.isFinite(value) ? esc(item.unit) : ""}</span></strong>${draft ? `<button class="btn small" type="button" data-configure-card-kpi="${i}" aria-label="Edit ${esc(item.name)}">Edit</button>` : ""}</div>`;
+        const hasValue = Number.isFinite(value);
+        const glyph = data.card_icons?.includes(item.icon) ? item.icon : "";
+        const tone = toneFor(item);
+        return `${compact ? "" : `<div class="metric kpi-formula-metric" data-tone="${tone}">`}<div class="metric-top"><span class="metric-label">${esc(item.name)}</span>${glyph ? `<span class="metric-icon" aria-hidden="true">${icon(glyph)}</span>` : ""}</div><strong class="metric-value">${hasValue ? fmt(value, value % 1 ? 2 : 0) : "—"}<span class="metric-unit">${hasValue ? esc(item.unit) : ""}</span></strong>${hasValue ? "" : '<span class="metric-foot">Unavailable</span>'}${draft ? `<button class="btn small" type="button" data-configure-card-kpi="${i}" aria-label="Edit ${esc(item.name)}">Edit</button>` : ""}${compact ? "" : "</div>"}`;
       }).join("");
-      const canAdd = draft || (!members && !calculated && trigger);
+      const canAdd = compact ? !metrics.length && trigger : draft;
       const config = esc(JSON.stringify({kpis: card.kpis, metrics}));
-      grid.insertAdjacentHTML("beforeend", `<section class="card kpi-group" data-kpi-id="${esc(card.id)}" data-kpi-config="${config}" data-kpi-width="${card.width}" data-kpi-height="${card.height}" style="--widget-columns:${card.width};--widget-rows:${card.height}" ${draft ? 'tabindex="0" aria-label="KPI card" aria-describedby="kpi-editor-help"' : ""}><div class="card-head"><div class="card-title"><h2>KPIs</h2></div></div><div class="kpi-group-content">${members}${calculated}${canAdd ? `<button type="button" class="btn kpi-group-add" data-configure-card-kpi="">${icon("plus")}Add KPI</button>` : ""}</div></section>`);
+      const add = canAdd ? addKpiButton() : "";
+      const content = compact ? calculated || add : `<div class="card-head"><div class="card-title"><h2>KPIs</h2></div></div><div class="kpi-group-content">${members}${calculated}${add}</div>`;
+      grid.insertAdjacentHTML("beforeend", `<section class="${compact ? "metric kpi-formula-metric kpi-single" : "card"} kpi-group" ${compact ? `data-tone="${metrics.length ? toneFor(metrics[0]) : "neutral"}"` : ""} data-kpi-id="${esc(card.id)}" data-kpi-config="${config}" data-kpi-width="${card.width}" data-kpi-height="${height}" style="--widget-columns:${card.width};--widget-rows:${height}" ${draft ? 'tabindex="0" aria-label="KPI card" aria-describedby="kpi-editor-help"' : ""}>${content}</section>`);
     } else grid.insertAdjacentHTML("beforeend", renderCards([card], Boolean(draft)));
+    setPosition(grid.lastElementChild, card.position);
     if (draft) {
       const node = grid.lastElementChild;
       const name = esc(cardName(node));
       node.insertAdjacentHTML("beforeend", `<button class="icon-btn kpi-corner kpi-corner-remove" type="button" data-kpi-tool="remove" aria-label="Remove ${name}" title="Remove widget">${icon("x")}</button><button class="icon-btn kpi-corner kpi-corner-resize" type="button" data-kpi-tool="resize" aria-label="Resize ${name}" title="Drag or use the arrow keys to resize">${icon("move-diagonal-2")}</button>`);
     }
   }
+  let layoutTracks, legacyTracks;
+  const compatibleTracks = positions => Math.max(0, ...positions
+    .filter(position => position?.tracks <= layoutTracks).map(position => position.tracks));
+  function sizeGrid() {
+    const style = getComputedStyle(grid);
+    const scale = Number(style.getPropertyValue("--ui-font-scale")) || 1;
+    const width = grid.getBoundingClientRect().width;
+    const columns = Math.max(2, Math.min(64, Math.floor((width - 34) / (Math.max(112, 108 * scale) + 18))));
+    grid.style.setProperty("--widget-grid-columns", columns);
+    const tracks = columns * 2;
+    const trackWidth = parseFloat(getComputedStyle(grid).gridTemplateColumns);
+    if (trackWidth > 0) grid.style.setProperty("--widget-row-size", `${trackWidth * 2 + parseFloat(style.columnGap)}px`);
+    return tracks;
+  }
   const paint = () => {
-    const widgetMode = Boolean(draft || personalized());
-    board.classList.toggle("dashboard-widget-mode", widgetMode);
+    const scrollTop = grid.scrollTop;
+    board.classList.add("dashboard-widget-mode");
     for (const panel of panels.values()) restore(panel);
     grid.replaceChildren();
-    const layout = draft ? draft.layout : currentKpiLayout();
+    const layout = draft ? draft.layout : withWidgets(data, currentKpiLayout(), personalized());
+    layoutTracks = sizeGrid();
+    legacyTracks = compatibleTracks(layout.map(card => card.position));
     for (const card of layout) addCard(card);
+    grid.scrollTop = scrollTop;
     if (!layout.length) grid.innerHTML = '<p class="kpi-empty subtle">No widgets selected.</p>';
     icons();
     refreshMap();
@@ -246,6 +297,7 @@ export function bindDashboardEditor(renderCards, openKpi) {
         ${field("Formula", "formula", mode === "formula" ? existing.formula : "", "text", 'maxlength="240" placeholder="e.g. active_calls + upcoming_arrivals"')}
         ${field("Label", "name", existing?.name ?? "", "text", 'required maxlength="80"')}
         ${field("Unit", "unit", existing?.unit ?? "", "text", 'maxlength="12"')}
+        ${select("Icon", "glyph", [["", "None"], ...(data.card_icons || []).map(key => [key, key.replaceAll("-", " ")])], existing?.icon ?? "")}
       </div><div id="widget-kpi-reference"><p class="subtle">Use numbers, +, -, *, /, parentheses, and named KPIs or variables.</p>${variableReference(data)}</div>
       <div class="form-actions">${existing ? '<button type="button" class="btn danger" id="widget-kpi-delete">Remove KPI</button>' : ""}<button type="submit" class="btn primary">Apply KPI</button></div>
     </form>`);
@@ -280,7 +332,7 @@ export function bindDashboardEditor(renderCards, openKpi) {
     setMode();
     handleForm("#widget-kpi-form", async input => {
       if (!existing && metrics.length >= 12) throw Error("Keep at most 12 configured KPIs in one card.");
-      const result = await api(path("/dashboard/kpi-preview"), "POST", {name: input.name, unit: input.unit, formula: input[input.mode]});
+      const result = await api(path("/dashboard/kpi-preview"), "POST", {name: input.name, unit: input.unit, formula: input[input.mode], icon: input.glyph});
       data.card_values = {...data.card_values, [result.metric.formula]: result.value};
       const next = [...metrics];
       if (existing) next[Number(index)] = result.metric;
@@ -314,9 +366,13 @@ export function bindDashboardEditor(renderCards, openKpi) {
         for (const element of $$("[id]", copy)) element.removeAttribute("id");
         for (const element of $$(".kpi-corner, .leaflet-control-container, .leaflet-popup-pane", copy)) element.remove();
         for (const row of $$("tbody tr:nth-child(n+5)", copy)) row.remove();
+        if (preview.dataset.preview === "widget_map") {
+          for (const element of $$(".map-top-left, .map-right-controls, .map-weather, .map-legend, .port-map-empty-state", copy))
+            element.remove();
+        }
         stage.append(copy);
       } else {
-        stage.innerHTML = `<section class="card kpi-group"><div class="card-head"><div class="card-title"><h2>KPIs</h2></div></div><div class="kpi-group-content"><span class="btn kpi-group-add">${icon("plus")}Add KPI</span></div></section>`;
+        stage.innerHTML = `<section class="metric kpi-formula-metric kpi-single kpi-group" data-tone="neutral">${addKpiButton()}</section>`;
       }
       preview.append(stage);
     }
@@ -324,8 +380,8 @@ export function bindDashboardEditor(renderCards, openKpi) {
     picker.onclick = event => {
       const choice = event.target.closest("[data-widget-choice]")?.dataset.widgetChoice;
       if (!choice) return;
-      if (choice === "kpi") return finishAdding({id: `kpi_group_${crypto.randomUUID()}`, kpis: [], metrics: [], width: 2, height: 2});
-      const {width, height} = widgets[choice];
+      if (choice === "kpi") return finishAdding({id: `kpi_group_${crypto.randomUUID()}`, kpis: [], metrics: [], width: 1, height: 1});
+      const {width, height} = choice === "widget_weather" ? {width: 5, height: 2} : widgets[choice];
       finishAdding({id: choice, width, height});
     };
   }
@@ -357,20 +413,48 @@ export function bindDashboardEditor(renderCards, openKpi) {
   const gridColumns = style => Number(style.getPropertyValue("--widget-grid-columns"));
   const widthStep = card => widgets[card.dataset.kpiId]?.width_step ?? 1;
   function sizeBounds(card, columns) {
-    const widget = panels.has(card.dataset.kpiId) ? widgets[card.dataset.kpiId] : card.dataset.kpiConfig ? {min_width: 2, min_height: 2} : null;
+    const widget = card.dataset.kpiId === "widget_weather"
+      ? {min_width: 3, max_width: 5, min_height: 1, max_height: 2}
+      : card.matches(".metric")
+        ? {min_width: 1, max_width: 2, min_height: 1, max_height: 1}
+        : panels.has(card.dataset.kpiId) ? widgets[card.dataset.kpiId] : {min_width: 2, min_height: 2};
     return {
       minWidth: Math.min(columns, widget?.min_width ?? 1),
-      maxWidth: Math.min(columns, widget ? 8 : 4),
+      maxWidth: Math.min(columns, widget ? widget.max_width ?? 8 : 4),
       minHeight: widget?.min_height ?? 1,
-      maxHeight: widget ? 4 : 2,
+      maxHeight: widget ? widget.max_height ?? 4 : 2,
     };
   }
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   function resize(card, width, height, columns = gridColumns(getComputedStyle(grid))) {
-    const { minWidth, maxWidth, minHeight, maxHeight } = sizeBounds(card, columns);
+    const weather = card.dataset.kpiId === "widget_weather";
+    const { minWidth, maxWidth, minHeight, maxHeight } = sizeBounds(card, weather ? 8 : columns);
+    if (weather) {
+      const compact = card.dataset.kpiWidth === "3";
+      const full = compact ? width > 3 || height >= 2 : width >= 5 && height >= 2;
+      width = full ? 5 : 3;
+      height = full ? 2 : 1;
+    }
     const nextWidth = String(clamp(width, minWidth, maxWidth));
     const nextHeight = String(clamp(height, minHeight, maxHeight));
     if (card.dataset.kpiWidth === nextWidth && card.dataset.kpiHeight === nextHeight) return;
+    if (draft && card.parentElement === grid && card.dataset.widgetPosition) {
+      const {cells, nodes, first, last} = boardCells();
+      const id = card.dataset.kpiId;
+      const slot = cells.get(id);
+      const span = Math.min(slot.tracks, Number(nextWidth) * 2);
+      const column = weather || card.matches(".metric")
+        ? Math.max(first, Math.min(slot.column, slot.tracks - span + 1))
+        : slot.column;
+      const expanded = {...slot, column, width: span, height: Number(nextHeight)};
+      const right = Math.max(last, expanded.column + expanded.width - 1);
+      const next = right <= slot.tracks && insertWidget(cells, id, expanded, {first, last: right});
+      if (!next) {
+        announce("There is not enough room to resize this widget.");
+        return;
+      }
+      showCells(next, nodes);
+    }
     card.dataset.kpiWidth = nextWidth;
     card.dataset.kpiHeight = nextHeight;
     card.style.setProperty("--widget-columns", nextWidth);
@@ -380,13 +464,73 @@ export function bindDashboardEditor(renderCards, openKpi) {
   function announceSize(card) {
     announce(`${cardName(card)}: ${card.dataset.kpiWidth} columns by ${card.dataset.kpiHeight} rows.`);
   }
-  function move(card, target) {
-    const cards = [...grid.children];
-    const before = cards.indexOf(card) < cards.indexOf(target) ? target.nextElementSibling : target;
-    place(card, grid, before);
+  function setPosition(card, position) {
+    card.style.removeProperty("--widget-column");
+    card.style.removeProperty("--widget-row");
+    if (!position) {
+      delete card.dataset.widgetPosition;
+      return;
+    }
+    card.dataset.widgetPosition = JSON.stringify(position);
+    if (position.tracks === layoutTracks || position.tracks === legacyTracks) {
+      card.style.setProperty("--widget-column", position.column);
+      card.style.setProperty("--widget-row", position.row);
+    }
+  }
+  function boardCells() {
+    const style = getComputedStyle(grid);
+    const tracks = layoutTracks;
+    const first = 1;
+    const last = tracks;
+    const stepX = parseFloat(style.gridTemplateColumns) + parseFloat(style.columnGap);
+    const stepY = parseFloat(style.gridTemplateRows) + parseFloat(style.rowGap);
+    const left = parseFloat(style.paddingLeft);
+    const right = grid.clientWidth - parseFloat(style.paddingRight);
+    const top = parseFloat(style.paddingTop);
+    const rtl = style.direction === "rtl";
+    const nodes = new Map([...grid.children].filter(node => node.dataset.kpiId)
+      .map(node => [node.dataset.kpiId, node]));
+    const cells = new Map([...nodes].map(([id, node]) => [id, {
+      tracks,
+      column: first + Math.round((rtl ? right - node.offsetLeft - node.offsetWidth : node.offsetLeft - left) / stepX),
+      row: 1 + Math.round((node.offsetTop - top) / stepY),
+      width: Math.min(tracks, Number(node.dataset.kpiWidth) * 2), height: Number(node.dataset.kpiHeight),
+    }]));
+    return {cells, nodes, tracks, first, last, stepX, stepY, rtl, top, bottom: parseFloat(style.paddingBottom)};
+  }
+  function showCells(cells, nodes, dragged) {
+    const previous = new Map();
+    if (dragged && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      for (const node of nodes.values()) {
+        if (node !== dragged) previous.set(node, node.getBoundingClientRect());
+      }
+    }
+    for (const [id, cell] of cells) {
+      const position = cell && {column: cell.column, row: cell.row, tracks: cell.tracks};
+      setPosition(nodes.get(id), position);
+    }
+    for (const [node, before] of previous) animateShift(node, before);
     refreshMap();
+  }
+  function animateShift(node, before) {
+    node.getAnimations().find(animation => animation.id === "widget-shift")?.cancel();
+    const after = node.getBoundingClientRect();
+    const x = before.left - after.left;
+    const y = before.top - after.top;
+    if (Math.abs(x) + Math.abs(y) > 1)
+      node.animate({translate: [`${x}px ${y}px`, "0px 0px"]}, {
+        id: "widget-shift", duration: 150, easing: "ease-out",
+      });
+  }
+  function commitCells(cells, nodes, card) {
+    let head = grid.firstElementChild;
+    for (const [id] of [...cells].sort(([, a], [, b]) => rowMajor(a, b))) {
+      const node = nodes.get(id);
+      if (node === head) head = head.nextElementSibling;
+      else place(node, grid, head);
+    }
     update();
-    announce(`${cardName(card)} moved to position ${[...grid.children].indexOf(card) + 1}.`);
+    announce(`${cardName(card)} moved to row ${cells.get(card.dataset.kpiId).row}.`);
   }
 
   grid.onclick = event => {
@@ -408,7 +552,9 @@ export function bindDashboardEditor(renderCards, openKpi) {
     if (button.dataset.kpiTool === "resize") {
       const {minHeight, maxHeight} = sizeBounds(card, 8);
       const height = Number(card.dataset.kpiHeight);
-      resize(card, Number(card.dataset.kpiWidth), height === maxHeight ? minHeight : height + 1, 8);
+      const width = Number(card.dataset.kpiWidth);
+      if (card.matches(".metric")) resize(card, width === 1 ? 2 : 1, 1, 8);
+      else resize(card, width, height === maxHeight ? minHeight : height + 1, 8);
       update();
       announceSize(card);
     }
@@ -425,8 +571,23 @@ export function bindDashboardEditor(renderCards, openKpi) {
       announce(`${name} removed from the layout.`);
     }
   };
+  const gridResize = new ResizeObserver(() => {
+    if (!grid.isConnected) return gridResize.disconnect();
+    if (!board.classList.contains("dashboard-widget-mode")) return;
+    const previousTracks = layoutTracks;
+    const nextTracks = sizeGrid();
+    if (nextTracks === previousTracks) return;
+    endGesture(false);
+    layoutTracks = nextTracks;
+    const placed = [...grid.children].filter(card => card.dataset.widgetPosition)
+      .map(card => [card, JSON.parse(card.dataset.widgetPosition)]);
+    legacyTracks = compatibleTracks(placed.map(([, position]) => position));
+    for (const [card, position] of placed) setPosition(card, position);
+    refreshMap();
+  });
+  gridResize.observe(grid);
   if (!trigger) {
-    if (data && personalized()) paint();
+    if (data?.widget_catalog) paint();
     return;
   }
 
@@ -447,24 +608,37 @@ export function bindDashboardEditor(renderCards, openKpi) {
     const action = button.dataset.editor;
     if (action === "cancel") return close();
     if (action === "reset") {
-      draft.layout = withWidgets(data, data.layout, data.widgets);
+      draft.layout = withWidgets(data, knownCards(data, data.layout), data.widgets);
       draft.reset = true;
       paint();
         announce("Port default previewed. Save layout to apply it.");
     }
     if (action === "add") return showWidgetPicker();
     if (action === "save") {
+      endGesture(false);
+      const original = draft.shared
+        ? withWidgets(data, data.layout, data.widgets)
+        : withWidgets(data, currentKpiLayout(), personalized());
+      if (!draft.reset && sameLayout(draft.layout, original)) return close();
       saving = button.disabled = true;
       try {
+        let layout = draft.layout;
+        if (!draft.reset && layout.length && occupiedWidgetColumns(layout)?.tracks !== layoutTracks) {
+          const {cells} = boardCells();
+          layout = layout.map(card => {
+            const {column, row, tracks} = cells.get(card.id);
+            return {...card, position: {column, row, tracks}};
+          });
+        }
         if (draft.shared) {
           const result = await api(path("/dashboard"), "PUT", {
-            revision: draft.revision, definitions: data.definitions, layout: draft.layout, widgets: true,
+            revision: draft.revision, definitions: data.definitions, layout, widgets: true,
           });
           data.layout = result.layout;
           data.widgets = result.widgets;
           S.data.port.revision = draft.revision + 1;
         } else {
-          const result = await api(path("/dashboard/layout"), "PUT", {layout: draft.reset ? null : draft.layout, widgets: true});
+          const result = await api(path("/dashboard/layout"), "PUT", {layout: draft.reset ? null : layout, widgets: true});
           data.personal_layout = result.layout;
           data.personal_widgets = result.widgets;
         }
@@ -485,6 +659,7 @@ export function bindDashboardEditor(renderCards, openKpi) {
       endGesture(false);
       return;
     }
+    if (gesture) return;
     const resizing = event.target.dataset.kpiTool === "resize";
     if ((!resizing && event.target !== card) || !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
     event.preventDefault();
@@ -495,14 +670,25 @@ export function bindDashboardEditor(renderCards, openKpi) {
       const delta = backward ? -1 : 1;
       const horizontal = ["ArrowLeft", "ArrowRight"].includes(event.key);
       const columns = horizontal ? gridColumns(style) : 8;
-      const width = horizontal ? Math.min(Number(card.dataset.kpiWidth), columns) + delta * widthStep(card) :
+      const width = horizontal ? Number(card.dataset.kpiWidth) + delta * widthStep(card) :
         Number(card.dataset.kpiWidth);
       resize(card, width, Number(card.dataset.kpiHeight) + (horizontal ? 0 : delta), columns);
       update();
       announceSize(card);
     } else {
-      const target = backward ? card.previousElementSibling : card.nextElementSibling;
-      if (target) move(card, target);
+      const {cells, nodes, first, last} = boardCells();
+      const id = card.dataset.kpiId;
+      const slot = cells.get(id);
+      const delta = backward ? -1 : 1;
+      const horizontal = event.key === "ArrowLeft" || event.key === "ArrowRight";
+      const target = {...slot,
+        column: horizontal ? clamp(slot.column + delta * 2, first, last - slot.width + 1) : slot.column,
+        row: horizontal ? slot.row : clamp(slot.row + delta, 1, MAX_WIDGET_ROW)};
+      if (!rowMajor(slot, target)) return;
+      const next = insertWidget(cells, id, target, {first, last});
+      if (!next) return announce("There is not enough room to move this widget.");
+      showCells(next, nodes, card);
+      commitCells(next, nodes, card);
       card.focus();
     }
   };
@@ -518,17 +704,26 @@ export function bindDashboardEditor(renderCards, openKpi) {
       const columns = gridColumns(style);
       const visibleWidth = Math.min(Number(card.dataset.kpiWidth), columns);
       const rows = Number(card.dataset.kpiHeight);
-      const stepX = (rect.width + parseFloat(style.columnGap)) / visibleWidth;
+      const stepX = (parseFloat(style.gridTemplateColumns) + parseFloat(style.columnGap)) * 2;
       const stepY = (rect.height + parseFloat(style.rowGap)) / rows;
       sizing = { ...sizeBounds(card, columns), rows, visibleWidth,
         width: rect.width, height: rect.height, stepX, stepY };
     }
     ignoreClick = false;
+    const placement = sizing ? null : boardCells();
+    const id = card.dataset.kpiId;
+    const lastRow = placement && Math.max(...[...placement.cells.values()].map(cell => cell.row + cell.height - 1));
+    const maxRow = placement && Math.min(MAX_WIDGET_ROW, Math.max(lastRow + 1,
+      Math.ceil((grid.clientHeight - placement.top) / placement.stepY)));
     gesture = {handle, card, id: event.pointerId, x: event.clientX, y: event.clientY,
-      startX: event.clientX, startY: event.clientY, scrollTop: grid.scrollTop, sizing};
+      startX: event.clientX, startY: event.clientY, scrollTop: grid.scrollTop, sizing, placement, maxRow, lastRow,
+      slot: placement?.cells.get(id), left: card.offsetLeft, top: card.offsetTop,
+      originalPositions: placement && new Map([...placement.nodes].map(([key, node]) =>
+        [key, JSON.parse(node.dataset.widgetPosition || "null")]))};
+    handle.focus({preventScroll: true});
     handle.setPointerCapture(event.pointerId);
   };
-  const track = () => {
+  const track = (time, scrolling = true) => {
     frame = null;
     if (!gesture?.active || !grid.isConnected) return;
     const {card, x, y, sizing, startX, startY} = gesture;
@@ -544,31 +739,59 @@ export function bindDashboardEditor(renderCards, openKpi) {
       if (card.dataset.kpiId === "widget_map") refreshMap();
       return;
     }
+    const {cells, nodes, stepX, stepY, rtl, tracks, first, last} = gesture.placement;
+    if (layoutTracks !== tracks) return endGesture(false);
+
     const bounds = grid.getBoundingClientRect();
-    const edge = y < bounds.top + 24 ? -8 : y > bounds.bottom - 24 ? 8 : 0;
+    const zone = Math.min(stepY, bounds.height / 3);
+    const edge = clamp((y - bounds.bottom + zone) / zone, 0, 1) -
+      clamp((bounds.top + zone - y) / zone, 0, 1);
     const scroll = grid.scrollTop;
-    if (edge) grid.scrollTop += edge;
-    card.style.translate = `${x - startX}px ${y - startY + grid.scrollTop - gesture.scrollTop}px`;
-    const hitY = Math.max(bounds.top + 1, Math.min(y, bounds.bottom - 1));
-    const target = document.elementFromPoint(x, hitY)?.closest(".metrics > [data-kpi-id]");
-    if (gesture.target !== target) {
-      gesture.target?.removeAttribute("data-kpi-drop");
-      gesture.target = target && target !== card && grid.contains(target) ? target : null;
-      if (gesture.target) {
-        const after = [...grid.children].indexOf(card) < [...grid.children].indexOf(gesture.target);
-        gesture.target.dataset.kpiDrop = after ? "after" : "before";
+    const elapsed = gesture.lastFrame == null ? 16 : Math.min(32, time - gesture.lastFrame);
+    gesture.lastFrame = time;
+    if (scrolling && edge) {
+      const {top, bottom} = gesture.placement;
+      const lastRow = gesture.preview
+        ? Math.max(...[...gesture.preview.values()].map(cell => cell.row + cell.height - 1))
+        : gesture.lastRow;
+      const maxScroll = Math.max(0, top + lastRow * stepY + bottom - grid.clientHeight);
+      grid.scrollTop = clamp(grid.scrollTop + edge * elapsed * .8, 0, maxScroll);
+    }
+    const id = card.dataset.kpiId;
+    const original = cells.get(id);
+    const dx = x - startX;
+    const dy = y - startY + grid.scrollTop - gesture.scrollTop;
+    const slot = {...original,
+      column: first - 1 + snapWidgetTrack(original.column - first + 1 + (rtl ? -dx : dx) / stepX,
+        gesture.slot.column - first + 1, last - first - original.width + 2, 2, original.column - first + 1),
+      row: snapWidgetTrack(original.row + dy / stepY, gesture.slot.row, gesture.maxRow)};
+    const changed = rowMajor(gesture.slot, slot);
+    if (changed) {
+      gesture.slot = slot;
+      gesture.preview = rowMajor(original, slot) ? insertWidget(cells, id, slot, {first, last}) : null;
+      showCells(gesture.preview || gesture.originalPositions, nodes, card);
+      grid.toggleAttribute("data-widget-drop", Boolean(gesture.preview));
+      if (gesture.preview) {
+        grid.style.setProperty("--widget-drop-column", `${slot.column - first + 1} / span ${slot.width}`);
+        grid.style.setProperty("--widget-drop-row", `${slot.row} / span ${slot.height}`);
       }
     }
-    if (grid.scrollTop !== scroll) frame = requestAnimationFrame(track);
+    card.toggleAttribute("data-widget-blocked", Boolean(rowMajor(original, slot) && !gesture.preview));
+    card.style.translate = `${gesture.left - card.offsetLeft + dx}px ${gesture.top - card.offsetTop + dy}px`;
+    if (scrolling && edge && (changed || grid.scrollTop !== scroll)) frame = requestAnimationFrame(track);
   };
   function endGesture(commit) {
     if (!gesture) return;
-    const {handle, id, card, target, active, sizing} = gesture;
+    const {handle, id, card, active, sizing, placement, preview, originalPositions, scrollTop} = gesture;
+    const release = active && placement && !matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? card.getBoundingClientRect() : null;
+    const scroll = grid.scrollTop;
     gesture = null;
     if (frame) cancelAnimationFrame(frame);
     frame = null;
-    target?.removeAttribute("data-kpi-drop");
+    grid.removeAttribute("data-widget-drop");
     card.removeAttribute("data-kpi-dragging");
+    card.removeAttribute("data-widget-blocked");
     card.style.removeProperty("translate");
     if (handle.hasPointerCapture(id)) handle.releasePointerCapture(id);
     if (!active) return;
@@ -581,14 +804,24 @@ export function bindDashboardEditor(renderCards, openKpi) {
       if (commit) {
         const step = widthStep(card);
         const columns = Math.round(sizing.dx / (sizing.stepX * step)) * step;
-        const width = columns ? sizing.visibleWidth + columns : Number(card.dataset.kpiWidth);
+        const width = card.dataset.kpiId === "widget_weather" || !columns
+          ? Number(card.dataset.kpiWidth) + columns
+          : sizing.visibleWidth + columns;
         resize(card, width, sizing.rows + Math.round(sizing.dy / sizing.stepY), 8);
         update();
         announceSize(card);
       }
       if (card.dataset.kpiId === "widget_map") refreshMap();
-    } else if (commit && target) move(card, target);
+    } else if (commit && preview) {
+      commitCells(preview, placement.nodes, card);
+    } else if (!commit) {
+      if (preview) showCells(originalPositions, placement.nodes, card);
+      grid.scrollTop = scrollTop;
+      announce("Widget move canceled.");
+    }
+    if (release && scroll === grid.scrollTop) animateShift(card, release);
   }
+
   grid.onpointermove = event => {
     if (gesture?.id !== event.pointerId) return;
     gesture.x = event.clientX;
@@ -597,7 +830,15 @@ export function bindDashboardEditor(renderCards, openKpi) {
       if (Math.hypot(gesture.x - gesture.startX, gesture.y - gesture.startY) < 5) return;
       gesture.active = true;
       if (gesture.sizing) gesture.card.dataset.kpiResizing = "";
-      else gesture.card.dataset.kpiDragging = "";
+      else {
+        const card = gesture.card;
+        const before = card.getBoundingClientRect();
+        card.getAnimations().find(animation => animation.id === "widget-shift")?.cancel();
+        const after = card.getBoundingClientRect();
+        gesture.left += before.left - after.left;
+        gesture.top += before.top - after.top;
+        card.dataset.kpiDragging = "";
+      }
     }
     if (!frame) frame = requestAnimationFrame(track);
   };
@@ -606,14 +847,15 @@ export function bindDashboardEditor(renderCards, openKpi) {
     if (frame) cancelAnimationFrame(frame);
     gesture.x = event.clientX;
     gesture.y = event.clientY;
-    track();
+    track(performance.now(), false);
     endGesture(true);
   };
   grid.onpointercancel = grid.onlostpointercapture = event => {
-    if (gesture?.id === event.pointerId) endGesture(false);
+    if (gesture?.id === event.pointerId &&
+        (event.type === "pointercancel" || !gesture.handle.hasPointerCapture(event.pointerId))) endGesture(false);
   };
   if (draft) {
     draft.layout = knownCards(data, draft.layout);
     show();
-  } else if (personalized()) paint();
+  } else if (data?.widget_catalog) paint();
 }

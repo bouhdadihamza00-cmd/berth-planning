@@ -1,4 +1,4 @@
-import { renderKpiConfig, bindKpiConfig } from "./dashboard-kpis.js?v=10";
+import { renderKpiConfig, bindKpiConfig } from "./dashboard-kpis.js?v=31";
 import { confirmRemoval } from "./removal.js?v=6";
 import {
   renderPortDirectory,

@@ -1,6 +1,6 @@
-import { DEFAULT_KPI_IDS, currentKpiLayout, kpiTone, bindDashboardEditor } from "./dashboard-kpis.js?v=10";
+import { DEFAULT_KPI_IDS, currentKpiLayout, kpiTone, bindDashboardEditor } from "./dashboard-kpis.js?v=31";
 import { confirmRemoval } from "./removal.js?v=6";
-import { mountWeather } from "./weather.js?v=14";
+import { mountWeather } from "./weather.js?v=15";
 import { portMapView, portMapBoundaryKey } from "./port-map-view.js?v=6";
 import { renderProductIcon, activeThroughputProducts } from "./cargo.js?v=12";
 import { mountAssistantChat } from "./assistant-chat.js?v=12";
@@ -33,7 +33,7 @@ import {
   delayForm,
   alertModal,
 } from "./workflows.js?v=30";
-import { renderConfig, bindConfig } from "./configuration.js?v=50";
+import { renderConfig, bindConfig } from "./configuration.js?v=71";
 const S = {
   user: null,
   ports: [],
@@ -340,6 +340,22 @@ function updateClock() {
       Date.now(),
   );
   c.innerHTML = `<strong>${new Intl.DateTimeFormat(getLocale(), { timeZone: S.data.port.timezone, day: "2-digit", month: "short", year: "numeric" }).format(d)}</strong><br>${time(d)} <span style="color:#a2afb7">${esc(S.data.port.timezone)}</span>`;
+  const portClock = $("[data-port-clock]");
+  const now = new Date();
+  const minute = String(Math.floor(+now / 60000));
+  if (portClock && portClock.dataset.minute !== minute) {
+    portClock.dataset.minute = minute;
+    const timeZone = S.data.port.timezone;
+    const locale = getLocale();
+    const currentTime = new Intl.DateTimeFormat(locale, {timeZone, hour: "numeric", minute: "2-digit"}).format(now);
+    const currentDate = new Intl.DateTimeFormat(locale, {timeZone, weekday: "long", month: "short", day: "numeric"}).format(now);
+    const reading = portClock.querySelector("time");
+    reading.dateTime = now.toISOString();
+    reading.textContent = currentTime;
+    const dateLabel = portClock.querySelector(".metric-foot");
+    dateLabel.textContent = currentDate;
+    dateLabel.title = timeZone;
+  }
 }
 function pageHeading(title, subtitle, actions = "", pill = true) {
   return `<div class="page-heading"><div><div class="title-line"><h1 id="workspace-heading" tabindex="-1">${title}</h1>${pill ? `<span class="demo-pill ${S.data.ais.mode === "live" ? "live" : ""}"><span class="dot" style="width:5px;height:5px"></span>${aisStateLabel()}</span>` : ""}</div><p>${subtitle}</p></div><div class="heading-actions">${actions}</div></div>`;
@@ -350,57 +366,29 @@ function cardHead(title, ic, meta = "", action = "", count = "") {
 function delayChart(k) {
   const entries = Object.entries(k.delay_causes).filter(([, hours]) => Number.isFinite(hours) && hours > 0).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((sum, [, hours]) => sum + hours, 0);
-  const palette = ["#168ac5", "#f78e16", "#21a66d", "#ee6458", "#4267ad", "#32a8ac"];
-  const sides = { left: [], right: [] };
+  const palette = [
+    "#087FB8", "#F5A623", "#168F91", "#627FAE", "#429F78", "#C57B49",
+    "#8676B4", "#36A9CB", "#C57C87", "#929D59", "#477C9C", "#8B8581",
+  ];
   let offset = 0;
-  const turn = Math.PI * 2;
   const parts = entries.map(([name, hours], i) => {
     const share = hours / total * 100;
     const part = {name, hours, share, offset, color: palette[i % palette.length],
-      angle: (offset + share / 2) * turn / 100 - Math.PI / 2};
+      angle: (offset + share / 2) * Math.PI / 50 - Math.PI / 2};
     offset += share;
     return part;
   });
-  // Rotate at the midpoint between adjacent side changes to balance the labels.
-  const cuts = parts.flatMap(({angle}) => [Math.PI / 2 - angle, -Math.PI / 2 - angle])
-    .map(angle => (angle + turn * 2) % turn).sort((a, b) => a - b);
-  let rotation = 0;
-  let bestBalance = Infinity;
-  let bestGap = 0;
-  cuts.forEach((start, i) => {
-    const gap = (cuts[i + 1] ?? cuts[0] + turn) - start;
-    const candidate = start + gap / 2;
-    const left = parts.filter(part => Math.cos(part.angle + candidate) < 0).length;
-    const balance = Math.abs(parts.length - left * 2);
-    if (balance < bestBalance || (balance === bestBalance && gap > bestGap)) {
-      rotation = candidate;
-      bestBalance = balance;
-      bestGap = gap;
-    }
-  });
-  const segments = parts.map(({name, hours, share, offset, color, angle}, i) => {
-    const x = Math.cos(angle + rotation);
-    const y = Math.sin(angle + rotation);
-    const radius = i === 0 ? 47 : 45;
-    const width = i === 0 ? 26 : 22;
-    sides[x < 0 ? "left" : "right"].push({ name, hours, color, x, y, edge: radius + width / 2 });
-    const segment = `<circle cx="60" cy="60" r="${radius}" pathLength="100" fill="none" stroke="${color}" stroke-width="${width}" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-offset}" transform="rotate(${rotation * 180 / Math.PI - 90} 60 60)"><title>${esc(name)}: ${fmt(hours, 1)} h (${fmt(share)}%)</title></circle>`;
-    return segment;
-  }).join("");
-  const callouts = Object.entries(sides).map(([side, items]) => {
-    items.sort((a, b) => a.y - b.y);
-    const edgeX = side === "left" ? 0 : 120;
-    return {
-      labels: `<div class="delay-callouts delay-callouts-${side}">${items.map(({ name, hours, color }) => `<div class="delay-chart-row"><span class="delay-chart-dot" style="background:${color}"></span><span dir="auto">${esc(name)}</span><b dir="ltr">${fmt(hours, 1)} h</b></div>`).join("")}</div>`,
-      lines: items.map(({ color, x, y, edge }, i) => {
-        const labelY = 120 * (i + 0.5) / items.length;
-        const elbowX = edgeX + (side === "left" ? 8 : -8);
-        return `<path d="M ${60 + x * edge} ${60 + y * edge} L ${elbowX} ${labelY} H ${edgeX}" stroke="${color}"/>`;
-      }).join(""),
-    };
-  });
-  const wide = entries.length && Math.max(sides.left.length, sides.right.length) <= 3;
-  return `<div class="delay-summary"><div class="delay-chart-layout${wide ? " delay-chart-layout-callouts" : ""}"><div class="delay-donut"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="45" fill="none" stroke="var(--line)" stroke-width="22"/><g class="delay-leaders" fill="none" stroke-width="1">${callouts.map(({ lines }) => lines).join("")}</g>${segments}<circle cx="60" cy="60" r="34" fill="#123e58"/></svg><div class="delay-donut-center"><strong>${fmt(k.delay_hours, 1)}</strong><span>Total delay · h</span></div></div><div class="delay-labels">${callouts.map(({ labels }) => labels).join("")}${entries.length ? "" : `<span class="delay-empty subtle">${S.data.port.source_feed ? "Delay durations are not supplied by the report." : "No delays recorded"}</span>`}</div></div></div>`;
+  const slices = parts.map(({share, offset, color}) =>
+    `<circle cx="60" cy="60" r="48" pathLength="100" fill="none" stroke="${color}" stroke-width="19" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-offset}" transform="rotate(-90 60 60)"/>`
+  ).join("");
+  const percentages = parts.filter(({share}) => share >= 8).map(({share, angle}) =>
+    `<text class="delay-slice-label" x="${60 + 48 * Math.cos(angle)}" y="${60 + 48 * Math.sin(angle)}" text-anchor="middle" dominant-baseline="central">${fmt(share)}%</text>`
+  ).join("");
+  const legend = parts.map(({name, hours, share, color}) =>
+    `<li><span class="delay-key-dot" style="--delay-color:${color}" aria-hidden="true"></span><span dir="auto">${esc(name)}</span> <b dir="ltr">${fmt(hours, 1)} h</b><span class="delay-share"> · ${fmt(share, 1)}%</span></li>`
+  ).join("");
+  const unavailable = !entries.length && S.data.port.source_feed;
+  return `<div class="delay-summary"><div class="delay-chart-layout"><div class="delay-donut"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="48" fill="none" stroke="var(--ui-border, var(--line))" stroke-width="19"/>${slices}${percentages}</svg><div class="delay-donut-center"><span>Total delay</span><strong dir="ltr">${unavailable ? "—" : `${fmt(k.delay_hours, 1)} <small>h</small>`}</strong></div></div>${entries.length ? `<ul class="delay-key" aria-label="Delay by department">${legend}</ul>` : `<span class="subtle">${unavailable ? "Delay durations are not supplied by the report." : "No delays recorded"}</span>`}</div></div>`;
 }
 function overviewKpiCards(layout, editing = false) {
   const k = S.data.stats;
@@ -495,17 +483,44 @@ function overviewKpiCards(layout, editing = false) {
     return `<${tag} class="metric" ${editing ? `tabindex="0" aria-label="${esc(name)}" aria-describedby="kpi-editor-help"` : 'type="button"'} data-metric="${i}" data-kpi-id="${esc(id)}" data-tone="${tone}" ${i === 0 && !definition?.thresholds ? "data-kpi-brand" : ""} data-kpi-width="${width}" data-kpi-height="${height}" style="--widget-columns:${width};--widget-rows:${height}" title="${esc(detail)}"><div class="metric-top"><span class="metric-label">${esc(name)}</span><span class="metric-icon" aria-hidden="true">${icon(glyph)}</span></div><div class="metric-value">${fmt(value, formula ? 2 : value % 1 ? 1 : 0)}<span class="metric-unit">${Number.isFinite(value) ? esc(definition?.unit ?? unit) : ""}</span></div>${i === 2 && !formula && Number.isFinite(value) ? `<div class="mini-meter"><span style="width:${Math.min(value, 100)}%"></span></div>` : ""}<div class="metric-foot">${esc(detail)}</div></${tag}>`;
   }).join("");
 }
+function cargoThroughput(records) {
+  const products = activeThroughputProducts(records);
+  const total = products.reduce((sum, product) => sum + Number(product.quantity), 0);
+  const title = S.data.port.source_feed ? "Cargo handled by 07:00" : "Cargo throughput";
+  const headline = `<strong class="cargo-total">${fmt(total / 1000, 1)} <small>kt total</small></strong>`;
+  const rows = products.map(product => {
+    const {name, quantity, direction, change} = product;
+    const share = Number(quantity) / total * 100;
+    const configured = S.data.port.product_icons?.[name]?.color;
+    const color = /^#[0-9a-f]{6}$/i.test(configured || "") ? configured : "var(--marine-600)";
+    return `<li class="cargo-row">
+      <span class="cargo-identity">
+        <span class="cargo-glyph" aria-hidden="true">${renderProductIcon(name)}</span>
+        <span class="cargo-name"><b dir="auto">${esc(name)}</b><small>${esc(direction)}</small></span>
+      </span>
+      <span class="cargo-share" dir="ltr">
+        <span class="cargo-bar" aria-hidden="true"><span style="width:${share}%;background:${color}"></span></span>
+        <span>${fmt(share, 1)}%</span>
+      </span>
+      <span class="cargo-amount"><b dir="ltr">${fmt(quantity / 1000, 1)} <small>kt</small></b>
+        ${change == null ? "" : `<small dir="ltr" title="Compared with prior 30 days">${change > 0 ? "+" : ""}${fmt(change)}%</small>`}
+      </span>
+    </li>`;
+  }).join("");
+  return `<section class="card cargo-throughput" data-overview-widget="widget_cargo">
+    ${cardHead(title, "chart-no-axes-combined", headline)}
+    ${rows ? `<ul class="cargo-comparison" tabindex="0" aria-label="Cargo volume and share of total">${rows}</ul>` : empty("No cargo handled in this period", "Products appear when import or export throughput is recorded.")}
+  </section>`;
+}
 function overview() {
   const { stats: k, calls, berths, alerts } = S.data;
   const ops = calls.filter((c) => ["Loading", "Unloading", "Delayed"].includes(c.status));
-  const products = activeThroughputProducts(k.products);
-  const total = products.reduce((n, p) => n + Number(p.quantity), 0);
   const configured = k.dashboard_kpis;
   const layout = configured ? currentKpiLayout() : DEFAULT_KPI_IDS.map(id => ({id, width: 1}));
   const cards = overviewKpiCards(layout.filter(card => !card.kpis && !Object.hasOwn(configured?.widget_catalog || {}, card.id)));
 
   const recent = [...calls].sort((a, b) => new Date(b.start) - new Date(a.start)).slice(0, 12);
-  const extraWidgets = `<div hidden><section class="card" data-overview-widget="widget_calls">${cardHead("Vessel calls", "ship", "View all", "vessels")}<div class="table-scroll"><table><thead><tr><th scope="col">Vessel</th><th scope="col">Berth</th><th scope="col">Status</th><th scope="col">Planned start</th></tr></thead><tbody>${recent.map(call => `<tr class="clickable" data-vessel="${esc(call.id)}"><td>${esc(call.name)}</td><td>${esc(berth(call.berth_id)?.code || "—")}</td><td>${status(call.status)}</td><td>${date(call.start)}</td></tr>`).join("") || `<tr><td colspan="4">${empty("No vessel calls")}</td></tr>`}</tbody></table></div></section><section class="card" data-overview-widget="widget_weather">${cardHead("Weather", "cloud-sun")}<div class="weather-widget" data-weather-widget aria-live="polite">Loading port weather…</div></section></div>`;
+  const extraWidgets = `<div hidden><section class="card" data-overview-widget="widget_calls">${cardHead("Vessel calls", "ship", "View all", "vessels")}<div class="table-scroll"><table><thead><tr><th scope="col">Vessel</th><th scope="col">Berth</th><th scope="col">Status</th><th scope="col">Planned start</th></tr></thead><tbody>${recent.map(call => `<tr class="clickable" data-vessel="${esc(call.id)}"><td>${esc(call.name)}</td><td>${esc(berth(call.berth_id)?.code || "—")}</td><td>${status(call.status)}</td><td>${date(call.start)}</td></tr>`).join("") || `<tr><td colspan="4">${empty("No vessel calls")}</td></tr>`}</tbody></table></div></section><section class="card" data-overview-widget="widget_weather" aria-label="Weather">${cardHead("Weather", "cloud-sun")}<div class="weather-widget" data-weather-widget aria-live="polite">Loading port weather…</div></section><section class="metric port-clock-card" data-overview-widget="widget_clock"><div data-port-clock><div class="metric-top"><span class="metric-label">Port clock</span><span class="metric-icon" aria-hidden="true">${icon("clock-3")}</span></div><time class="metric-value" dir="auto"></time><div class="metric-foot"></div></div></section></div>`;
   return (
     pageHeading(
       "Port overview",
@@ -539,12 +554,7 @@ function overview() {
         })
         .join("") ||
       `<tr><td colspan="4">${empty("No berths configured", "Draw your first berth in Configuration.")}</td></tr>`
-    }</tbody></table></div></section></div></div><div class="dashboard-bottom"><section class="card" data-overview-widget="widget_cargo">${cardHead(S.data.port.source_feed ? "Cargo handled by 07:00" : "Cargo throughput", "chart-no-axes-combined", `<span class="throughput-total">${fmt(total / 1000, 1)} <span>kt total</span></span>`)}<div class="products throughput-products">${products.map((p) => {
-      const share = total ? Number(p.quantity) / total * 100 : 0;
-      const configured = S.data.port.product_icons?.[p.name]?.color;
-      const color = /^#[0-9a-f]{6}$/i.test(configured || "") ? configured : "#087db3";
-      return `<div class="product throughput-product" role="button" tabindex="0" data-product="${esc(p.name)}" style="--cargo-color:${color}" aria-label="${esc(p.name)} · ${fmt(p.quantity / 1000, 1)} kt · ${fmt(share, 1)}% of total"><div class="throughput-product-top"><span class="product-symbol">${renderProductIcon(p.name)}</span><span class="throughput-flow" title="${esc(p.direction)}">${icon(p.direction === "Import" ? "arrow-down-left" : "arrow-up-right")}<span>${esc(p.direction)}</span></span></div><div class="product-label" title="${esc(p.name)}">${esc(p.name)}</div><div class="product-value">${fmt(p.quantity / 1000, 1)}<small>kt</small></div><div class="throughput-share-track" aria-hidden="true"><span style="width:${share}%"></span></div><div class="throughput-product-meta"><span>${fmt(share, 1)}% of total</span>${p.change == null ? "" : `<span class="throughput-trend" title="Compared with prior 30 days">${p.change > 0 ? "+" : ""}${fmt(p.change)}%</span>`}</div></div>`;
-    }).join("") || empty("No cargo handled in this period", "Products appear when import or export throughput is recorded.")}</div></section><section class="card" data-overview-widget="widget_delays">${cardHead("Operational delays", "timer", "By responsible department")}${delayChart(k)}</section><section class="card alerts-card" data-overview-widget="widget_alerts">${cardHead(S.data.port.source_feed ? "Source review" : "Alerts & planning risks", "bell-ring", "View all", "alerts", S.data.port.source_feed ? k.source_issues : k.open_alerts)}<div class="alerts-list">${
+    }</tbody></table></div></section></div></div><div class="dashboard-bottom">${cargoThroughput(k.products)}<section class="card" data-overview-widget="widget_delays">${cardHead("Operational delays", "timer", "By responsible department")}${delayChart(k)}</section><section class="card alerts-card" data-overview-widget="widget_alerts">${cardHead(S.data.port.source_feed ? "Source review" : "Alerts & planning risks", "bell-ring", "View all", "alerts", S.data.port.source_feed ? k.source_issues : k.open_alerts)}<div class="alerts-list">${
       alerts
         .filter((a) => !["Resolved", "Closed"].includes(a.status))
         .map((a) => alertRow(a))

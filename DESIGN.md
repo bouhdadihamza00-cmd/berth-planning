@@ -4,9 +4,17 @@ Portside is an operations application for planners, operators and administrators
 
 ## Identity and surfaces
 
-Keep the navy header and navigation rail, blue selection and focus, orange primary actions, and semantic operational status colors. The logo and selected port stay visible. The rail expands over the workspace on hover or keyboard focus.
+[Portside Color Palette & Design Guidelines, version 1.0](docs/Portside_Color_Palette_Design_Guidelines.pdf) is the official color reference. Shared palette and contrast tokens live in `frontend/preferences.css`.
 
-Shared tokens live in `frontend/preferences.css`, after workspace styles. Light canvas: `#f2f6f9`; surface: white; soft surface: `#f7fafc`; ink follows the existing navy token; secondary text: `#526c7e`. Dark mode uses corresponding navy surfaces and light text. Card outlines separate content; controls have stronger boundaries. Cards use a 9px radius, controls 5–6px. Avoid redundant nested containers.
+| Role | Palette |
+| --- | --- |
+| Navigation and dark KPI surfaces | Deep Navy `#082C46`, Ocean Navy `#123C56` |
+| Actions, data, and live information | Marine Blue `#087FB8`, Cyan `#28A7D7` |
+| Selection, active controls, and placement | Maritime Amber `#F5A623`, Amber Light `#FFF3D9`, selection border `#E69A17` |
+| Canvas, cards, and borders | `#F3F7FA`, `#FFFFFF`, `#DAE5EC` |
+| Success, information, warning, critical, and neutral | `#16856A`, `#087FB8`, `#C66B17`, `#C94149`, `#64798A` |
+
+Use dark navy text on amber selections. Use contrast-adjusted variants for small text on tinted surfaces and white button labels. Keep labels, icons, and visible focus outlines alongside color. The logo and selected port stay visible. The rail expands over the workspace on hover or keyboard focus. Cards use a 9px radius, controls 5–6px. Avoid redundant nested containers.
 
 ## Typography and spacing
 
@@ -16,7 +24,7 @@ Use 8px gaps within actions, 12–16px internal spacing and 20–24px between di
 
 ## Controls, tables and states
 
-Use orange for the primary action, neutral surfaces for secondary actions, and clearly named red actions for removal. Keep removal beside configuration/edit actions. Independent configuration forms save independently and preserve other drafts. Do not imply a connector or model is live when only its definition is saved.
+Use marine blue for the primary action, neutral surfaces for secondary actions, and clearly named red actions for removal. Keep removal beside configuration/edit actions. Independent configuration forms save independently and preserve other drafts. Do not imply a connector or model is live when only its definition is saved.
 
 Use native form controls and dialogs. Inputs have visible labels, validation and clear boundaries. Tables use column-header scope and preserve native horizontal scrolling where their content requires it. Navigation, focus, selection, disabled, loading, error, empty and success states must be distinguishable. Status is communicated with text or icons as well as color.
 

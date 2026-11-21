@@ -1,4 +1,8 @@
 import { getLocale } from "./preferences.js?v=8";
+function compactReading(glyph, label, value, detail = "") {
+  const {esc, icon} = window.P;
+  return `<div title="${esc([label, detail].filter(Boolean).join(" · "))}"><dt><span class="weather-reading-label">${esc(label)}</span><span aria-hidden="true">${icon(glyph)}</span></dt><dd>${esc(value)}</dd></div>`;
+}
 export async function mountWeather() {
   const { S, api, path, esc, icon } = window.P;
   const container = document.querySelector('#port-weather');
@@ -35,7 +39,7 @@ export async function mountWeather() {
       const readings = [
         fields[2], fields[3], ['droplets', 'Humidity', number(weather.humidity_percent, '%')], fields[4],
       ];
-      widget.innerHTML = `<div class="weather-widget-hero"><div class="weather-widget-current"><span class="weather-widget-condition-icon" aria-hidden="true">${icon(symbol)}</span><span><strong>${weather.temperature_c == null ? "—" : `${esc(number(weather.temperature_c, "°C"))}`}</strong><span>${esc(condition)}</span></span></div><div class="weather-widget-wind"><div class="weather-compass" aria-hidden="true"><span>N</span><span>E</span><span>S</span><span>W</span><i style="--wind-angle:${bearing ?? 0}deg">${icon(bearing === null ? "wind" : "arrow-up")}</i></div><div><strong>${esc(number(weather.wind_knots, "kn"))}</strong><span>${bearing === null ? "Wind direction unavailable" : `From ${direction} · ${Math.round(bearing)}°`}</span></div></div></div><dl class="weather-widget-readings">${readings.map(([glyph, label, value]) => `<div><dt>${icon(glyph)} ${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join("")}</dl><p class="weather-widget-source">${esc(state)}${weather.valid_at ? " · " + date(weather.valid_at) : ""} · <a href="https://www.met.no/en" target="_blank" rel="noopener noreferrer">MET Norway</a></p>`;
+      widget.innerHTML = `<div class="weather-widget-hero"><div class="weather-widget-current"><span class="weather-widget-condition-icon" aria-hidden="true">${icon(symbol)}</span><span><strong>${weather.temperature_c == null ? "—" : `${esc(number(weather.temperature_c, "°C"))}`}</strong><span>${esc(condition)}</span></span></div><div class="weather-widget-wind"><div class="weather-compass" aria-hidden="true"><span>N</span><span>E</span><span>S</span><span>W</span><i style="--wind-angle:${bearing ?? 0}deg">${icon(bearing === null ? "wind" : "arrow-up")}</i></div><div><strong>${esc(number(weather.wind_knots, "kn"))}</strong><span>${bearing === null ? "Wind direction unavailable" : `From ${direction} · ${Math.round(bearing)}°`}</span></div></div></div><dl class="weather-widget-readings">${readings.map(([glyph, label, value]) => `<div><dt>${icon(glyph)} ${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join("")}</dl><dl class="weather-widget-compact" aria-label="Weather and marine readings">${[fields[1], ...readings].map(([glyph, label, value]) => compactReading(glyph, label, value, state)).join("")}</dl><p class="weather-widget-source">${esc(state)}${weather.valid_at ? " · " + date(weather.valid_at) : ""} · <a href="https://www.met.no/en" target="_blank" rel="noopener noreferrer">MET Norway</a></p>`;
     }
     window.P.icons();
   } catch {
@@ -44,11 +48,11 @@ export async function mountWeather() {
       if (widget) widget.textContent = 'Weather unavailable.';
     }
   } finally {
-    if (container.isConnected && S.portId === port) mountMarine(container, port);
+    if (container.isConnected && S.portId === port) mountMarine(container, port, widget);
   }
 }
 
-async function mountMarine(container, port) {
+async function mountMarine(container, port, widget) {
   const { S, api, path, esc, icon } = window.P;
   try {
     const marine = await api(path('/marine'));
@@ -58,12 +62,14 @@ async function mountMarine(container, port) {
     const value = (v, unit) => v == null ? '—' : Number(v).toLocaleString(getLocale(), { maximumFractionDigits: 2 }) + unit;
     const detail = group => group ? `E.U. Copernicus Marine Service · ${group.status === 'current' ? 'Forecast' : 'STALE forecast'} · ${new Date(group.valid_at).toLocaleString(getLocale(), {timeZone:S.data.port.timezone})} · Model cell ${group.distance_km} km from port` : 'No forecast retrieved';
     const fields = [
-      ['waves', `Waves ${value(waves?.VHM0, 'm')} · ${value(waves?.VTPK, 's')}`, `Significant offshore wave height / peak period. ${detail(waves)}`],
-      ['waves', `Swell ${value(waves?.VHM0_SW1, 'm')}`, `Primary swell height. ${detail(waves)}`],
-      ['arrow-up-down', `Level ${value(physics?.zos, 'm')} (geoid)`, `Tide-inclusive model sea level ABOVE GEOID, not chart datum or clearance. ${detail(physics)}`],
-      ['navigation', `Current ${value(physics?.current_knots, 'kn')}${physics?.current_to_degrees == null ? '' : ' → ' + physics.current_to_degrees + '°'}`, `Surface current speed and direction TO. ${detail(physics)}`],
+      ['waves', "Waves", `${value(waves?.VHM0, 'm')} · ${value(waves?.VTPK, 's')}`, `Significant offshore wave height / peak period. ${detail(waves)}`],
+      ['waves', "Swell", `${value(waves?.VHM0_SW1, 'm')}`, `Primary swell height. ${detail(waves)}`],
+      ['arrow-up-down', "Level", `${value(physics?.zos, 'm')} (geoid)`, `Tide-inclusive model sea level ABOVE GEOID, not chart datum or clearance. ${detail(physics)}`],
+      ['navigation', "Current", `${value(physics?.current_knots, 'kn')}${physics?.current_to_degrees == null ? '' : ' → ' + physics.current_to_degrees + '°'}`, `Surface current speed and direction TO. ${detail(physics)}`],
     ];
-    container.insertAdjacentHTML('beforeend', fields.map(([symbol,text,title]) => `<span class="map-environment-item" tabindex="0" title="${esc(title)}" aria-label="${esc(text + '. ' + title)}">${icon(symbol)}<span>${esc(text)}</span></span>`).join(''));
+    container.insertAdjacentHTML('beforeend', fields.map(([symbol,label,text,title]) => `<span class="map-environment-item" tabindex="0" title="${esc(title)}" aria-label="${esc(label + " " + text + ". " + title)}">${icon(symbol)}<span>${esc(label + " " + text)}</span></span>`).join(''));
+    const compact = widget?.querySelector(".weather-widget-compact");
+    compact?.insertAdjacentHTML("beforeend", fields.map(args => compactReading(...args)).join(""));
     window.P.icons();
   } catch {
     if (container.isConnected && S.portId === port) container.insertAdjacentHTML('beforeend', '<small class="map-environment-source">Marine data unavailable</small>');

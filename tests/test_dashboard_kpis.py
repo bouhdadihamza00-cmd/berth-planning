@@ -78,13 +78,13 @@ class DashboardKpisTest(unittest.TestCase):
         self.assertEqual(snapshot()['stats']['dashboard_kpis']['personal_layout'], widgets)
 
         group = dict(id='kpi_group_9409dabc-1c78-48db-9127-9ad32082502f', width=3, height=2, kpis=['active', 'ratio'])
-        combined = [group, dict(id='widget_weather', width=2, height=2), dict(id='widget_calls', width=3, height=2)]
+        combined = [group, dict(id='widget_weather', width=5, height=2), dict(id='widget_calls', width=3, height=2)]
         self.assertEqual(client.put(f'{base}/dashboard/layout', json=dict(layout=combined, widgets=True)).status_code, 200)
         self.assertEqual(snapshot()['stats']['dashboard_kpis']['personal_layout'], combined)
         duplicate = [*combined, dict(id='active', width=1)]
         self.assertEqual(client.put(f'{base}/dashboard/layout', json=dict(layout=duplicate, widgets=True)).status_code, 422)
 
-        simple = dict(name='Calls in port', unit='calls', formula='active_calls')
+        simple = dict(name='Calls in port', unit='calls', formula='active_calls', icon='ship')
         formula = dict(name='Total traffic', unit='calls', formula='active + upcoming_arrivals')
         preview = client.post(f'{base}/dashboard/kpi-preview', json=formula)
         self.assertEqual(preview.status_code, 200, preview.text)
@@ -95,8 +95,32 @@ class DashboardKpisTest(unittest.TestCase):
         empty_card = dict(id=group['id'], width=2, height=2, kpis=[], metrics=[])
         self.assertEqual(client.put(f'{base}/dashboard/layout', json=dict(layout=[empty_card], widgets=True)).status_code, 200)
         self.assertEqual(snapshot()['stats']['dashboard_kpis']['personal_layout'], [empty_card])
+        compact = {**empty_card, 'width': 1, 'metrics': [simple]}
+        del compact['height']
+        self.assertEqual(client.put(f'{base}/dashboard/layout', json=dict(layout=[compact], widgets=True)).status_code, 200)
+        self.assertEqual(snapshot()['stats']['dashboard_kpis']['personal_layout'], [compact])
         configured_card = {**empty_card, 'metrics': [simple, formula]}
         self.assertEqual(client.put(f'{base}/dashboard/layout', json=dict(layout=[configured_card], widgets=True)).status_code, 200)
         saved = snapshot()['stats']['dashboard_kpis']
         self.assertEqual(saved['personal_layout'], [configured_card])
         self.assertEqual(saved['card_values'], {'active_calls': summary['active'], formula['formula']: preview.json()['value']})
+
+        first = dict(id='active', width=1, position=dict(column=3, row=2, tracks=30))
+        second = dict(id='upcoming', width=1, position=dict(column=7, row=2, tracks=30))
+        map_widget = dict(id='widget_map', width=4, height=3, position=dict(column=9, row=1, tracks=30))
+        positioned = [map_widget, first, second]
+        self.assertEqual(client.put(f'{base}/dashboard/layout', json=dict(layout=positioned, widgets=True)).status_code, 200)
+        self.assertEqual(snapshot()['stats']['dashboard_kpis']['personal_layout'], positioned)
+        overlap = [map_widget, {**first, 'position': dict(column=9, row=2, tracks=30)}]
+        self.assertEqual(client.put(f'{base}/dashboard/layout', json=dict(layout=overlap, widgets=True)).status_code, 422)
+
+        weather = dict(id='widget_weather', width=3)
+        self.assertEqual(client.put(f'{base}/dashboard/layout', json=dict(layout=[weather], widgets=True)).status_code, 200)
+        self.assertEqual(snapshot()['stats']['dashboard_kpis']['personal_layout'], [weather])
+
+        invalid_weather = {**weather, 'height': 2}
+        self.assertEqual(client.put(f'{base}/dashboard/layout', json=dict(layout=[invalid_weather], widgets=True)).status_code, 422)
+
+        clock = dict(id='widget_clock', width=1)
+        self.assertEqual(client.put(f'{base}/dashboard/layout', json=dict(layout=[clock], widgets=True)).status_code, 200)
+        self.assertEqual(snapshot()['stats']['dashboard_kpis']['personal_layout'], [clock])
